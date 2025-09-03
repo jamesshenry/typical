@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="TUnit" Version="0.24.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Typical\Typical.csproj" />
+    <ProjectReference Include="..\Typical.Lib\Typical.Lib.csproj" />
+  </ItemGroup>
+</Project>

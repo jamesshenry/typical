@@ -1,0 +1,97 @@
+name: Publish Stable Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release-nuget:
+    name: Publish NuGet Package
+    if: vars.PROJECT_TO_PACK != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Run Tests
+        run: dotnet run .build/targets.cs test
+      - name: Pack NuGet Package
+        run: dotnet run .build/targets.cs pack --packProject ${{ vars.PROJECT_TO_PACK }}
+      - name: Push NuGet Package
+        run: dotnet nuget push "dist/nuget/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source "https://api.nuget.org/v3/index.json" --skip-duplicate
+
+
+  release-velopack:
+    name: Prepare Velopack Release
+    if: vars.PROJECT_TO_PUBLISH != ''
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+
+  build-and-publish-velopack:
+    name: Build & Publish for ${{ matrix.os }}-${{ matrix.arch }}
+    needs: release-velopack # Depends on the release placeholder being created.
+    runs-on: ${{ matrix.runner_os }}
+    strategy:
+      matrix:
+        include:
+          - { runner_os: windows-latest, os: win, arch: x64 }
+          - { runner_os: ubuntu-latest, os: linux, arch: x64 }
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Run Tests
+        run: dotnet run .build/targets.cs test
+      - name: Build and Publish for ${{ matrix.os }}-${{ matrix.arch }}
+        run: dotnet run .build/targets.cs publish --os ${{ matrix.os }} --arch ${{ matrix.arch }} --publishProject ${{ vars.PROJECT_TO_PUBLISH }}
+      - name: Upload Artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          RID="${{ matrix.os }}-${{ matrix.arch }}"
+          SEARCH_PATH="./dist/publish/$RID"
+          echo "Searching for release asset in: $SEARCH_PATH"
+
+          # WARNING: Your build script runs a standard 'dotnet publish'. This upload step
+          # is looking for specific Velopack installers which are not created by default.
+          # This step will likely fail unless your .csproj is configured to produce
+          # these files (e.g., -Setup.exe, .AppImage) during the publish step.
+          if [[ "${{ matrix.os }}" == "win" ]]; then
+            FILES_TO_UPLOAD=$(find "$SEARCH_PATH" \( -name "*-Setup.exe" -o -name "*-Portable.zip" \))
+          elif [[ "${{ matrix.os }}" == "linux" ]]; then
+            FILES_TO_UPLOAD=$(find "$SEARCH_PATH" \( -name "*.AppImage" -o -name "*-Portable.zip" \))
+          elif [[ "${{ matrix.os }}" == "osx" ]]; then
+            FILES_TO_UPLOAD=$(find "$SEARCH_PATH" -name "*.zip")
+          fi
+
+          if [[ -z "$FILES_TO_UPLOAD" ]]; then
+            echo "::error::Could not find any release assets to upload in $SEARCH_PATH"
+            exit 1
+          fi
+
+          echo "--- Found assets to upload ---"
+          echo "$FILES_TO_UPLOAD"
+          echo "------------------------------"
+
+          echo "$FILES_TO_UPLOAD" | xargs gh release upload ${{ github.ref_name }} --clobber

@@ -1,0 +1,86 @@
+﻿name: Build Pre-release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-library:
+    name: Build NuGet Pre-release
+    if: vars.PROJECT_TO_PACK != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: Get pre-release version
+        id: version
+        run: |
+          # Run the new dnx command and pipe to tail to get only the last line (the version).
+          VERSION=$(dnx minver-cli -y --default-pre-release-identifiers preview | tail -n 1)
+          echo "Discovered version: $VERSION"
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Run Tests
+        run: dotnet run .build/targets.cs test
+
+      - name: Pack NuGet Pre-release Package
+        run: dotnet run .build/targets.cs pack --version ${{ env.APP_VERSION }}
+
+      - name: Upload NuGet Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-artifact-${{ env.APP_VERSION }}
+          path: dist/nuget/
+
+  build-application:
+    name: Build App for ${{ matrix.os }}-${{ matrix.arch }}
+    if: vars.PROJECT_TO_PUBLISH != ''
+    runs-on: ${{ matrix.runner_os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner_os: windows-latest, os: win, arch: x64 }
+          - { runner_os: ubuntu-latest, os: linux, arch: x64 }
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 } 
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: Get pre-release version
+        id: version
+        run: |
+          VERSION=$(dnx minver-cli -y -p preview | tail -n 1)
+          echo "Discovered version: $VERSION"
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Run Tests
+        run: dotnet run .build/targets.cs test
+
+      - name: Build and Publish Pre-release for ${{ matrix.os }}-${{ matrix.arch }}
+        run: dotnet run .build/targets.cs publish --os ${{ matrix.os }} --arch ${{ matrix.arch }} --publishProject ${{ vars.PROJECT_TO_PUBLISH }} --version ${{ env.APP_VERSION }}
+
+      - name: Upload Application Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-artifact-${{ matrix.os }}-${{ matrix.arch }}-${{ env.APP_VERSION }}
+          path: dist/publish/
