@@ -26,3 +26,32 @@ jobs:
 
       - name: Run Tests
         run: dotnet run .build/targets.cs test
+
+      - name: ReportGenerator
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.4.12
+        with:
+          reports: TestResults/coverage.xml
+          targetdir: coveragereport
+          reporttypes: 'Html;MarkdownSummaryGithub;Badges'
+
+      - name: Upload full coverage report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coveragereport/
+
+      - name: Add coverage summary to pull request
+        # This step only runs for pull requests
+        if: github.event_name == 'pull_request'
+        run: |
+          # Use the official GitHub CLI to post a comment
+          # It will find and update its own previous comment, or create a new one
+          gh pr comment ${{ github.event.number }} --body-file coveragereport/SummaryGithub.md
+        env:
+          # The GITHUB_TOKEN is automatically provided by GitHub Actions
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Add coverage summary to job summary
+        # This adds the same markdown report to the GitHub Actions summary page
+        run: cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+        shell: bash
