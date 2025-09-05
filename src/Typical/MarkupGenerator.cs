@@ -57,7 +57,7 @@ public class MarkupGenerator
     private string GetMarkupForState(TypingResult state) =>
         state switch
         {
-            TypingResult.Correct => "[green]",
+            TypingResult.Correct => "[default on green]",
             TypingResult.Incorrect => "[red on grey15]",
             _ => "[grey]",
         };

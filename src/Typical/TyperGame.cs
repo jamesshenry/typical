@@ -46,22 +46,43 @@ public class TypicalGame
                 centerLayout.Update(CreateGamePanel());
                 ctx.Refresh();
 
+                int lastHeight = Console.WindowHeight;
+                int lastWidth = Console.WindowWidth;
+
                 while (true)
                 {
-                    var key = Console.ReadKey(true);
+                    bool needsRefresh = false;
 
-                    if (!HandleInput(key))
+                    if (Console.WindowWidth != lastWidth || Console.WindowHeight != lastHeight)
                     {
-                        break;
+                        lastWidth = Console.WindowWidth;
+                        lastHeight = Console.WindowHeight;
+                        needsRefresh = true;
                     }
 
-                    centerLayout.Update(CreateGamePanel());
-                    ctx.Refresh();
+                    if (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(true);
+                        if (!HandleInput(key))
+                        {
+                            break;
+                        }
+                        needsRefresh = true;
+                    }
+
+                    if (needsRefresh)
+                    {
+                        centerLayout.Update(CreateGamePanel());
+                        ctx.Refresh();
+                    }
+
                     if (_userInput.ToString() == _targetText)
                     {
                         Thread.Sleep(500);
                         break;
                     }
+
+                    Thread.Sleep(1000 / _gameOptions.TargetFrameRate);
                 }
             });
 
