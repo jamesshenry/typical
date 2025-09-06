@@ -1,36 +1,21 @@
-using System.Text;
 using Spectre.Console;
 using Spectre.Console.Rendering;
+using Typical.Core;
 using Typical.TUI;
 
 namespace Typical;
 
-public class TypicalGame
+public class GameRunner
 {
     private readonly MarkupGenerator _markupGenerator;
-
-    private readonly string _targetText;
-    private readonly StringBuilder _userInput;
-    private readonly GameOptions _gameOptions;
+    private readonly TypicalGame _engine;
     private readonly LayoutConfiguration _layoutConfiguration;
 
-    public TypicalGame(string targetText)
-        : this(targetText, new GameOptions(), LayoutConfiguration.Default) { }
-
-    public TypicalGame(string targetText, GameOptions gameOptions)
-        : this(targetText, gameOptions, LayoutConfiguration.Default) { }
-
-    public TypicalGame(
-        string targetText,
-        GameOptions gameOptions,
-        LayoutConfiguration layoutConfiguration
-    )
+    public GameRunner(TypicalGame engine, LayoutConfiguration layoutConfiguration)
     {
-        _targetText = targetText;
-        _gameOptions = gameOptions;
-        _layoutConfiguration = layoutConfiguration;
+        _engine = engine;
         _markupGenerator = new MarkupGenerator();
-        _userInput = new StringBuilder();
+        _layoutConfiguration = layoutConfiguration;
     }
 
     public void Run()
@@ -63,7 +48,7 @@ public class TypicalGame
                     if (Console.KeyAvailable)
                     {
                         var key = Console.ReadKey(true);
-                        if (!HandleInput(key))
+                        if (!_engine.ProcessKeyPress(key))
                         {
                             break;
                         }
@@ -76,50 +61,22 @@ public class TypicalGame
                         ctx.Refresh();
                     }
 
-                    if (_userInput.ToString() == _targetText)
+                    if (_engine.IsOver)
                     {
                         Thread.Sleep(500);
                         break;
                     }
 
-                    Thread.Sleep(1000 / _gameOptions.TargetFrameRate);
+                    Thread.Sleep(_engine.TargetFrameDelayMilliseconds);
                 }
             });
 
         DisplaySummary();
     }
 
-    private bool HandleInput(ConsoleKeyInfo key)
-    {
-        if (key.Key == ConsoleKey.Escape)
-            return false;
-
-        if (key.Key == ConsoleKey.Backspace && _userInput.Length > 0)
-        {
-            _userInput.Remove(_userInput.Length - 1, 1);
-        }
-        else if (!char.IsControl(key.KeyChar))
-        {
-            if (_gameOptions.ForbidIncorrectEntries)
-            {
-                int currentPos = _userInput.Length;
-                if (currentPos < _targetText.Length && key.KeyChar == _targetText[currentPos])
-                {
-                    _userInput.Append(key.KeyChar);
-                }
-            }
-            else
-            {
-                _userInput.Append(key.KeyChar);
-            }
-        }
-
-        return true;
-    }
-
     private IRenderable CreateGamePanel()
     {
-        var markup = _markupGenerator.BuildMarkupOptimized(_targetText, _userInput.ToString());
+        var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
 
         var panel = new Panel(markup).Header("Typing Area").BorderColor(Color.Blue);
         return Align.Center(panel, VerticalAlignment.Middle);
