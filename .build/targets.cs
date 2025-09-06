@@ -28,7 +28,7 @@ var packProjectOption = app.Option<string>(
     "--packProject <project>",
     "The project file to pack into a NuGet package.",
     CommandOptionType.SingleValue,
-    opts => opts.DefaultValue = "src/typical.Lib/typical.Lib.csproj"
+    opts => opts.DefaultValue = "src/Typical.Core/Typical.Core.csproj"
 );
 var configurationOption = app.Option<string>(
     "-c|--configuration <configuration>",

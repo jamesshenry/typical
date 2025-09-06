@@ -10,6 +10,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Typical\Typical.csproj" />
-    <ProjectReference Include="..\Typical.Lib\Typical.Lib.csproj" />
+    <ProjectReference Include="..\Typical.Core\Typical.Core.csproj" />
   </ItemGroup>
 </Project>
