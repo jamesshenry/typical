@@ -6,7 +6,8 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="TUnit" Version="0.24.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
+    <PackageReference Include="TUnit" Version="0.57.24" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Typical\Typical.csproj" />
