@@ -16,7 +16,7 @@ var solutionOption = app.Option<string>(
     "-s|--solution <solution>",
     "The solution file to operate on.",
     CommandOptionType.SingleValue,
-    opts => opts.DefaultValue = "typical.slnx"
+    opts => opts.DefaultValue = "Typical.slnx"
 );
 var publishProjectOption = app.Option<string>(
     "--publishProject <project>",
