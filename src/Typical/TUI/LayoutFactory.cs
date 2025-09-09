@@ -44,6 +44,12 @@ public class LayoutFactory
     internal Layout GetContentFor(LayoutName name)
     {
         var content = _configuration.Renderables.GetValueOrDefault(name);
-        return new Layout(name.Value, content);
+        if (content is not null)
+            return new Layout(
+                name.Value,
+                content.AlignmentFunc.Invoke(content.Content, content.VerticalAlignment)
+            );
+
+        return new Layout(name.Value, content?.Content);
     }
 }

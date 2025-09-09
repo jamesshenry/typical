@@ -76,10 +76,22 @@ public class GameRunner
 
     private IRenderable CreateGamePanel()
     {
+        var originalPanelInfo = _layoutConfiguration.Renderables[LayoutName.TypingArea];
+        if (originalPanelInfo is null)
+            return new Panel("No content configured for TypingArea").NoBorder();
         var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
-
-        var panel = new Panel(markup).Header("Typing Area").BorderColor(Color.Blue);
-        return Align.Center(panel, VerticalAlignment.Middle);
+        var newPanel = new Panel(markup);
+        Panel originalPanel = (originalPanelInfo.Content as Panel)!;
+        newPanel.BorderStyle = originalPanel.BorderStyle;
+        newPanel.Header = originalPanel.Header;
+        if (originalPanelInfo.AlignmentFunc != null)
+        {
+            return originalPanelInfo.AlignmentFunc.Invoke(
+                newPanel,
+                originalPanelInfo.VerticalAlignment
+            )!;
+        }
+        return newPanel;
     }
 
     private Action<string> DisplaySummary() =>
