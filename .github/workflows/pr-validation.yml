@@ -5,7 +5,8 @@ on:
     branches:
       - 'main'
     types: [opened, synchronize, reopened]
-
+permissions:
+  pull-requests: write
 jobs:
   validate:
     name: Build & Test PR

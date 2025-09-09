@@ -16,7 +16,7 @@ var solutionOption = app.Option<string>(
     "-s|--solution <solution>",
     "The solution file to operate on.",
     CommandOptionType.SingleValue,
-    opts => opts.DefaultValue = "typical.slnx"
+    opts => opts.DefaultValue = "Typical.slnx"
 );
 var publishProjectOption = app.Option<string>(
     "--publishProject <project>",
@@ -28,7 +28,7 @@ var packProjectOption = app.Option<string>(
     "--packProject <project>",
     "The project file to pack into a NuGet package.",
     CommandOptionType.SingleValue,
-    opts => opts.DefaultValue = "src/typical.Lib/typical.Lib.csproj"
+    opts => opts.DefaultValue = "src/Typical.Core/Typical.Core.csproj"
 );
 var configurationOption = app.Option<string>(
     "-c|--configuration <configuration>",
@@ -36,23 +36,17 @@ var configurationOption = app.Option<string>(
     CommandOptionType.SingleValue,
     opts => opts.DefaultValue = "Release"
 );
-var osOption = app.Option<string>(
-    "--os <os>",
-    "The target operating system (e.g., win, linux, osx).",
-    CommandOptionType.SingleValue,
-    opts => opts.DefaultValue = "win"
-);
-var archOption = app.Option<string>(
-    "--arch <arch>",
-    "The target architecture (e.g., x64, x86, arm64).",
-    CommandOptionType.SingleValue,
-    opts => opts.DefaultValue = "x64"
+var ridOption = app.Option<string>(
+    "--rid <rid>",
+    "The runtime identifier (RID) to use for publishing.",
+    CommandOptionType.SingleValue
 );
 var versionOption = app.Option<string>(
     "--version <version>",
     "The version to use for packing.",
     CommandOptionType.SingleValue
 );
+
 app.Argument(
     "targets",
     "A list of targets to run or list. If not specified, the \"default\" target will be run, or all targets will be listed.",
@@ -94,7 +88,11 @@ app.OnExecuteAsync(async _ =>
         () =>
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(solution);
-            return RunAsync("dotnet", $"restore {solution}");
+
+            var rid = ridOption.Value();
+            var runtimeArg = !string.IsNullOrEmpty(rid) ? $"--runtime {rid}" : string.Empty;
+
+            return RunAsync("dotnet", $"restore {solution} {runtimeArg}");
         }
     );
 
@@ -105,6 +103,7 @@ app.OnExecuteAsync(async _ =>
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(solution);
             ArgumentException.ThrowIfNullOrWhiteSpace(configuration);
+
             return RunAsync(
                 "dotnet",
                 $"build {solution} --configuration {configuration} --no-restore"
@@ -127,7 +126,7 @@ app.OnExecuteAsync(async _ =>
             var testResultPath = Directory.CreateDirectory(Path.Combine(root, testResultFolder));
             await RunAsync(
                 "dotnet",
-                $"test --solution {solution} --configuration {configuration} --no-build --coverage --coverage-output {Path.Combine(testResultPath.FullName, coverageFileName)} --coverage-output-format xml --ignore-exit-code 8"
+                $"test --solution {solution} --configuration {configuration} --coverage --coverage-output {Path.Combine(testResultPath.FullName, coverageFileName)} --coverage-output-format xml --ignore-exit-code 8"
             );
         }
     );
@@ -144,17 +143,16 @@ app.OnExecuteAsync(async _ =>
         () =>
         {
             var publishProject = publishProjectOption.Value();
-            var os = osOption.Value();
-            var arch = archOption.Value();
             ArgumentException.ThrowIfNullOrWhiteSpace(publishProject);
 
-            var rid = $"{os}-{arch}";
+            var rid = ridOption.Value();
+            var runtimeArg = string.IsNullOrEmpty(rid) ? $"--runtime {rid}" : string.Empty;
 
-            var publishDir = Path.Combine(root, "dist", "publish", rid);
+            var publishDir = Path.Combine(root, "dist", "publish", rid!);
 
             return RunAsync(
                 "dotnet",
-                $"publish {publishProject} -c {configuration} -o {publishDir} --no-build"
+                $"publish {publishProject} -c {configuration} -o {publishDir} --no-build {runtimeArg}"
             );
         }
     );

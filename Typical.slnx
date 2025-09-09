@@ -6,7 +6,7 @@
     <File Path=".editorconfig" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src/Typical.Lib/Typical.Lib.csproj" />
+    <Project Path="src/Typical.Core/Typical.Core.csproj" />
     <Project Path="src/Typical.Tests/Typical.Tests.csproj" />
     <Project Path="src/Typical/Typical.csproj" />
   </Folder>
