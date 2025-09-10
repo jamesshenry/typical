@@ -5,6 +5,8 @@ namespace Typical.TUI;
 [ValueObject<string>]
 public partial record LayoutName
 {
+    public static readonly LayoutName Default = From(nameof(Default));
+
     // The main container for everything
     public static readonly LayoutName Root = From(nameof(Root));
 

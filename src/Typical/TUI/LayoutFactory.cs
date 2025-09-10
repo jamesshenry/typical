@@ -45,11 +45,8 @@ public class LayoutFactory
     {
         var content = _configuration.Renderables.GetValueOrDefault(name);
         if (content is not null)
-            return new Layout(
-                name.Value,
-                content.AlignmentFunc.Invoke(content.Content, content.VerticalAlignment)
-            );
+            return new Layout(name.Value, content);
 
-        return new Layout(name.Value, content?.Content);
+        return new Layout(name.Value, content);
     }
 }

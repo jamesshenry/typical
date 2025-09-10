@@ -5,26 +5,12 @@ namespace Typical.TUI;
 
 public class LayoutConfiguration
 {
-    public Dictionary<LayoutName, LayoutData?> Renderables { get; } = [];
+    public Dictionary<LayoutName, IRenderable?> Renderables { get; } = [];
 
     public static LayoutConfiguration Default => new();
 
     public LayoutConfiguration()
     {
-        Renderables[LayoutName.Header] = (
-            new LayoutData(
-                new Panel(new Markup("[bold yellow]Typical[/]").Centered())
-                    .Header("Header")
-                    .Border(BoxBorder.Rounded)
-                    .Expand(),
-                Align.Center
-            )
-        );
+        Renderables[LayoutName.Header] = new Markup("[bold yellow]Typical[/]");
     }
 }
-
-public record LayoutData(
-    IRenderable Content,
-    Func<IRenderable, VerticalAlignment?, Align>? AlignmentFunc,
-    VerticalAlignment? VerticalAlignment = null
-);

@@ -2,6 +2,7 @@ using Spectre.Console;
 using Spectre.Console.Rendering;
 using Typical.Core;
 using Typical.TUI;
+using Typical.TUI.Settings;
 
 namespace Typical;
 
@@ -9,11 +10,13 @@ public class GameRunner
 {
     private readonly MarkupGenerator _markupGenerator;
     private readonly TypicalGame _engine;
+    private readonly Theme _theme;
     private readonly LayoutConfiguration _layoutConfiguration;
 
-    public GameRunner(TypicalGame engine, LayoutConfiguration layoutConfiguration)
+    public GameRunner(TypicalGame engine, Theme theme, LayoutConfiguration layoutConfiguration)
     {
         _engine = engine;
+        _theme = theme;
         _markupGenerator = new MarkupGenerator();
         _layoutConfiguration = layoutConfiguration;
     }
@@ -27,8 +30,8 @@ public class GameRunner
             .Live(layout)
             .Start(ctx =>
             {
-                var centerLayout = layout[LayoutName.TypingArea.Value];
-                centerLayout.Update(CreateGamePanel());
+                var typingArea = layout[LayoutName.TypingArea.Value];
+                typingArea.Update(CreateTypingArea());
                 ctx.Refresh();
 
                 int lastHeight = Console.WindowHeight;
@@ -57,7 +60,7 @@ public class GameRunner
 
                     if (needsRefresh)
                     {
-                        centerLayout.Update(CreateGamePanel());
+                        typingArea.Update(CreateTypingArea());
                         ctx.Refresh();
                     }
 
@@ -74,24 +77,13 @@ public class GameRunner
         DisplaySummary();
     }
 
-    private IRenderable CreateGamePanel()
+    private IRenderable CreateTypingArea()
     {
-        var originalPanelInfo = _layoutConfiguration.Renderables[LayoutName.TypingArea];
-        if (originalPanelInfo is null)
-            return new Panel("No content configured for TypingArea").NoBorder();
         var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
-        var newPanel = new Panel(markup);
-        Panel originalPanel = (originalPanelInfo.Content as Panel)!;
-        newPanel.BorderStyle = originalPanel.BorderStyle;
-        newPanel.Header = originalPanel.Header;
-        if (originalPanelInfo.AlignmentFunc != null)
-        {
-            return originalPanelInfo.AlignmentFunc.Invoke(
-                newPanel,
-                originalPanelInfo.VerticalAlignment
-            )!;
-        }
-        return newPanel;
+        var panel = new Panel(markup);
+
+        _theme.Apply(panel, LayoutName.TypingArea);
+        return panel;
     }
 
     private Action<string> DisplaySummary() =>
