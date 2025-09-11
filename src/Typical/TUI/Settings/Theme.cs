@@ -14,11 +14,12 @@ public class Theme
 
     public void Apply(Panel panel, LayoutName layoutName)
     {
-        IRenderable renderable = panel;
         if (!_settings.TryGetValue(layoutName, out var style))
         {
             _settings.TryGetValue(LayoutName.Default, out style);
         }
+        if (style is null)
+            return;
 
         if (style.BorderStyle is not null)
         {
@@ -37,11 +38,12 @@ public class Theme
         }
 
         var verticalAlign = style.VerticalAlignment is not null
-    ? Enum.Parse<VerticalAlignment>(style.VerticalAlignment, true)
-    : VerticalAlignment.Top;
+            ? Enum.Parse<VerticalAlignment>(style.VerticalAlignment, true)
+            : VerticalAlignment.Top;
 
         if (style.Alignment is not null)
         {
+            IRenderable renderable = panel;
             renderable = Enum.Parse<Justify>(style.Alignment, true) switch
             {
                 Justify.Left => Align.Left(panel, verticalAlign),

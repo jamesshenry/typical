@@ -1,7 +1,80 @@
 {
-    "CliConfig": {
-        "Port": "5001",
-        "Enabled": true,
-        "ApiUrl": "https://jsonplaceholder.typicode.com/"
+  "Layouts": {
+    "ClassicFocus": {
+      "Name": "Root",
+      "SplitDirection": "Rows",
+      "Children": [
+        {
+          "Name": "Header"
+        },
+        {
+          "Name": "TypingArea",
+          "Ratio": 3
+        },
+        {
+          "Name": "Footer"
+        }
+      ]
+    },
+    "Dashboard": {
+      "Name": "Root",
+      "Children": [
+        {
+          "Name": "GeneralInfo"
+        },
+        {
+          "Name": "Center",
+          "Ratio": 3,
+          "SplitDirection": "Rows",
+          "Children": [
+            {
+              "Name": "Header"
+            },
+            {
+              "Name": "TypingArea",
+              "Ratio": 3
+            },
+            {
+              "Name": "Footer"
+            }
+          ]
+        },
+        {
+          "Name": "TypingInfo"
+        }
+      ]
     }
+  },
+  "Theme": {
+    "TypingArea": {
+      "BorderStyle": {
+        "ForegroundColor": "Yellow",
+        "Decoration": "None"
+      },
+      "PanelHeader": {
+        "Text": "[yellow]Type the text below[/]"
+      }
+    },
+    "Header": {
+      "BorderStyle": {
+        "ForegroundColor": "Blue"
+      },
+      "PanelHeader": {
+        "Text": "[bold blue]Typical[/]"
+      }
+    },
+    "Stats": {
+      "BorderStyle": {
+        "ForegroundColor": "Grey"
+      },
+      "PanelHeader": {
+        "Text": "Stats"
+      }
+    },
+    "Default": {
+      "BorderStyle": {
+        "ForegroundColor": "Grey50"
+      }
+    }
+  }
 }

@@ -1,8 +1,10 @@
+using System.ComponentModel;
 using Vogen;
 
 namespace Typical.TUI;
 
-[ValueObject<string>]
+[ValueObject<string>(conversions: Conversions.SystemTextJson)]
+[TypeConverter(typeof(LayoutNameTypeConverter))]
 public partial record LayoutName
 {
     public static readonly LayoutName Default = From(nameof(Default));
@@ -20,4 +22,16 @@ public partial record LayoutName
     public static readonly LayoutName GeneralInfo = From(nameof(GeneralInfo));
     public static readonly LayoutName TypingInfo = From(nameof(TypingInfo));
     public static readonly LayoutName Center = From(nameof(Center));
+}
+
+public class LayoutNameTypeConverter : TypeConverter
+{
+    public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType) =>
+        sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+
+    public override object? ConvertFrom(
+        ITypeDescriptorContext? context,
+        System.Globalization.CultureInfo? culture,
+        object value
+    ) => value is string s ? LayoutName.From(s) : base.ConvertFrom(context, culture, value);
 }

@@ -11,22 +11,27 @@ public class GameRunner
     private readonly MarkupGenerator _markupGenerator;
     private readonly TypicalGame _engine;
     private readonly Theme _theme;
-    private readonly LayoutConfiguration _layoutConfiguration;
+    private readonly IAnsiConsole _console;
 
-    public GameRunner(TypicalGame engine, Theme theme, LayoutConfiguration layoutConfiguration)
+    public GameRunner(
+        TypicalGame engine,
+        Theme theme,
+        MarkupGenerator markupGenerator,
+        IAnsiConsole console
+    )
     {
         _engine = engine;
         _theme = theme;
-        _markupGenerator = new MarkupGenerator();
-        _layoutConfiguration = layoutConfiguration;
+        _markupGenerator = markupGenerator;
+        _console = console;
     }
 
     public void Run()
     {
-        var layoutFactory = new LayoutFactory(_layoutConfiguration);
+        var layoutFactory = new LayoutFactory();
         var layout = layoutFactory.BuildDashboard();
 
-        AnsiConsole
+        _console
             .Live(layout)
             .Start(ctx =>
             {
