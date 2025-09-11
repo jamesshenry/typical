@@ -1,9 +1,8 @@
 ﻿using Spectre.Console;
 using Spectre.Console.Rendering;
-using TUnit.Assertions.AssertConditions.Throws;
 using Typical.TUI;
 
-namespace Typical.Tests;
+namespace Typical.Tests.TUI;
 
 public class LayoutFactoryTests
 {
