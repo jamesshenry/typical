@@ -1,39 +1,39 @@
-using Microsoft.Extensions.Configuration;
-using Typical.TUI;
-using Typical.TUI.Settings;
+// using Microsoft.Extensions.Configuration;
+// using Typical.TUI;
+// using Typical.TUI.Settings;
 
-namespace Typical;
+// namespace Typical;
 
-public static class ConfigurationExtensions
-{
-    public static ThemeSettings GetThemeSettings(this IConfiguration configuration)
-    {
-        var section = configuration.GetSection("Theme");
-        var dict = new ThemeSettings();
+// public static class ConfigurationExtensions
+// {
+//     public static RuntimeTheme GetThemeSettings(this IConfiguration configuration)
+//     {
+//         var section = configuration.GetSection("Theme");
+//         var dict = new RuntimeTheme();
 
-        foreach (var child in section.GetChildren())
-        {
-            var key = LayoutName.From(child.Key);
-            var value = child.Get<ElementStyle>();
-            dict[key] = value;
-        }
+//         foreach (var child in section.GetChildren())
+//         {
+//             var key = LayoutName.From(child.Key);
+//             var value = child.Get<ElementStyle>();
+//             dict[key] = value;
+//         }
 
-        return dict;
-    }
+//         return dict;
+//     }
 
-    // TODO:Not working
-    public static LayoutPresetSettings GetLayoutPresets(this IConfiguration configuration)
-    {
-        var section = configuration.GetSection("Layouts");
-        var dict = new LayoutPresetSettings();
+//     // TODO:Not working
+//     public static LayoutPresetDict GetLayoutPresets(this IConfiguration configuration)
+//     {
+//         var section = configuration.GetSection("Layouts");
+//         var dict = new LayoutPresetDict();
 
-        foreach (var child in section.GetChildren())
-        {
-            var key = child.Key;
-            var value = child.Get<LayoutDefinition>();
-            dict[key] = value;
-        }
+//         foreach (var child in section.GetChildren())
+//         {
+//             var key = child.Key;
+//             var value = child.Get<LayoutDefinition>();
+//             dict[key] = value;
+//         }
 
-        return dict;
-    }
-}
+//         return dict;
+//     }
+// }

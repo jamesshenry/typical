@@ -20,7 +20,7 @@
       "Name": "Root",
       "Children": [
         {
-          "Name": "GeneralInfo"
+          "Name": "GameInfo"
         },
         {
           "Name": "Center",
@@ -45,35 +45,41 @@
       ]
     }
   },
-  "Theme": {
-    "TypingArea": {
-      "BorderStyle": {
-        "ForegroundColor": "Yellow",
-        "Decoration": "None"
-      },
-      "PanelHeader": {
-        "Text": "[yellow]Type the text below[/]"
-      }
-    },
-    "Header": {
-      "BorderStyle": {
-        "ForegroundColor": "Blue"
-      },
-      "PanelHeader": {
-        "Text": "[bold blue]Typical[/]"
-      }
-    },
-    "Stats": {
-      "BorderStyle": {
-        "ForegroundColor": "Grey"
-      },
-      "PanelHeader": {
-        "Text": "Stats"
-      }
-    },
+  "Themes": {
     "Default": {
-      "BorderStyle": {
-        "ForegroundColor": "Grey50"
+      "TypingArea": {
+        "BorderStyle": {
+          "ForegroundColor": "Yellow",
+          "Decoration": "None",
+        },
+        "PanelHeader": {
+          "Text": "[yellow]test Area[/]"
+        },
+        "Alignment": {
+          "Vertical": "Middle",
+          "Horizontal": "Right"
+        }
+      },
+      "Header": {
+        "BorderStyle": {
+          "ForegroundColor": "Blue"
+        },
+        "PanelHeader": {
+          "Text": "[bold blue]Typical[/]"
+        }
+      },
+      "GameInfo": {
+        "BorderStyle": {
+          "ForegroundColor": "Grey"
+        },
+        "PanelHeader": {
+          "Text": "Stats"
+        }
+      },
+      "Default": {
+        "BorderStyle": {
+          "ForegroundColor": "Grey50"
+        }
       }
     }
   }

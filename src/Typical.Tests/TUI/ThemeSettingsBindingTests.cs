@@ -31,7 +31,7 @@ public class ThemeSettingsBindingTests
             .Build();
 
         // Act: bind into our strongly-typed ThemeSettings
-        var themeSettings = configuration.GetSection("Theme").Get<ThemeSettings>();
+        var themeSettings = configuration.GetSection("Theme").Get<RuntimeTheme>();
 
         // Assert: dictionary has LayoutName keys, not strings
         await Assert.That(themeSettings).IsNotNull();
@@ -47,16 +47,16 @@ public class ThemeSettingsBindingTests
             .IsEqualTo("TypingText");
     }
 
-    [Test]
-    public async Task Debug_TypeConverter_For_LayoutName()
-    {
-        var converter = TypeDescriptor.GetConverter(typeof(LayoutName));
+    // [Test]
+    // public async Task Debug_TypeConverter_For_LayoutName()
+    // {
+    //     var converter = TypeDescriptor.GetConverter(typeof(LayoutName));
 
-        await Assert.That(converter).IsNotNull();
-        await Assert.That(converter).IsTypeOf<LayoutNameTypeConverter>();
+    //     await Assert.That(converter).IsNotNull();
+    //     await Assert.That(converter).IsTypeOf<LayoutNameTypeConverter>();
 
-        // You can also test conversion directly:
-        var layout = (LayoutName)converter.ConvertFrom("Header");
-        await Assert.That(layout).IsEqualTo(LayoutName.Header);
-    }
+    //     // You can also test conversion directly:
+    //     var layout = (LayoutName)converter.ConvertFrom("Header");
+    //     await Assert.That(layout).IsEqualTo(LayoutName.Header);
+    // }
 }

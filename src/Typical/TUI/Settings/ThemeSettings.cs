@@ -1,10 +1,7 @@
 namespace Typical.TUI.Settings;
 
-public class ThemeSettings : Dictionary<LayoutName, ElementStyle> { }
+public class Theme : Dictionary<string, ElementStyle> { }
 
-public class ThemeSettings2 : Dictionary<string, ElementStyle> { }
+public class LayoutPresetDict : Dictionary<string, LayoutDefinition>;
 
-public class ThemeContainer
-{
-    public ThemeSettings Theme { get; set; }
-}
+public class ThemeDict : Dictionary<string, Theme> { }

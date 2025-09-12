@@ -1,52 +1,48 @@
+using System.Diagnostics.Tracing;
 using Spectre.Console;
-using static Typical.TUI.LayoutName;
+using Spectre.Console.Rendering;
+using Typical.TUI.Settings;
 
-namespace Typical.TUI;
+namespace Typical.TUI.Runtime;
 
 public class LayoutFactory
 {
-    private readonly LayoutConfiguration _configuration;
+    private readonly RuntimeLayoutDict _presets;
 
-    public LayoutFactory(LayoutConfiguration configuration = null!)
+    public LayoutFactory(RuntimeLayoutDict presets)
     {
-        _configuration = configuration ?? LayoutConfiguration.Default;
+        _presets = presets;
     }
 
-    public Layout Build()
+    public Layout Build(LayoutName rootLayout)
     {
-        return new Layout(Root.Value);
+        if (!_presets.TryGetValue(rootLayout, out var rootDefinition))
+        {
+            return new Layout(rootLayout.Value);
+        }
+
+        return BuildLayoutFromDefinition(rootDefinition, rootLayout.Value);
     }
 
-    public Layout BuildClassicFocus()
+    private Layout BuildLayoutFromDefinition(LayoutNode node, string name)
     {
-        return new Layout(Root.Value).SplitRows(
-            new Layout(Header.Value, GetContentFor(Header)),
-            new Layout(TypingArea.Value, GetContentFor(TypingArea)).Ratio(3),
-            new Layout(Footer.Value, GetContentFor(Footer))
-        );
-    }
+        // Use root or child name
+        var layout = new Layout(name);
 
-    public Layout BuildDashboard()
-    {
-        return new Layout(Root.Value).SplitColumns(
-            new Layout(GeneralInfo.Value, GetContentFor(GeneralInfo)),
-            new Layout(Center.Value)
-                .Ratio(3)
-                .SplitRows(
-                    new Layout(Header.Value, GetContentFor(Header)),
-                    new Layout(TypingArea.Value, GetContentFor(TypingArea)).Ratio(3),
-                    new Layout(Footer.Value, GetContentFor(Footer))
-                ),
-            new Layout(TypingInfo.Value, GetContentFor(TypingInfo))
-        );
-    }
+        layout.Ratio(node.Ratio);
 
-    internal Layout GetContentFor(LayoutName name)
-    {
-        var content = _configuration.Renderables.GetValueOrDefault(name);
-        if (content is not null)
-            return new Layout(name.Value, content);
+        if (node.Children.Count == 0)
+            return layout;
 
-        return new Layout(name.Value, content);
+        var childLayouts = node
+            .Children.Select(kvp => BuildLayoutFromDefinition(kvp.Value, kvp.Key.Value))
+            .ToArray();
+
+        if (node.Direction == LayoutDirection.Rows)
+            layout.SplitRows(childLayouts);
+        else
+            layout.SplitColumns(childLayouts);
+
+        return layout;
     }
 }

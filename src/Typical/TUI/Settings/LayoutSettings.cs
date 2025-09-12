@@ -1,11 +1,9 @@
 namespace Typical.TUI.Settings;
 
-public class LayoutPresetSettings : Dictionary<string, LayoutDefinition> { }
-
 public class LayoutDefinition
 {
-    public LayoutName Name { get; set; }
-    public int? Ratio { get; set; }
-    public string? SplitDirection { get; set; } // "Rows" or "Columns"
-    public List<LayoutDefinition> Children { get; set; } = new();
+    public string Name { get; set; } = default!;
+    public int? Ratio { get; set; } = 1;
+    public string? SplitDirection { get; set; } = "Columns";
+    public List<LayoutDefinition> Children { get; set; } = [];
 }

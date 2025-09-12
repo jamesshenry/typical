@@ -10,7 +10,7 @@ public class ThemeTests
     public async Task Apply_WithSpecificStyle_SetsPanelBorderStyle()
     {
         // Arrange
-        var settings = new ThemeSettings
+        var settings = new RuntimeTheme
         {
             {
                 LayoutName.From("TestArea"),
@@ -20,7 +20,7 @@ public class ThemeTests
                 }
             },
         };
-        var theme = new Theme(settings);
+        var theme = new ThemeManager(settings);
         var panel = new Panel("");
         var layoutName = LayoutName.From("TestArea");
 
@@ -36,14 +36,14 @@ public class ThemeTests
     public async Task Apply_WithSpecificStyle_SetsPanelHeader()
     {
         // Arrange
-        var settings = new ThemeSettings
+        var settings = new RuntimeTheme
         {
             {
                 LayoutName.From("TestArea"),
                 new ElementStyle { PanelHeader = new PanelHeaderSettings { Text = "Hello" } }
             },
         };
-        var theme = new Theme(settings);
+        var theme = new ThemeManager(settings);
         var panel = new Panel("");
         var layoutName = LayoutName.From("TestArea");
 
@@ -59,7 +59,7 @@ public class ThemeTests
     public async Task Apply_WithHexColor_CorrectlyParsesAndSetsColor()
     {
         // Arrange
-        var settings = new ThemeSettings
+        var settings = new RuntimeTheme
         {
             {
                 LayoutName.From("TestArea"),
@@ -69,7 +69,7 @@ public class ThemeTests
                 }
             },
         };
-        var theme = new Theme(settings);
+        var theme = new ThemeManager(settings);
         var panel = new Panel("");
         var layoutName = LayoutName.From("TestArea");
 
@@ -84,7 +84,7 @@ public class ThemeTests
     public async Task Apply_WithDecoration_CorrectlyParsesAndSetsDecoration()
     {
         // Arrange
-        var settings = new ThemeSettings
+        var settings = new RuntimeTheme
         {
             {
                 LayoutName.From("TestArea"),
@@ -94,7 +94,7 @@ public class ThemeTests
                 }
             },
         };
-        var theme = new Theme(settings);
+        var theme = new ThemeManager(settings);
         var panel = new Panel("");
         var layoutName = LayoutName.From("TestArea");
 
@@ -111,7 +111,7 @@ public class ThemeTests
     public async Task Apply_WhenStyleIsMissing_FallsBackToDefaultStyle()
     {
         // Arrange
-        var settings = new ThemeSettings
+        var settings = new RuntimeTheme
         {
             // Note: "TestArea" is missing, but "Default" is present.
             {
@@ -122,7 +122,7 @@ public class ThemeTests
                 }
             },
         };
-        var theme = new Theme(settings);
+        var theme = new ThemeManager(settings);
         var panel = new Panel("");
         var layoutName = LayoutName.From("TestArea"); // Requesting a style that doesn't exist
 
@@ -137,8 +137,8 @@ public class ThemeTests
     public async Task Apply_WhenNoSpecificOrDefaultStyle_DoesNotChangePanel()
     {
         // Arrange
-        var settings = new ThemeSettings(); // Completely empty settings
-        var theme = new Theme(settings);
+        var settings = new RuntimeTheme(); // Completely empty settings
+        var theme = new ThemeManager(settings);
         var originalPanel = new Panel("");
         // Manually set a border to ensure it doesn't get overwritten
         originalPanel.BorderStyle = new Style(Color.Green);
@@ -156,7 +156,7 @@ public class ThemeTests
     public async Task Apply_WithOnlyPartialStyleInfo_AppliesOnlyWhatIsProvided()
     {
         // Arrange
-        var settings = new ThemeSettings
+        var settings = new RuntimeTheme
         {
             {
                 LayoutName.From("TestArea"),
@@ -165,7 +165,7 @@ public class ThemeTests
             // Note: ForegroundColor and PanelHeader are missing from the config.
         };
         var sttyle = new ElementStyle();
-        var theme = new Theme(settings);
+        var theme = new ThemeManager(settings);
         var panel = new Panel("");
         var layoutName = LayoutName.From("TestArea");
 

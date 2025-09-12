@@ -2,6 +2,7 @@ using Spectre.Console;
 using Spectre.Console.Rendering;
 using Typical.Core;
 using Typical.TUI;
+using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
 
 namespace Typical;
@@ -10,32 +11,34 @@ public class GameRunner
 {
     private readonly MarkupGenerator _markupGenerator;
     private readonly TypicalGame _engine;
-    private readonly Theme _theme;
+    private readonly ThemeManager _theme;
+    private readonly LayoutFactory _layoutFactory;
     private readonly IAnsiConsole _console;
 
     public GameRunner(
         TypicalGame engine,
-        Theme theme,
+        ThemeManager theme,
         MarkupGenerator markupGenerator,
+        LayoutFactory layoutFactory,
         IAnsiConsole console
     )
     {
         _engine = engine;
         _theme = theme;
         _markupGenerator = markupGenerator;
+        _layoutFactory = layoutFactory;
         _console = console;
     }
 
     public void Run()
     {
-        var layoutFactory = new LayoutFactory();
-        var layout = layoutFactory.BuildDashboard();
+        var layout = _layoutFactory.Build(LayoutName.Dashboard);
 
         _console
             .Live(layout)
             .Start(ctx =>
             {
-                var typingArea = layout[LayoutName.TypingArea.Value];
+                var typingArea = layout[LayoutSection.TypingArea.Value];
                 typingArea.Update(CreateTypingArea());
                 ctx.Refresh();
 
@@ -87,8 +90,8 @@ public class GameRunner
         var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
         var panel = new Panel(markup);
 
-        _theme.Apply(panel, LayoutName.TypingArea);
-        return panel;
+        IRenderable applied = _theme.Apply(panel, LayoutSection.TypingArea);
+        return applied;
     }
 
     private Action<string> DisplaySummary() =>
