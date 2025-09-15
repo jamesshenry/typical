@@ -89,7 +89,7 @@ app.OnExecuteAsync(async _ =>
 
     Target(
         "publish",
-        ["build"],
+        ["restore"],
         () =>
         {
             var rid = ridOption.Value();
@@ -99,7 +99,7 @@ app.OnExecuteAsync(async _ =>
             var publishDir = Path.Combine(root, "dist", "publish", rid);
             return RunAsync(
                 "dotnet",
-                $"publish {publishProject} -c {configuration} -o {publishDir} --no-build {runtimeArg}"
+                $"publish {publishProject} -c {configuration} -o {publishDir} --no-restore {runtimeArg}"
             );
         }
     );
