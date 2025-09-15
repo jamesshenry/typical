@@ -10,7 +10,7 @@ permissions:
 
 jobs:
 
-  release-velopack:
+  create-release:
     name: Prepare Velopack Release
     if: vars.PROJECT_TO_PUBLISH != ''
     runs-on: ubuntu-latest
@@ -28,7 +28,7 @@ jobs:
 
   build-and-publish-velopack:
     name: Build & Publish for ${{ matrix.os }}-${{ matrix.arch }}
-    needs: release-velopack # Depends on the release placeholder being created.
+    needs: create-release # Depends on the release placeholder being created.
     runs-on: ${{ matrix.runner_os }}
     strategy:
       matrix:
