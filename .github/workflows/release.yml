@@ -49,7 +49,7 @@ jobs:
     - name: Get version
       id: minver
       run: |
-        VERSION=$(dnx minver-cli -y -p preview | tail -n 1)
+        VERSION=$(dnx -v q -y minver-cli -- --default-pre-release-identifiers preview --verbosity error)
         echo "Discovered version: $VERSION"
         echo "package_version=$VERSION" >> $GITHUB_OUTPUT
 
@@ -85,7 +85,7 @@ jobs:
     - name: Get version
       id: minver
       run: |
-        VERSION=$(dnx minver-cli -y -p preview | tail -n 1)
+        VERSION=$(dnx -v q -y minver-cli -- --default-pre-release-identifiers preview --verbosity error)
         echo "Discovered version: $VERSION"
         echo "package_version=$VERSION" >> $GITHUB_OUTPUT
 
