@@ -36,26 +36,29 @@ jobs:
           - { runner_os: windows-latest, rid: win-x64 }
           - { runner_os: macos-latest, rid: osx-x64 }
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with: { fetch-depth: 0 }
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with: { global-json-file: global.json }
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with: { global-json-file: global.json }
 
-      - name: Get version
-        id: minver
-        run: echo "package_version=$(dnx minver-cli -y --default-pre-release-identifiers preview.0)" >> $GITHUB_OUTPUT
+    - name: Get version
+      id: minver
+      run: |
+        VERSION=$(dnx minver-cli -y -p preview | tail -n 1)
+        echo "Discovered version: $VERSION"
+        echo "package_version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Build Release for ${{ matrix.rid }}
-        run: dotnet run .build/targets.cs release --rid ${{ matrix.rid }} --version ${{ steps.minver.outputs.package_version }}
+    - name: Build Release for ${{ matrix.rid }}
+      run: dotnet run .build/targets.cs release --rid ${{ matrix.rid }} --version ${{ steps.minver.outputs.package_version }}
 
-      - name: Upload Velopack artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: typical-${{ matrix.rid }}
-          path: dist/release/${{ matrix.rid}}
+    - name: Upload Velopack artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: typical-${{ matrix.rid }}
+        path: dist/release/${{ matrix.rid}}
   publish-release:
     name: Publish GitHub Release
     runs-on: ubuntu-latest
@@ -79,7 +82,10 @@ jobs:
         merge-multiple: true
     - name: Get version
       id: minver
-      run: echo "package_version=$(dotnet minver --tag-prefix v)" >> $GITHUB_OUTPUT
+      run: |
+        VERSION=$(dnx minver-cli -y -p preview | tail -n 1)
+        echo "Discovered version: $VERSION"
+        echo "package_version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Aggregate and Upload Release
       run: ./build.cs upload-release --version ${{ steps.get_version.outputs.version }}
