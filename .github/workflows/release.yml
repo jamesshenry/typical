@@ -12,7 +12,6 @@ jobs:
 
   create-release:
     name: Prepare Velopack Release
-    if: vars.PROJECT_TO_PUBLISH != ''
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
