@@ -146,7 +146,7 @@ app.OnExecuteAsync(async _ =>
             ArgumentException.ThrowIfNullOrWhiteSpace(publishProject);
 
             var rid = ridOption.Value();
-            var runtimeArg = string.IsNullOrEmpty(rid) ? $"--runtime {rid}" : string.Empty;
+            var runtimeArg = !string.IsNullOrEmpty(rid) ? $"--runtime {rid}" : string.Empty;
 
             var publishDir = Path.Combine(root, "dist", "publish", rid!);
 
