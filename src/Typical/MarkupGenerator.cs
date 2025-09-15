@@ -7,9 +7,14 @@ public class MarkupGenerator
 {
     public Markup BuildMarkupOptimized(string target, string typed)
     {
+        return new Markup(BuildMarkupString(target, typed));
+    }
+
+    internal string BuildMarkupString(string target, string typed)
+    {
         if (string.IsNullOrEmpty(target))
         {
-            return new Markup(string.Empty);
+            return string.Empty;
         }
 
         var builder = new StringBuilder();
@@ -48,10 +53,12 @@ public class MarkupGenerator
 
         if (typedLength > target.Length)
         {
-            builder.Append($"[red on grey15]{Markup.Escape(typed.Substring(target.Length))}[/]");
+            builder.Append(GetMarkupForState(TypingResult.Incorrect));
+            builder.Append($"{Markup.Escape(typed.Substring(target.Length))}");
+            builder.Append("[/]");
         }
 
-        return new Markup(builder.ToString());
+        return builder.ToString();
     }
 
     private string GetMarkupForState(TypingResult state) =>

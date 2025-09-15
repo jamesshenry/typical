@@ -2,6 +2,8 @@ using Spectre.Console;
 using Spectre.Console.Rendering;
 using Typical.Core;
 using Typical.TUI;
+using Typical.TUI.Runtime;
+using Typical.TUI.Settings;
 
 namespace Typical;
 
@@ -9,26 +11,35 @@ public class GameRunner
 {
     private readonly MarkupGenerator _markupGenerator;
     private readonly TypicalGame _engine;
-    private readonly LayoutConfiguration _layoutConfiguration;
+    private readonly ThemeManager _theme;
+    private readonly LayoutFactory _layoutFactory;
+    private readonly IAnsiConsole _console;
 
-    public GameRunner(TypicalGame engine, LayoutConfiguration layoutConfiguration)
+    public GameRunner(
+        TypicalGame engine,
+        ThemeManager theme,
+        MarkupGenerator markupGenerator,
+        LayoutFactory layoutFactory,
+        IAnsiConsole console
+    )
     {
         _engine = engine;
-        _markupGenerator = new MarkupGenerator();
-        _layoutConfiguration = layoutConfiguration;
+        _theme = theme;
+        _markupGenerator = markupGenerator;
+        _layoutFactory = layoutFactory;
+        _console = console;
     }
 
     public void Run()
     {
-        var layoutFactory = new LayoutFactory(_layoutConfiguration);
-        var layout = layoutFactory.BuildDashboard();
+        var layout = _layoutFactory.Build(LayoutName.Dashboard);
 
-        AnsiConsole
+        _console
             .Live(layout)
             .Start(ctx =>
             {
-                var centerLayout = layout[LayoutName.TypingArea.Value];
-                centerLayout.Update(CreateGamePanel());
+                var typingArea = layout[LayoutSection.TypingArea.Value];
+                typingArea.Update(CreateTypingArea());
                 ctx.Refresh();
 
                 int lastHeight = Console.WindowHeight;
@@ -57,7 +68,7 @@ public class GameRunner
 
                     if (needsRefresh)
                     {
-                        centerLayout.Update(CreateGamePanel());
+                        typingArea.Update(CreateTypingArea());
                         ctx.Refresh();
                     }
 
@@ -74,12 +85,13 @@ public class GameRunner
         DisplaySummary();
     }
 
-    private IRenderable CreateGamePanel()
+    private IRenderable CreateTypingArea()
     {
         var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
+        var panel = new Panel(markup);
 
-        var panel = new Panel(markup).Header("Typing Area").BorderColor(Color.Blue);
-        return Align.Center(panel, VerticalAlignment.Middle);
+        IRenderable applied = _theme.Apply(panel, LayoutSection.TypingArea);
+        return applied;
     }
 
     private Action<string> DisplaySummary() =>

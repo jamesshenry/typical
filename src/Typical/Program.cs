@@ -1,9 +1,26 @@
-﻿using Typical;
+﻿using Microsoft.Extensions.Configuration;
+using Spectre.Console;
+using Typical;
 using Typical.Core;
-using Typical.TUI;
+using Typical.TUI.Runtime;
+using Typical.TUI.Settings;
 
-ITextProvider textProvider = new StaticTextProvider("The quick brown fox jumps over the lazy dog.");
+var configuration = new ConfigurationBuilder().AddJsonFile("config.json").Build();
+
+var appSettings = configuration.Get<AppSettings>()!;
+
+var themeManager = new ThemeManager(appSettings.Themes.ToRuntimeThemes(), defaultTheme: "Default");
+var layoutFactory = new LayoutFactory(appSettings.Layouts.ToRuntimeLayouts());
+ITextProvider textProvider = new StaticTextProvider("[[Helloooo]]");
+
 var game = new TypicalGame(textProvider);
 await game.StartNewGame();
-var runner = new GameRunner(game, LayoutConfiguration.Default);
+var markupGenerator = new MarkupGenerator();
+var runner = new GameRunner(
+    game,
+    themeManager,
+    markupGenerator,
+    layoutFactory,
+    AnsiConsole.Console
+);
 runner.Run();

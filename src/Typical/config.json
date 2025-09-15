@@ -1,7 +1,86 @@
 {
-    "CliConfig": {
-        "Port": "5001",
-        "Enabled": true,
-        "ApiUrl": "https://jsonplaceholder.typicode.com/"
+  "Layouts": {
+    "ClassicFocus": {
+      "Name": "Root",
+      "SplitDirection": "Rows",
+      "Children": [
+        {
+          "Name": "Header"
+        },
+        {
+          "Name": "TypingArea",
+          "Ratio": 3
+        },
+        {
+          "Name": "Footer"
+        }
+      ]
+    },
+    "Dashboard": {
+      "Name": "Root",
+      "Children": [
+        {
+          "Name": "GameInfo"
+        },
+        {
+          "Name": "Center",
+          "Ratio": 3,
+          "SplitDirection": "Rows",
+          "Children": [
+            {
+              "Name": "Header"
+            },
+            {
+              "Name": "TypingArea",
+              "Ratio": 3
+            },
+            {
+              "Name": "Footer"
+            }
+          ]
+        },
+        {
+          "Name": "TypingInfo"
+        }
+      ]
     }
+  },
+  "Themes": {
+    "Default": {
+      "TypingArea": {
+        "BorderStyle": {
+          "ForegroundColor": "Yellow",
+          "Decoration": "None",
+        },
+        "PanelHeader": {
+          "Text": "[yellow]test Area[/]"
+        },
+        "Alignment": {
+          "Vertical": "Middle",
+          "Horizontal": "Right"
+        }
+      },
+      "Header": {
+        "BorderStyle": {
+          "ForegroundColor": "Blue"
+        },
+        "PanelHeader": {
+          "Text": "[bold blue]Typical[/]"
+        }
+      },
+      "GameInfo": {
+        "BorderStyle": {
+          "ForegroundColor": "Grey"
+        },
+        "PanelHeader": {
+          "Text": "Stats"
+        }
+      },
+      "Default": {
+        "BorderStyle": {
+          "ForegroundColor": "Grey50"
+        }
+      }
+    }
+  }
 }
