@@ -118,7 +118,7 @@ app.OnExecuteAsync(async _ =>
             var outputDir = Path.Combine(root, "dist", "release", rid);
             return RunAsync(
                 "dnx",
-                $"vpk pack --packId {velopackId} --packVersion {version} --packDir \"{publishDir}\" --outputDir \"{outputDir}\""
+                $"vpk pack --packId {velopackId} --packVersion {version} --packDir \"{publishDir}\" --outputDir \"{outputDir}\" --yes"
             );
         }
     );
