@@ -1,5 +1,5 @@
 using Spectre.Console;
-using Typical.TUI; // Your project's namespaces
+using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
 
 public class ThemeTests
@@ -10,22 +10,23 @@ public class ThemeTests
     public async Task Apply_WithSpecificStyle_SetsPanelBorderStyle()
     {
         // Arrange
-        var settings = new RuntimeTheme
+        var theme = new RuntimeTheme
         {
             {
-                LayoutName.From("TestArea"),
+                LayoutSection.From("TestArea"),
                 new ElementStyle
                 {
                     BorderStyle = new BorderStyleSettings { ForegroundColor = "Blue" },
                 }
             },
         };
-        var theme = new ThemeManager(settings);
-        var panel = new Panel("");
-        var layoutName = LayoutName.From("TestArea");
+        var themeDict = new Dictionary<string, RuntimeTheme> { { "default", theme } };
+        var manager = new ThemeManager(themeDict);
+        var layoutName = LayoutSection.From("TestArea");
 
         // Act
-        theme.Apply(panel, layoutName);
+        var panel = new Panel("");
+        manager.Apply(panel, layoutName);
 
         // Assert
         await Assert.That(panel.BorderStyle).IsNotNull();
@@ -39,16 +40,18 @@ public class ThemeTests
         var settings = new RuntimeTheme
         {
             {
-                LayoutName.From("TestArea"),
+                LayoutSection.From("TestArea"),
                 new ElementStyle { PanelHeader = new PanelHeaderSettings { Text = "Hello" } }
             },
         };
-        var theme = new ThemeManager(settings);
+        var themeDict = new Dictionary<string, RuntimeTheme> { { "default", settings } };
+        var manager = new ThemeManager(themeDict);
+
         var panel = new Panel("");
-        var layoutName = LayoutName.From("TestArea");
+        var layoutName = LayoutSection.From("TestArea");
 
         // Act
-        theme.Apply(panel, layoutName);
+        manager.Apply(panel, layoutName);
 
         // Assert
         await Assert.That(panel.Header).IsNotNull();
@@ -62,19 +65,21 @@ public class ThemeTests
         var settings = new RuntimeTheme
         {
             {
-                LayoutName.From("TestArea"),
+                LayoutSection.From("TestArea"),
                 new ElementStyle
                 {
                     BorderStyle = new BorderStyleSettings { ForegroundColor = "#FF00FF" },
                 }
             },
         };
-        var theme = new ThemeManager(settings);
+        var themeDict = new Dictionary<string, RuntimeTheme> { { "default", settings } };
+
+        var manager = new ThemeManager(themeDict);
         var panel = new Panel("");
-        var layoutName = LayoutName.From("TestArea");
+        var layoutName = LayoutSection.From("TestArea");
 
         // Act
-        theme.Apply(panel, layoutName);
+        manager.Apply(panel, layoutName);
 
         // Assert
         await Assert.That(panel.BorderStyle?.Foreground).IsEqualTo(new Color(255, 0, 255));
@@ -87,19 +92,21 @@ public class ThemeTests
         var settings = new RuntimeTheme
         {
             {
-                LayoutName.From("TestArea"),
+                LayoutSection.From("TestArea"),
                 new ElementStyle
                 {
                     BorderStyle = new BorderStyleSettings { Decoration = "Underline" },
                 }
             },
         };
-        var theme = new ThemeManager(settings);
+        var themeDict = new Dictionary<string, RuntimeTheme> { { "default", settings } };
+
+        var manager = new ThemeManager(themeDict);
         var panel = new Panel("");
-        var layoutName = LayoutName.From("TestArea");
+        var layoutName = LayoutSection.From("TestArea");
 
         // Act
-        theme.Apply(panel, layoutName);
+        manager.Apply(panel, layoutName);
 
         // Assert
         await Assert.That(panel.BorderStyle?.Decoration).IsEqualTo(Decoration.Underline);
@@ -115,19 +122,21 @@ public class ThemeTests
         {
             // Note: "TestArea" is missing, but "Default" is present.
             {
-                LayoutName.From("Default"),
+                LayoutSection.From("Default"),
                 new ElementStyle
                 {
                     BorderStyle = new BorderStyleSettings { ForegroundColor = "Red" },
                 }
             },
         };
-        var theme = new ThemeManager(settings);
+        var themeDict = new Dictionary<string, RuntimeTheme> { { "default", settings } };
+
+        var manager = new ThemeManager(themeDict);
         var panel = new Panel("");
-        var layoutName = LayoutName.From("TestArea"); // Requesting a style that doesn't exist
+        var layoutName = LayoutSection.From("TestArea"); // Requesting a style that doesn't exist
 
         // Act
-        theme.Apply(panel, layoutName);
+        manager.Apply(panel, layoutName);
 
         // Assert
         await Assert.That(panel.BorderStyle?.Foreground).IsEqualTo(Color.Red);
@@ -138,13 +147,15 @@ public class ThemeTests
     {
         // Arrange
         var settings = new RuntimeTheme(); // Completely empty settings
-        var theme = new ThemeManager(settings);
+        var themeDict = new Dictionary<string, RuntimeTheme> { { "default", settings } };
+
+        var manager = new ThemeManager(themeDict);
         var originalPanel = new Panel("");
         // Manually set a border to ensure it doesn't get overwritten
         originalPanel.BorderStyle = new Style(Color.Green);
 
         // Act
-        theme.Apply(originalPanel, LayoutName.From("NonExistent"));
+        manager.Apply(originalPanel, LayoutSection.From("NonExistent"));
 
         // Assert
         // The panel's style should be unchanged from its original state.
@@ -159,18 +170,19 @@ public class ThemeTests
         var settings = new RuntimeTheme
         {
             {
-                LayoutName.From("TestArea"),
+                LayoutSection.From("TestArea"),
                 new ElementStyle { BorderStyle = new BorderStyleSettings { Decoration = "Bold" } }
             },
             // Note: ForegroundColor and PanelHeader are missing from the config.
         };
-        var sttyle = new ElementStyle();
-        var theme = new ThemeManager(settings);
+        var themeDict = new Dictionary<string, RuntimeTheme> { { "default", settings } };
+
+        var manager = new ThemeManager(themeDict);
         var panel = new Panel("");
-        var layoutName = LayoutName.From("TestArea");
+        var layoutName = LayoutSection.From("TestArea");
 
         // Act
-        theme.Apply(panel, layoutName);
+        manager.Apply(panel, layoutName);
 
         // Assert
         await Assert.That(panel.BorderStyle).IsNotNull();
