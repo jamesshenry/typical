@@ -52,6 +52,8 @@ jobs:
         VERSION=$(dnx -v q -y minver-cli -- --default-pre-release-identifiers preview --verbosity error)
         echo "Discovered version: $VERSION"
         echo "package_version=$VERSION" >> $GITHUB_OUTPUT
+      env:
+        DOTNET_NOLOGO: true
 
     - name: Build Release for ${{ matrix.rid }}
       run: dotnet run .build/targets.cs release --rid ${{ matrix.rid }} --version ${{ steps.minver.outputs.package_version }}
@@ -88,6 +90,8 @@ jobs:
         VERSION=$(dnx -v q -y minver-cli -- --default-pre-release-identifiers preview --verbosity error)
         echo "Discovered version: $VERSION"
         echo "package_version=$VERSION" >> $GITHUB_OUTPUT
+      env:
+        DOTNET_NOLOGO: true
 
     - name: Aggregate and Upload Release
       run: ./build.cs upload-release --version ${{ steps.get_version.outputs.version }}
