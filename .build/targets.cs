@@ -37,7 +37,7 @@ app.OnExecuteAsync(async _ =>
 {
     const string configuration = "Release";
     const string solution = "Typical.slnx";
-    const string publishProject = "src/typical/typical.csproj";
+    const string publishProject = "src/Typical/Typical.csproj";
     // const string packProject = "src/Typical.Core/Typical.Core.csproj";
 
     var root = Directory.GetCurrentDirectory();
