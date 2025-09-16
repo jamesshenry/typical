@@ -45,7 +45,7 @@ jobs:
       with:
         dotnet-version: |
           10.0.x
-          9.0.x
+          9.0.301
         dotnet-quality: 'preview'
 
     - name: Free up disk space on Windows
