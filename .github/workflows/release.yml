@@ -43,8 +43,23 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '10.0.x'
+        dotnet-version: |
+          10.0.x
+          9.0.x
         dotnet-quality: 'preview'
+
+    - name: Free up disk space on Windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Write-Host "Initial free space:"
+        Get-PSDrive C | Select-Object Free
+        Write-Host "Removing large toolsets..."
+        Remove-Item -Path "C:\hostedtoolcache\windows\Android\*" -Recurse -Force
+        Remove-Item -Path "C:\Program Files\Microsoft\Exchange Server\*" -Recurse -Force
+        Remove-Item -Path "C:\ghcup\*" -Recurse -Force
+        Write-Host "Free space after cleanup:"
+        Get-PSDrive C | Select-Object Free
 
     - name: Get version
       id: minver
