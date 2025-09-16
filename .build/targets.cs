@@ -116,6 +116,13 @@ app.OnExecuteAsync(async _ =>
 
             var publishDir = Path.Combine(root, "dist", "publish", rid);
             var outputDir = Path.Combine(root, "dist", "release", rid);
+
+            var files = Directory.GetFiles(publishDir);
+
+            foreach (var file in files)
+            {
+                Console.WriteLine($"FILE: {file}");
+            }
             return RunAsync(
                 "dnx",
                 $"vpk pack --packId {velopackId} --packVersion {version} --packDir \"{publishDir}\" --outputDir \"{outputDir}\" --yes"
