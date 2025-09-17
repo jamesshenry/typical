@@ -2,8 +2,9 @@ name: Publish Stable Release
 
 on:
   push:
-    # tags:
-    #   - '[0-9]+.[0-9]+.[0-9]+'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+    branches: [ main ]
 
 permissions:
   contents: write
@@ -37,25 +38,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with: { fetch-depth: 0 }
-    - name: Free up disk space on Windows
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        Write-Host "Initial free space:"
-        Get-PSDrive C | Select-Object Free
-        Write-Host "Removing large toolsets..."
-        Remove-Item -Path "C:\hostedtoolcache\windows\Android\*" -Recurse -Force
-        Remove-Item -Path "C:\Program Files\Microsoft\Exchange Server\*" -Recurse -Force
-        Remove-Item -Path "C:\ghcup\*" -Recurse -Force
-        Write-Host "Free space after cleanup:"
-        Get-PSDrive C | Select-Object Free
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: |
-          10.0.x
-          9.0.301
-        dotnet-quality: 'preview'
+        global-json-file: global.json
     - name: Get version
       id: minver
       run: |
@@ -98,7 +84,7 @@ jobs:
       env:
         DOTNET_NOLOGO: true
     - name: Aggregate and Upload Release
-      run: ./build.cs upload-release --version ${{ steps.get_version.outputs.version }}
+      run: dotnet run ./build.cs upload-release --version ${{ steps.get_version.outputs.version }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}

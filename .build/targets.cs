@@ -124,35 +124,12 @@ app.OnExecuteAsync(async _ =>
                 Console.WriteLine($"FILE: {file}");
             }
             return RunAsync(
-                "dnx",
+                "dotnet",
                 $"vpk pack --packId {velopackId} --packVersion {version} --packDir \"{publishDir}\" --outputDir \"{outputDir}\" --yes"
             );
         }
     );
 
-    // Target("pack", ["build"], async () =>
-    // {
-
-    //         ArgumentException.ThrowIfNullOrWhiteSpace(packProject);
-
-    //     var nugetOutputDir = Path.Combine(root, "dist", "nuget");
-
-    //         await RunAsync(
-    //             "dotnet",
-    //             $"pack {packProject} -c {configuration} -o {nugetOutputDir} --no-build"
-    //         );
-
-    //         var files = Directory.GetFiles(nugetOutputDir, "*.nupkg");
-    //         if (files.Length == 0)
-    //         {
-    //             throw new InvalidOperationException("No NuGet package was created.");
-    //         }
-    //         foreach (var file in files)
-    //         {
-    //             Console.WriteLine($"NuGet package created: {file}");
-    //         }
-    //     }
-    // );
 
     Target(
         "upload-release",
@@ -166,34 +143,11 @@ app.OnExecuteAsync(async _ =>
             var githubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
             ArgumentException.ThrowIfNullOrWhiteSpace(githubToken, "GITHUB_TOKEN");
 
-            // // 1. Package raw binaries into zips
-            // Directory.CreateDirectory(Path.Combine(root, "dist", "release"));
-            // var finalAssets = new List<string>();
-            // foreach (var rid in new[] { "win-x64", "linux-x64", "osx-x64" })
-            // {
-            //     var zipPath = Path.Combine(root, "dist", "release", $"app-{rid}-{version}.zip");
-            //     var sourceDir = Path.Combine(root, "dist", "artifacts", $"app-{rid}");
-            //     ZipFile.CreateFromDirectory(sourceDir, zipPath);
-            //     finalAssets.Add(zipPath);
-            // }
-
-            // // 2. Add NuGet package to the list
-            // finalAssets.AddRange(
-            //     Directory.GetFiles(Path.Combine(root, "dist", "nuget"), "*.nupkg")
-            // );
-
-            // 3. Create GitHub Release with Velopack assets
             var velopackDir = Path.Combine(root, "dist", "artifacts", "velopack-release");
             await RunAsync(
                 "vpk",
                 $"upload github --repoUrl https://github.com/{githubRepo} --publish --releaseName \"Release {version}\" --tag \"v{version}\" --releaseDir \"{velopackDir}\" --token \"{githubToken}\""
             );
-
-            // // 4. Upload all other assets to the new release
-            // await RunAsync(
-            //     "gh",
-            //     $"release upload v{version} {string.Join(" ", finalAssets)} --clobber"
-            // );
         }
     );
 
