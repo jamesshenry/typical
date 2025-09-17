@@ -42,10 +42,14 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         global-json-file: global.json
+    - name: Restore .NET tools
+      uses: actions/setup-dotnet@v4
+      with:
+        global-json-file: global.json
     - name: Get version
       id: minver
       run: |
-        VERSION=$(dnx -v q -y minver-cli -- --default-pre-release-identifiers preview --verbosity error)
+        VERSION=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)
         echo "Discovered version: $VERSION"
         echo "package_version=$VERSION" >> $GITHUB_OUTPUT
       env:
@@ -78,7 +82,7 @@ jobs:
     - name: Get version
       id: minver
       run: |
-        VERSION=$(dnx -v q -y minver-cli -- --default-pre-release-identifiers preview --verbosity error)
+        VERSION=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)
         echo "Discovered version: $VERSION"
         echo "package_version=$VERSION" >> $GITHUB_OUTPUT
       env:

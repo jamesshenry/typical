@@ -96,6 +96,8 @@ app.OnExecuteAsync(async _ =>
             var runtimeArg = $"--runtime {rid}";
 
             var publishDir = Path.Combine(root, "dist", "publish", rid);
+            if (Directory.Exists(publishDir)) Directory.Delete(publishDir, true); 
+
             return RunAsync(
                 "dotnet",
                 $"publish {publishProject} -c {configuration} -o {publishDir} {runtimeArg}"
@@ -116,13 +118,8 @@ app.OnExecuteAsync(async _ =>
 
             var publishDir = Path.Combine(root, "dist", "publish", rid);
             var outputDir = Path.Combine(root, "dist", "release", rid);
+            if (Directory.Exists(outputDir)) Directory.Delete(outputDir, true); 
 
-            var files = Directory.GetFiles(publishDir);
-
-            foreach (var file in files)
-            {
-                Console.WriteLine($"FILE: {file}");
-            }
             return RunAsync(
                 "dotnet",
                 $"vpk pack --packId {velopackId} --packVersion {version} --packDir \"{publishDir}\" --outputDir \"{outputDir}\" --yes"

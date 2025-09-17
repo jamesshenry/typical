@@ -4,7 +4,9 @@ using Typical;
 using Typical.Core;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
+using Velopack;
 
+VelopackApp.Build().Run();
 var configuration = new ConfigurationBuilder().AddJsonFile("config.json").Build();
 
 var appSettings = configuration.Get<AppSettings>()!;
