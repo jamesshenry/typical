@@ -78,25 +78,15 @@ jobs:
         # Define the path to the release directory and the assets file
         RELEASE_DIR="dist/release/${{ matrix.rid }}"
         ASSETS_FILE="$RELEASE_DIR/assets.${{ matrix.os_name }}.json"
-
         echo "Looking for assets file at: $ASSETS_FILE"
-        
-        # Change into the directory where the assets are. This is crucial.
         cd "$RELEASE_DIR"
-        
-        # 1. Use jq to get the list of asset filenames and store them in a variable.
         ASSET_LIST=$(jq -r '.[] | select(.Type=="Installer" or .Type=="Portable") | .RelativeFileName' "assets.${{ matrix.os_name }}.json")
-
-        # 2. CRITICAL: Check if we actually found any assets to upload.
         if [ -z "$ASSET_LIST" ]; then
           echo "Warning: No Installer or Portable assets found in $ASSETS_FILE. Nothing to upload."
         else
           echo "Found assets to upload:"
           echo "$ASSET_LIST"
-          
-          # 3. Use xargs to safely pass the list of files to gh release upload.
-          # This is more robust than using a pipe.
-          echo "$ASSET_LIST" | xargs gh release upload ${{ github.ref_name }} --clobber
+          echo "$ASSET_LIST" | tr -d '\r' | xargs gh release upload ${{ github.ref_name }} --clobber
         fi
   # publish-release:
   #   name: Publish GitHub Release
