@@ -96,7 +96,8 @@ app.OnExecuteAsync(async _ =>
             var runtimeArg = $"--runtime {rid}";
 
             var publishDir = Path.Combine(root, "dist", "publish", rid);
-            if (Directory.Exists(publishDir)) Directory.Delete(publishDir, true); 
+            if (Directory.Exists(publishDir))
+                Directory.Delete(publishDir, true);
 
             return RunAsync(
                 "dotnet",
@@ -118,15 +119,18 @@ app.OnExecuteAsync(async _ =>
 
             var publishDir = Path.Combine(root, "dist", "publish", rid);
             var outputDir = Path.Combine(root, "dist", "release", rid);
-            if (Directory.Exists(outputDir)) Directory.Delete(outputDir, true); 
-
+            if (Directory.Exists(outputDir))
+                Directory.Delete(outputDir, true);
+            string directive =
+                rid.StartsWith("linux", StringComparison.OrdinalIgnoreCase) ? "[linux]"
+                : rid.StartsWith("osx", StringComparison.OrdinalIgnoreCase) ? "[osx]"
+                : "[win]";
             return RunAsync(
                 "dotnet",
-                $"vpk pack --packId {velopackId} --packVersion {version} --packDir \"{publishDir}\" --outputDir \"{outputDir}\" --yes"
+                $"vpk {directive} pack --packId {velopackId} --packVersion {version} --packDir \"{publishDir}\" --outputDir \"{outputDir}\" --yes"
             );
         }
     );
-
 
     Target(
         "upload-release",

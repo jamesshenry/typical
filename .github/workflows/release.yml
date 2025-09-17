@@ -31,21 +31,22 @@ jobs:
             # Create the release and capture its upload_url from the output.
             UPLOAD_URL=$(gh release create ${{ github.ref_name }} \
                           --title "Release ${{ github.ref_name }}" \
-                          --notes "Automated release created by GitHub Actions." | grep -oP 'https://uploads.github.com/repos/.*/releases/.*/assets')
+                          --notes "Automated release created by GitHub Actions." | grep -oP 'https://uploads.github.com/repos/.*/releases/.*/assets' \
+                          --draft)
           fi
           
           echo "Setting output: upload_url=$UPLOAD_URL"
           echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
-  build-release:
-    name: Build for ${{ matrix.rid }}
+  build-and-upload:
+    name: Build & Upload for ${{ matrix.rid }}
     needs: create-release # Depends on the release placeholder being created.
     runs-on: ${{ matrix.runner_os }}
     strategy:
       matrix:
         include:
-          - { runner_os: ubuntu-latest, rid: linux-x64 }
-          - { runner_os: windows-latest, rid: win-x64 }
-          - { runner_os: macos-latest, rid: osx-x64 }
+          - { runner_os: ubuntu-latest, rid: linux-x64, os_name: linux }
+          - { runner_os: windows-latest, rid: win-x64, os_name: win }
+          - { runner_os: macos-latest, rid: osx-x64, os_name: osx }
       fail-fast: false
     steps:
     - name: Checkout code
@@ -69,42 +70,56 @@ jobs:
         DOTNET_NOLOGO: true
     - name: Build Release for ${{ matrix.rid }}
       run: dotnet run .build/targets.cs release --rid ${{ matrix.rid }} --version ${{ steps.minver.outputs.package_version }}
-    - name: Upload Velopack artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: typical-${{ matrix.rid }}
-        path: dist/release/${{ matrix.rid}}
-  publish-release:
-    name: Publish GitHub Release
-    runs-on: ubuntu-latest
-    needs: build-release
-    permissions:
-      contents: write
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with: { global-json-file: global.json }
-    - name: Restore .NET tools
-      run: dotnet tool restore
-    - name: Download all build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: typical
-        pattern: typical-*
-        merge-multiple: true
-    - name: Get version
-      id: minver
+    - name: Upload Release Assets
       shell: bash
-      run: |
-        VERSION_OUTPUT=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)
-        echo "Discovered version: $VERSION_OUTPUT"
-        echo "package_version=$VERSION_OUTPUT" >> $GITHUB_OUTPUT
-      env:
-        DOTNET_NOLOGO: true
-    - name: Aggregate and Upload Release
-      run: dotnet run .build/targets.cs upload-release --version ${{ steps.minver.outputs.package_version }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        # Define the path to the release directory and the assets file
+        RELEASE_DIR="dist/release/${{ matrix.rid }}"
+        ASSETS_FILE="$RELEASE_DIR/assets.${{ matrix.os_name }}.json"
+
+        echo "Looking for assets file at: $ASSETS_FILE"
+
+        # Use jq to parse the JSON, select the desired types, and get the filenames
+        # The 'cd' is crucial so gh can find the files by their relative names
+        cd "$RELEASE_DIR"
+        
+        # This command reads the json, filters for Portable or Installer, gets the filename,
+        # and then passes the list of files to gh release upload.
+        jq -r '.[] | select(.Type=="Installer" or .Type=="Portable") | .RelativeFileName' "assets.${{ matrix.os_name }}.json" | \
+        gh release upload ${{ github.ref_name }} --clobber -
+  # publish-release:
+  #   name: Publish GitHub Release
+  #   runs-on: ubuntu-latest
+  #   needs: build-release
+  #   permissions:
+  #     contents: write
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #   - name: Setup .NET
+  #     uses: actions/setup-dotnet@v4
+  #     with: { global-json-file: global.json }
+  #   - name: Restore .NET tools
+  #     run: dotnet tool restore
+  #   - name: Download all build artifacts
+  #     uses: actions/download-artifact@v4
+  #     with:
+  #       path: typical
+  #       pattern: typical-*
+  #       merge-multiple: true
+  #   - name: Get version
+  #     id: minver
+  #     shell: bash
+  #     run: |
+  #       VERSION_OUTPUT=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)
+  #       echo "Discovered version: $VERSION_OUTPUT"
+  #       echo "package_version=$VERSION_OUTPUT" >> $GITHUB_OUTPUT
+  #     env:
+  #       DOTNET_NOLOGO: true
+  #   - name: Aggregate and Upload Release
+  #     run: dotnet run .build/targets.cs upload-release --version ${{ steps.minver.outputs.package_version }}
+  #     env:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       GITHUB_REPOSITORY: ${{ github.repository }}
