@@ -2,8 +2,8 @@ name: Publish Stable Release
 
 on:
   push:
-    # tags:
-    #   - '[0-9]+.[0-9]+.[0-9]+'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 
 permissions:
@@ -88,37 +88,3 @@ jobs:
           echo "$ASSET_LIST"
           echo "$ASSET_LIST" | tr -d '\r' | xargs gh release upload ${{ github.ref_name }} --clobber
         fi
-  # publish-release:
-  #   name: Publish GitHub Release
-  #   runs-on: ubuntu-latest
-  #   needs: build-release
-  #   permissions:
-  #     contents: write
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
-  #   - name: Setup .NET
-  #     uses: actions/setup-dotnet@v4
-  #     with: { global-json-file: global.json }
-  #   - name: Restore .NET tools
-  #     run: dotnet tool restore
-  #   - name: Download all build artifacts
-  #     uses: actions/download-artifact@v4
-  #     with:
-  #       path: typical
-  #       pattern: typical-*
-  #       merge-multiple: true
-  #   - name: Get version
-  #     id: minver
-  #     shell: bash
-  #     run: |
-  #       VERSION_OUTPUT=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)
-  #       echo "Discovered version: $VERSION_OUTPUT"
-  #       echo "package_version=$VERSION_OUTPUT" >> $GITHUB_OUTPUT
-  #     env:
-  #       DOTNET_NOLOGO: true
-  #   - name: Aggregate and Upload Release
-  #     run: dotnet run .build/targets.cs upload-release --version ${{ steps.minver.outputs.package_version }}
-  #     env:
-  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       GITHUB_REPOSITORY: ${{ github.repository }}
