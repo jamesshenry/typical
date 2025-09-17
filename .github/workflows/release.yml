@@ -92,7 +92,7 @@ jobs:
       env:
         DOTNET_NOLOGO: true
     - name: Aggregate and Upload Release
-      run: dotnet run ./build.cs upload-release --version ${{ steps.get_version.outputs.version }}
+      run: dotnet run .build/targets.cs upload-release --version ${{ steps.get_version.outputs.version }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
