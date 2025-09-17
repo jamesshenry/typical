@@ -48,9 +48,7 @@ jobs:
     - name: Get version
       id: minver
       run: |
-        VERSION=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)
-        echo "Discovered version: $VERSION"
-        echo "package_version=$VERSION" >> $GITHUB_OUTPUT
+        echo "package_version=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)" >> $GITHUB_OUTPUT
       env:
         DOTNET_NOLOGO: true
     - name: Build Release for ${{ matrix.rid }}
@@ -81,9 +79,8 @@ jobs:
     - name: Get version
       id: minver
       run: |
-        VERSION=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)
-        echo "Discovered version: $VERSION"
-        echo "package_version=$VERSION" >> $GITHUB_OUTPUT
+        echo "package_version=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)" >> $GITHUB_OUTPUT
+
       env:
         DOTNET_NOLOGO: true
     - name: Aggregate and Upload Release
