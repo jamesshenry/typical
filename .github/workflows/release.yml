@@ -47,8 +47,11 @@ jobs:
       run: dotnet tool restore
     - name: Get version
       id: minver
+      shell: bash
       run: |
-        echo "package_version=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)" >> $GITHUB_OUTPUT
+        VERSION_OUTPUT=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)
+        echo "Discovered version: $VERSION_OUTPUT"
+        echo "package_version=$VERSION_OUTPUT" >> $GITHUB_OUTPUT
       env:
         DOTNET_NOLOGO: true
     - name: Build Release for ${{ matrix.rid }}
@@ -78,9 +81,11 @@ jobs:
         merge-multiple: true
     - name: Get version
       id: minver
+      shell: bash
       run: |
-        echo "package_version=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)" >> $GITHUB_OUTPUT
-
+        VERSION_OUTPUT=$(dotnet minver --default-pre-release-identifiers preview --verbosity error)
+        echo "Discovered version: $VERSION_OUTPUT"
+        echo "package_version=$VERSION_OUTPUT" >> $GITHUB_OUTPUT
       env:
         DOTNET_NOLOGO: true
     - name: Aggregate and Upload Release
