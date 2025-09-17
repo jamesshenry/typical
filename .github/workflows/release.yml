@@ -34,6 +34,7 @@ jobs:
           - { runner_os: ubuntu-latest, rid: linux-x64 }
           - { runner_os: windows-latest, rid: win-x64 }
           - { runner_os: macos-latest, rid: osx-x64 }
+      fail-fast: false
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
