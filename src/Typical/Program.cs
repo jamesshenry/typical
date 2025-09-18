@@ -43,3 +43,4 @@ var runner = new GameRunner(
     AnsiConsole.Console
 );
 runner.Run();
+Console.Clear();
