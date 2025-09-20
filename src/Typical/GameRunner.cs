@@ -14,6 +14,7 @@ public class GameRunner
     private readonly ThemeManager _theme;
     private readonly LayoutFactory _layoutFactory;
     private readonly IAnsiConsole _console;
+    private readonly GameStats _stats;
 
     public GameRunner(
         TypicalGame engine,
@@ -28,6 +29,7 @@ public class GameRunner
         _markupGenerator = markupGenerator;
         _layoutFactory = layoutFactory;
         _console = console;
+        _stats = new GameStats();
     }
 
     public void Run()
@@ -58,6 +60,7 @@ public class GameRunner
 
                     if (Console.KeyAvailable)
                     {
+                        _stats.Start();
                         var key = Console.ReadKey(true);
                         if (!_engine.ProcessKeyPress(key))
                         {
