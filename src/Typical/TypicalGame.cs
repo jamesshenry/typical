@@ -8,7 +8,7 @@ using Typical.TUI.Settings;
 
 namespace Typical;
 
-public class GameRunner
+public class TypicalGame
 {
     private readonly MarkupGenerator _markupGenerator;
     private readonly GameEngine _engine;
@@ -16,7 +16,7 @@ public class GameRunner
     private readonly LayoutFactory _layoutFactory;
     private readonly IAnsiConsole _console;
 
-    public GameRunner(
+    public TypicalGame(
         GameEngine engine,
         ThemeManager theme,
         MarkupGenerator markupGenerator,

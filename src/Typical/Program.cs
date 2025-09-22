@@ -43,7 +43,7 @@ ITextProvider textProvider = new StaticTextProvider(text);
 var game = new GameEngine(textProvider);
 await game.StartNewGame();
 var markupGenerator = new MarkupGenerator();
-var runner = new GameRunner(
+var runner = new TypicalGame(
     game,
     themeManager,
     markupGenerator,
