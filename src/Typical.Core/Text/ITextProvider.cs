@@ -1,4 +1,4 @@
-namespace Typical.Core;
+namespace Typical.Core.Text;
 
 public interface ITextProvider
 {

@@ -1,4 +1,4 @@
-using Typical.Core;
+using Typical.Core.Text;
 
 namespace Typical;
 

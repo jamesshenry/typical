@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Spectre.Console;
 using Typical;
 using Typical.Core;
+using Typical.Core.Text;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
 using Velopack;

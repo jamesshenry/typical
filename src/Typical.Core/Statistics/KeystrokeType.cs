@@ -1,4 +1,4 @@
-namespace Typical.Core;
+namespace Typical.Core.Statistics;
 
 public enum KeystrokeType
 {

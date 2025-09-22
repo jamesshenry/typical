@@ -1,4 +1,6 @@
 using System.Text;
+using Typical.Core.Statistics;
+using Typical.Core.Text;
 
 namespace Typical.Core;
 

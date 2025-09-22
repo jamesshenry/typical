@@ -1,6 +1,4 @@
-using System.Diagnostics;
-
-namespace Typical.Core;
+namespace Typical.Core.Statistics;
 
 public class GameStats(TimeProvider? timeProvider = null)
 {

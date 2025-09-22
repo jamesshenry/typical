@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.Time.Testing;
 using TUnit;
-using Typical.Core;
+using Typical.Core.Statistics;
 
 namespace Typical.Tests
 {

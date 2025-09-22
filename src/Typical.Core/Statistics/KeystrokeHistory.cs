@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace Typical.Core;
+namespace Typical.Core.Statistics;
 
 public class KeystrokeHistory : IEnumerable<KeystrokeLog>
 {
