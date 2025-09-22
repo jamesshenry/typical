@@ -13,7 +13,7 @@ namespace Typical.Tests
             var stats = new GameStats();
 
             await Assert.That(stats.WordsPerMinute).IsEqualTo(0);
-            await Assert.That(stats.Accuracy).IsEqualTo(0);
+            await Assert.That(stats.Accuracy).IsEqualTo(100);
             await Assert.That(stats.IsRunning).IsFalse();
         }
 
@@ -49,8 +49,20 @@ namespace Typical.Tests
 
             stats.Start();
             fakeTime.Advance(TimeSpan.FromSeconds(1));
-            stats.Update("hello", "hxllo");
+            string target = "hello";
+            string input = "hxllo"; // 1 incorrect out of 5
 
+            foreach (var (c, i) in target.Zip(input))
+            {
+                if (c == i)
+                {
+                    stats.LogKeystroke(c, KeystrokeType.Correct);
+                }
+                else
+                {
+                    stats.LogKeystroke(i, KeystrokeType.Incorrect);
+                }
+            }
             await Assert.That(stats.Accuracy).IsEqualTo(80);
         }
 
@@ -62,7 +74,20 @@ namespace Typical.Tests
 
             stats.Start();
             fakeTime.Advance(TimeSpan.FromSeconds(1));
-            stats.Update("hello world", "hello");
+            string target = "hello world";
+            string input = "hello";
+
+            foreach (var (c, i) in target.Zip(input))
+            {
+                if (c == i)
+                {
+                    stats.LogKeystroke(c, KeystrokeType.Correct);
+                }
+                else
+                {
+                    stats.LogKeystroke(i, KeystrokeType.Incorrect);
+                }
+            }
 
             await Assert.That(stats.WordsPerMinute).IsEqualTo(60);
         }
