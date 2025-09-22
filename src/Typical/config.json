@@ -50,14 +50,14 @@
       "TypingArea": {
         "BorderStyle": {
           "ForegroundColor": "Yellow",
-          "Decoration": "None",
+          "Decoration": "None"
         },
         "PanelHeader": {
-          "Text": "[yellow]test Area[/]"
+          "Text": "[yellow]Type here[/]"
         },
         "Alignment": {
           "Vertical": "Middle",
-          "Horizontal": "Right"
+          "Horizontal": "Center"
         }
       },
       "Header": {
@@ -70,15 +70,18 @@
       },
       "GameInfo": {
         "BorderStyle": {
-          "ForegroundColor": "Grey"
+          "ForegroundColor": "Blue"
         },
         "PanelHeader": {
           "Text": "Stats"
+        },
+        "Alignment": {
+          "Vertical": "Middle"
         }
       },
       "Default": {
         "BorderStyle": {
-          "ForegroundColor": "Grey50"
+          "ForegroundColor": "Gray50"
         }
       }
     }

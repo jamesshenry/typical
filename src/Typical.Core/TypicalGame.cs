@@ -69,7 +69,6 @@ public class TypicalGame
             IsOver = true;
             Stats.Stop();
         }
-        Stats.CalculateStats();
 
         return true;
     }

@@ -36,7 +36,7 @@ public class GameRunner
     public void Run()
     {
         var layout = _layoutFactory.Build(LayoutName.Dashboard);
-        const int statsUpdateIntervalMs = 2000; // Update stats every 2 seconds
+        const int statsUpdateIntervalMs = 1000; // Update stats every 2 seconds
         var statsTimer = Stopwatch.StartNew();
         _console
             .Live(layout)
@@ -44,6 +44,7 @@ public class GameRunner
             {
                 layout[LayoutSection.TypingArea.Value].Update(CreateTypingArea());
                 layout[LayoutSection.GameInfo.Value].Update(CreateGameInfoArea());
+                layout[LayoutSection.Header.Value].Update(CreateHeader());
                 ctx.Refresh();
 
                 int lastHeight = Console.WindowHeight;
@@ -117,18 +118,19 @@ public class GameRunner
         grid.AddRow("Correct Chars:", $"{_engine.Stats.Chars.Correct}");
         grid.AddRow("Incorrect Chars:", $"{_engine.Stats.Chars.Incorrect}");
         grid.AddRow("Extra Chars:", $"{_engine.Stats.Chars.Extra}");
-        var panel = new Panel(grid);
-        var applied = _theme.Apply(panel, LayoutSection.GameInfo);
-        return applied;
+        grid.AddRow("Elapsed:", $"{_engine.Stats.ElapsedTime:mm\\:ss}");
+        return _theme.Apply(grid, LayoutSection.GameInfo);
     }
 
     private IRenderable CreateTypingArea()
     {
         var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
-        var panel = new Panel(markup);
+        return _theme.Apply(markup, LayoutSection.TypingArea);
+    }
 
-        IRenderable applied = _theme.Apply(panel, LayoutSection.TypingArea);
-        return applied;
+    private IRenderable CreateHeader()
+    {
+        return _theme.Apply(new Markup("Typical - A Typing Tutor"), LayoutSection.Header);
     }
 
     private Action<string> DisplaySummary() =>

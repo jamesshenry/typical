@@ -1,6 +1,4 @@
-using System.Diagnostics.Tracing;
 using Spectre.Console;
-using Spectre.Console.Rendering;
 using Typical.TUI.Settings;
 
 namespace Typical.TUI.Runtime;
