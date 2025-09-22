@@ -4,16 +4,16 @@ using Typical.Core.Text;
 
 namespace Typical.Core;
 
-public class TypicalGame
+public class GameEngine
 {
     private readonly StringBuilder _userInput;
     private readonly ITextProvider _textProvider;
     private readonly GameOptions _gameOptions;
 
-    public TypicalGame(ITextProvider textProvider)
+    public GameEngine(ITextProvider textProvider)
         : this(textProvider, new GameOptions()) { }
 
-    public TypicalGame(ITextProvider textProvider, GameOptions gameOptions)
+    public GameEngine(ITextProvider textProvider, GameOptions gameOptions)
     {
         _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
         _gameOptions = gameOptions;

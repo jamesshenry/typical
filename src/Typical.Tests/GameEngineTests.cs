@@ -24,7 +24,7 @@ public class TypicalGameTests
         // Arrange
         var expectedText = "This is a test.";
         _mockTextProvider.SetText(expectedText);
-        var game = new TypicalGame(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(_mockTextProvider, _defaultOptions);
 
         // Act
         await game.StartNewGame();
@@ -38,7 +38,7 @@ public class TypicalGameTests
     {
         // Arrange
         _mockTextProvider.SetText("some text");
-        var game = new TypicalGame(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(_mockTextProvider, _defaultOptions);
         await game.StartNewGame();
 
         // Simulate playing the game
@@ -65,7 +65,7 @@ public class TypicalGameTests
     public async Task ProcessKeyPress_EscapeKey_EndsGameAndReturnsFalse()
     {
         // Arrange
-        var game = new TypicalGame(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(_mockTextProvider, _defaultOptions);
 
         // Act
         var result = game.ProcessKeyPress(
@@ -81,7 +81,7 @@ public class TypicalGameTests
     public async Task ProcessKeyPress_BackspaceKey_RemovesLastCharacter()
     {
         // Arrange
-        var game = new TypicalGame(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(_mockTextProvider, _defaultOptions);
         game.ProcessKeyPress(new ConsoleKeyInfo('a', ConsoleKey.A, false, false, false));
         game.ProcessKeyPress(new ConsoleKeyInfo('b', ConsoleKey.B, false, false, false));
         await Assert.That(game.UserInput).IsEqualTo("ab");
@@ -105,7 +105,7 @@ public class TypicalGameTests
     public async Task ProcessKeyPress_BackspaceOnEmptyInput_DoesNothing()
     {
         // Arrange
-        var game = new TypicalGame(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(_mockTextProvider, _defaultOptions);
         await Assert.That(game.UserInput).IsEmpty();
 
         // Act
@@ -128,7 +128,7 @@ public class TypicalGameTests
     {
         // Arrange
         _mockTextProvider.SetText("hi");
-        var game = new TypicalGame(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(_mockTextProvider, _defaultOptions);
         await game.StartNewGame();
 
         // Act
@@ -147,7 +147,7 @@ public class TypicalGameTests
     {
         // Arrange
         _mockTextProvider.SetText("abc");
-        var game = new TypicalGame(_mockTextProvider, _strictOptions);
+        var game = new GameEngine(_mockTextProvider, _strictOptions);
         await game.StartNewGame();
 
         // Act
@@ -162,7 +162,7 @@ public class TypicalGameTests
     {
         // Arrange
         _mockTextProvider.SetText("abc");
-        var game = new TypicalGame(_mockTextProvider, _strictOptions);
+        var game = new GameEngine(_mockTextProvider, _strictOptions);
         await game.StartNewGame();
         await Assert.That(game.UserInput).IsEmpty();
 
@@ -178,7 +178,7 @@ public class TypicalGameTests
     {
         // Arrange
         _mockTextProvider.SetText("abc");
-        var game = new TypicalGame(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(_mockTextProvider, _defaultOptions);
         await game.StartNewGame();
         await Assert.That(game.UserInput).IsEmpty();
 

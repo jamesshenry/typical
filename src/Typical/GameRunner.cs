@@ -11,13 +11,13 @@ namespace Typical;
 public class GameRunner
 {
     private readonly MarkupGenerator _markupGenerator;
-    private readonly TypicalGame _engine;
+    private readonly GameEngine _engine;
     private readonly ThemeManager _theme;
     private readonly LayoutFactory _layoutFactory;
     private readonly IAnsiConsole _console;
 
     public GameRunner(
-        TypicalGame engine,
+        GameEngine engine,
         ThemeManager theme,
         MarkupGenerator markupGenerator,
         LayoutFactory layoutFactory,

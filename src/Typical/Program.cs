@@ -40,7 +40,7 @@ string text = File.Exists(quotePath)
 
 ITextProvider textProvider = new StaticTextProvider(text);
 
-var game = new TypicalGame(textProvider);
+var game = new GameEngine(textProvider);
 await game.StartNewGame();
 var markupGenerator = new MarkupGenerator();
 var runner = new GameRunner(
