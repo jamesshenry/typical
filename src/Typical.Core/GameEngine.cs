@@ -1,4 +1,5 @@
 using System.Text;
+using Typical.Core.Events;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
 
@@ -9,6 +10,7 @@ public class GameEngine
     private readonly StringBuilder _userInput;
     private readonly ITextProvider _textProvider;
     private readonly GameOptions _gameOptions;
+    private readonly GameStats _stats;
 
     public GameEngine(ITextProvider textProvider)
         : this(textProvider, new GameOptions()) { }
@@ -26,7 +28,8 @@ public class GameEngine
     public bool IsOver { get; private set; }
     public bool IsRunning => !IsOver && _stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
-    private readonly GameStats _stats;
+
+    public event EventHandler<GameEndedEventArgs>? GameEnded;
 
     public bool ProcessKeyPress(ConsoleKeyInfo key)
     {
@@ -66,13 +69,20 @@ public class GameEngine
             }
         }
 
+        CheckEndCondition();
+
+        return true;
+    }
+
+    private void CheckEndCondition()
+    {
         if (_userInput.ToString() == TargetText)
         {
             IsOver = true;
             _stats.Stop();
-        }
 
-        return true;
+            GameEnded?.Invoke(this, new GameEndedEventArgs(_stats.CreateSnapshot()));
+        }
     }
 
     public async Task StartNewGame()
