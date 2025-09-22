@@ -112,14 +112,15 @@ public class GameRunner
 
     private IRenderable CreateGameInfoArea()
     {
+        var stats = _engine.GetGameStatistics();
         var grid = new Grid();
         grid.AddColumns([new GridColumn(), new GridColumn()]);
-        grid.AddRow("WPM:", $"{_engine.Stats.WordsPerMinute:F1}");
-        grid.AddRow("Accuracy:", $"{_engine.Stats.Accuracy:F1}%");
-        grid.AddRow("Correct Chars:", $"{_engine.Stats.Chars.Correct}");
-        grid.AddRow("Incorrect Chars:", $"{_engine.Stats.Chars.Incorrect}");
-        grid.AddRow("Extra Chars:", $"{_engine.Stats.Chars.Extra}");
-        grid.AddRow("Elapsed:", $"{_engine.Stats.ElapsedTime:mm\\:ss}");
+        grid.AddRow("WPM:", $"{stats.WordsPerMinute:F1}");
+        grid.AddRow("Accuracy:", $"{stats.Accuracy:F1}%");
+        grid.AddRow("Correct Chars:", $"{stats.Chars.Correct}");
+        grid.AddRow("Incorrect Chars:", $"{stats.Chars.Incorrect}");
+        grid.AddRow("Extra Chars:", $"{stats.Chars.Extra}");
+        grid.AddRow("Elapsed:", $"{stats.ElapsedTime:mm\\:ss}");
         return _theme.Apply(grid, LayoutSection.GameInfo);
     }
 

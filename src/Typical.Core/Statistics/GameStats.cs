@@ -1,6 +1,6 @@
 namespace Typical.Core.Statistics;
 
-public class GameStats(TimeProvider? timeProvider = null)
+internal class GameStats(TimeProvider? timeProvider = null)
 {
     private readonly KeystrokeHistory _keystrokeHistory = [];
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
@@ -70,13 +70,29 @@ public class GameStats(TimeProvider? timeProvider = null)
         }
     }
 
+    public GameStatisticsSnapshot CreateSnapshot()
+    {
+        if (_statsAreDirty)
+        {
+            RecalculateAllStats();
+        }
+
+        return new GameStatisticsSnapshot(
+            WordsPerMinute: _cachedWpm,
+            Accuracy: _cachedAccuracy,
+            Chars: _cachedChars,
+            ElapsedTime: this.ElapsedTime,
+            IsRunning: this.IsRunning
+        );
+    }
+
     private void RecalculateAllStats()
     {
         _cachedWpm = _keystrokeHistory.CalculateWpm(ElapsedTime);
         _cachedAccuracy = _keystrokeHistory.CalculateAccuracy();
         _cachedChars = _keystrokeHistory.GetCharacterStats();
 
-        _statsAreDirty = false; // The stats are now fresh
+        _statsAreDirty = false;
     }
 
     internal void LogKeystroke(char keyChar, KeystrokeType extra)
@@ -86,6 +102,6 @@ public class GameStats(TimeProvider? timeProvider = null)
             Start();
         }
         _keystrokeHistory.Add(new KeystrokeLog(keyChar, extra, _timeProvider.GetTimestamp()));
-        _statsAreDirty = true; // Mark stats as dirty
+        _statsAreDirty = true;
     }
 }
