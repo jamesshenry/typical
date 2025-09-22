@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 using Typical.Core;
@@ -33,13 +34,19 @@ public class GameRunner
     public void Run()
     {
         var layout = _layoutFactory.Build(LayoutName.Dashboard);
-
+        const int statsUpdateIntervalMs = 1000; // Update stats every 2 seconds
+        var statsTimer = Stopwatch.StartNew();
         _console
             .Live(layout)
             .Start(ctx =>
             {
                 var typingArea = layout[LayoutSection.TypingArea.Value];
+                var statsArea = layout[LayoutSection.GameInfo.Value];
+                var headerArea = layout[LayoutSection.Header.Value];
                 typingArea.Update(CreateTypingArea());
+                statsArea.Update(CreateGameInfoArea());
+                headerArea.Update(CreateHeader());
+
                 ctx.Refresh();
 
                 int lastHeight = Console.WindowHeight;
@@ -47,33 +54,51 @@ public class GameRunner
 
                 while (true)
                 {
-                    bool needsRefresh = false;
+                    bool needsTypingRefresh = false;
+                    bool needsStatsRefresh = false;
 
                     if (Console.WindowWidth != lastWidth || Console.WindowHeight != lastHeight)
                     {
                         lastWidth = Console.WindowWidth;
                         lastHeight = Console.WindowHeight;
-                        needsRefresh = true;
+                        needsTypingRefresh = true;
+                        needsStatsRefresh = true;
                     }
 
                     if (Console.KeyAvailable)
                     {
                         var key = Console.ReadKey(true);
                         if (!_engine.ProcessKeyPress(key))
-                        {
                             break;
-                        }
-                        needsRefresh = true;
+
+                        needsTypingRefresh = true;
                     }
 
-                    if (needsRefresh)
+                    if (_engine.IsRunning && statsTimer.ElapsedMilliseconds > statsUpdateIntervalMs)
+                    {
+                        needsStatsRefresh = true;
+                        statsTimer.Restart(); // Reset the timer
+                    }
+
+                    if (needsTypingRefresh)
                     {
                         typingArea.Update(CreateTypingArea());
+                    }
+                    if (needsStatsRefresh)
+                    {
+                        statsArea.Update(CreateGameInfoArea());
+                    }
+
+                    if (needsTypingRefresh || needsStatsRefresh)
+                    {
                         ctx.Refresh();
                     }
 
                     if (_engine.IsOver)
                     {
+                        typingArea.Update(CreateTypingArea());
+                        statsArea.Update(CreateGameInfoArea());
+                        ctx.Refresh();
                         Thread.Sleep(500);
                         break;
                     }
@@ -85,13 +110,28 @@ public class GameRunner
         DisplaySummary();
     }
 
+    private IRenderable CreateGameInfoArea()
+    {
+        var grid = new Grid();
+        grid.AddColumns([new GridColumn(), new GridColumn()]);
+        grid.AddRow("WPM:", $"{_engine.Stats.WordsPerMinute:F1}");
+        grid.AddRow("Accuracy:", $"{_engine.Stats.Accuracy:F1}%");
+        grid.AddRow("Correct Chars:", $"{_engine.Stats.Chars.Correct}");
+        grid.AddRow("Incorrect Chars:", $"{_engine.Stats.Chars.Incorrect}");
+        grid.AddRow("Extra Chars:", $"{_engine.Stats.Chars.Extra}");
+        grid.AddRow("Elapsed:", $"{_engine.Stats.ElapsedTime:mm\\:ss}");
+        return _theme.Apply(grid, LayoutSection.GameInfo);
+    }
+
     private IRenderable CreateTypingArea()
     {
         var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
-        var panel = new Panel(markup);
+        return _theme.Apply(markup, LayoutSection.TypingArea);
+    }
 
-        IRenderable applied = _theme.Apply(panel, LayoutSection.TypingArea);
-        return applied;
+    private IRenderable CreateHeader()
+    {
+        return _theme.Apply(new Markup("Typical - A Typing Tutor"), LayoutSection.Header);
     }
 
     private Action<string> DisplaySummary() =>

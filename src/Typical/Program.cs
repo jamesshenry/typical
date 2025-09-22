@@ -30,7 +30,14 @@ var appSettings = configuration.Get<AppSettings>()!;
 
 var themeManager = new ThemeManager(appSettings.Themes.ToRuntimeThemes(), defaultTheme: "Default");
 var layoutFactory = new LayoutFactory(appSettings.Layouts.ToRuntimeLayouts());
-ITextProvider textProvider = new StaticTextProvider("[[Helloooo]]");
+
+string quotePath = Path.Combine(AppContext.BaseDirectory, "quote.txt");
+
+string text = File.Exists(quotePath)
+    ? await File.ReadAllTextAsync(quotePath)
+    : "The quick brown fox jumps over the lazy dog.";
+
+ITextProvider textProvider = new StaticTextProvider(text);
 
 var game = new TypicalGame(textProvider);
 await game.StartNewGame();

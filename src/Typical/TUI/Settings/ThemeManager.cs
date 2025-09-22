@@ -22,49 +22,65 @@ public class ThemeManager
         _activeTheme = _themes[ActiveThemeName];
     }
 
-    public IRenderable Apply(IRenderable renderable, LayoutSection layoutName)
+    public IRenderable Apply<T>(T renderable, LayoutSection layoutName)
+        where T : IRenderable
     {
         if (!_activeTheme.TryGetValue(layoutName, out var style))
         {
             _activeTheme.TryGetValue(LayoutSection.Default, out style);
         }
-        if (style is null)
+
+        style ??= new ElementStyle();
+
+        if (layoutName == LayoutSection.Header)
+            style.WrapInPanel = false;
+
+        if (!style.WrapInPanel)
             return renderable;
-        if (renderable is Panel panel)
+
+        Panel finalPanel;
+
+        if (renderable is Panel existingPanel)
         {
-            if (style.BorderStyle is not null)
+            finalPanel = existingPanel;
+        }
+        else
+        {
+            IRenderable content = renderable;
+            if (style.Alignment is not null)
             {
-                var foreground = style.BorderStyle.ForegroundColor is not null
-                    ? ParseColor(style.BorderStyle.ForegroundColor)
-                    : Color.Default;
+                var verticalAlign = Enum.Parse<Spectre.Console.VerticalAlignment>(
+                    style.Alignment.Vertical.ToString(),
+                    true
+                );
 
-                Enum.TryParse<Decoration>(style.BorderStyle.Decoration, true, out var decoration);
-
-                panel.BorderStyle = new Style(foreground: foreground, decoration: decoration);
+                content = Enum.Parse<Justify>(style.Alignment.Horizontal.ToString(), true) switch
+                {
+                    Justify.Left => Align.Left(content, verticalAlign),
+                    Justify.Center => Align.Center(content, verticalAlign),
+                    Justify.Right => Align.Right(content, verticalAlign),
+                    _ => renderable,
+                };
             }
-
-            if (style.PanelHeader?.Text is not null)
-            {
-                panel.Header = new PanelHeader(style.PanelHeader.Text);
-            }
+            finalPanel = new Panel(content);
         }
 
-        if (style.Alignment is not null)
+        if (style.BorderStyle is not null)
         {
-            var verticalAlign = Enum.Parse<Spectre.Console.VerticalAlignment>(
-                style.Alignment.Vertical.ToString(),
-                true
-            );
+            var foreground = style.BorderStyle.ForegroundColor is not null
+                ? ParseColor(style.BorderStyle.ForegroundColor)
+                : Color.Default;
 
-            renderable = Enum.Parse<Justify>(style.Alignment.Horizontal.ToString(), true) switch
-            {
-                Justify.Left => Align.Left(renderable, verticalAlign),
-                Justify.Center => Align.Center(renderable, verticalAlign),
-                Justify.Right => Align.Right(renderable, verticalAlign),
-                _ => renderable,
-            };
+            Enum.TryParse<Decoration>(style.BorderStyle.Decoration, true, out var decoration);
+
+            finalPanel.BorderStyle = new Style(foreground: foreground, decoration: decoration);
         }
-        return renderable;
+
+        if (style.PanelHeader?.Text is not null)
+        {
+            finalPanel.Header = new PanelHeader(style.PanelHeader.Text);
+        }
+        return finalPanel.Expand();
     }
 
     private static Color? ParseColor(string stringColor)

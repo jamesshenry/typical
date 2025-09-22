@@ -7,7 +7,6 @@ public class TypicalGame
     private readonly StringBuilder _userInput;
     private readonly ITextProvider _textProvider;
     private readonly GameOptions _gameOptions;
-    private string _targetText = string.Empty;
 
     public TypicalGame(ITextProvider textProvider)
         : this(textProvider, new GameOptions()) { }
@@ -17,18 +16,22 @@ public class TypicalGame
         _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
         _gameOptions = gameOptions;
         _userInput = new StringBuilder();
+        Stats = new GameStats(); // IT CREATES ITS OWN STATS OBJECT
     }
 
-    public string TargetText => _targetText;
+    public string TargetText { get; private set; } = string.Empty;
     public string UserInput => _userInput.ToString();
     public bool IsOver { get; private set; }
+    public bool IsRunning => !IsOver && Stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
+    public GameStats Stats { get; }
 
     public bool ProcessKeyPress(ConsoleKeyInfo key)
     {
         if (key.Key == ConsoleKey.Escape)
         {
             IsOver = true;
+            Stats.Stop();
             return false;
         }
 
@@ -38,23 +41,33 @@ public class TypicalGame
         }
         else if (!char.IsControl(key.KeyChar))
         {
-            if (_gameOptions.ForbidIncorrectEntries)
+            int currentPos = _userInput.Length;
+            if (currentPos >= TargetText.Length)
             {
-                int currentPos = _userInput.Length;
-                if (currentPos < _targetText.Length && key.KeyChar == _targetText[currentPos])
-                {
-                    _userInput.Append(key.KeyChar);
-                }
+                Stats.LogKeystroke(key.KeyChar, KeystrokeType.Extra);
+            }
+            else if (key.KeyChar == TargetText[currentPos])
+            {
+                Stats.LogKeystroke(key.KeyChar, KeystrokeType.Correct);
             }
             else
+            {
+                Stats.LogKeystroke(key.KeyChar, KeystrokeType.Incorrect);
+            }
+
+            if (
+                !_gameOptions.ForbidIncorrectEntries
+                || (currentPos < TargetText.Length && key.KeyChar == TargetText[currentPos])
+            )
             {
                 _userInput.Append(key.KeyChar);
             }
         }
 
-        if (_userInput.ToString() == _targetText)
+        if (_userInput.ToString() == TargetText)
         {
             IsOver = true;
+            Stats.Stop();
         }
 
         return true;
@@ -62,7 +75,8 @@ public class TypicalGame
 
     public async Task StartNewGame()
     {
-        _targetText = await _textProvider.GetTextAsync();
+        TargetText = await _textProvider.GetTextAsync();
+        Stats.Start();
         _userInput.Clear();
         IsOver = false;
     }
