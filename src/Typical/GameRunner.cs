@@ -15,7 +15,6 @@ public class GameRunner
     private readonly ThemeManager _theme;
     private readonly LayoutFactory _layoutFactory;
     private readonly IAnsiConsole _console;
-    private readonly GameStats _stats;
 
     public GameRunner(
         TypicalGame engine,
@@ -30,7 +29,6 @@ public class GameRunner
         _markupGenerator = markupGenerator;
         _layoutFactory = layoutFactory;
         _console = console;
-        _stats = new GameStats();
     }
 
     public void Run()
@@ -42,9 +40,13 @@ public class GameRunner
             .Live(layout)
             .Start(ctx =>
             {
-                layout[LayoutSection.TypingArea.Value].Update(CreateTypingArea());
-                layout[LayoutSection.GameInfo.Value].Update(CreateGameInfoArea());
-                layout[LayoutSection.Header.Value].Update(CreateHeader());
+                var typingArea = layout[LayoutSection.TypingArea.Value];
+                var statsArea = layout[LayoutSection.GameInfo.Value];
+                var headerArea = layout[LayoutSection.Header.Value];
+                typingArea.Update(CreateTypingArea());
+                statsArea.Update(CreateGameInfoArea());
+                headerArea.Update(CreateHeader());
+
                 ctx.Refresh();
 
                 int lastHeight = Console.WindowHeight;
@@ -65,7 +67,6 @@ public class GameRunner
 
                     if (Console.KeyAvailable)
                     {
-                        _stats.Start();
                         var key = Console.ReadKey(true);
                         if (!_engine.ProcessKeyPress(key))
                             break;
@@ -81,11 +82,11 @@ public class GameRunner
 
                     if (needsTypingRefresh)
                     {
-                        layout[LayoutSection.TypingArea.Value].Update(CreateTypingArea());
+                        typingArea.Update(CreateTypingArea());
                     }
                     if (needsStatsRefresh)
                     {
-                        layout[LayoutSection.GameInfo.Value].Update(CreateGameInfoArea());
+                        statsArea.Update(CreateGameInfoArea());
                     }
 
                     if (needsTypingRefresh || needsStatsRefresh)
@@ -95,8 +96,8 @@ public class GameRunner
 
                     if (_engine.IsOver)
                     {
-                        layout[LayoutSection.TypingArea.Value].Update(CreateTypingArea());
-                        layout[LayoutSection.GameInfo.Value].Update(CreateGameInfoArea());
+                        typingArea.Update(CreateTypingArea());
+                        statsArea.Update(CreateGameInfoArea());
                         ctx.Refresh();
                         Thread.Sleep(500);
                         break;
