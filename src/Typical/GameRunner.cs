@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 using Typical.Core;
@@ -35,13 +36,14 @@ public class GameRunner
     public void Run()
     {
         var layout = _layoutFactory.Build(LayoutName.Dashboard);
-
+        const int statsUpdateIntervalMs = 2000; // Update stats every 2 seconds
+        var statsTimer = Stopwatch.StartNew();
         _console
             .Live(layout)
             .Start(ctx =>
             {
-                var typingArea = layout[LayoutSection.TypingArea.Value];
-                typingArea.Update(CreateTypingArea());
+                layout[LayoutSection.TypingArea.Value].Update(CreateTypingArea());
+                layout[LayoutSection.GameInfo.Value].Update(CreateGameInfoArea());
                 ctx.Refresh();
 
                 int lastHeight = Console.WindowHeight;
@@ -49,13 +51,15 @@ public class GameRunner
 
                 while (true)
                 {
-                    bool needsRefresh = false;
+                    bool needsTypingRefresh = false;
+                    bool needsStatsRefresh = false;
 
                     if (Console.WindowWidth != lastWidth || Console.WindowHeight != lastHeight)
                     {
                         lastWidth = Console.WindowWidth;
                         lastHeight = Console.WindowHeight;
-                        needsRefresh = true;
+                        needsTypingRefresh = true;
+                        needsStatsRefresh = true;
                     }
 
                     if (Console.KeyAvailable)
@@ -63,20 +67,36 @@ public class GameRunner
                         _stats.Start();
                         var key = Console.ReadKey(true);
                         if (!_engine.ProcessKeyPress(key))
-                        {
                             break;
-                        }
-                        needsRefresh = true;
+
+                        needsTypingRefresh = true;
                     }
 
-                    if (needsRefresh)
+                    if (_engine.IsRunning && statsTimer.ElapsedMilliseconds > statsUpdateIntervalMs)
                     {
-                        typingArea.Update(CreateTypingArea());
+                        needsStatsRefresh = true;
+                        statsTimer.Restart(); // Reset the timer
+                    }
+
+                    if (needsTypingRefresh)
+                    {
+                        layout[LayoutSection.TypingArea.Value].Update(CreateTypingArea());
+                    }
+                    if (needsStatsRefresh)
+                    {
+                        layout[LayoutSection.GameInfo.Value].Update(CreateGameInfoArea());
+                    }
+
+                    if (needsTypingRefresh || needsStatsRefresh)
+                    {
                         ctx.Refresh();
                     }
 
                     if (_engine.IsOver)
                     {
+                        layout[LayoutSection.TypingArea.Value].Update(CreateTypingArea());
+                        layout[LayoutSection.GameInfo.Value].Update(CreateGameInfoArea());
+                        ctx.Refresh();
                         Thread.Sleep(500);
                         break;
                     }
@@ -86,6 +106,20 @@ public class GameRunner
             });
 
         DisplaySummary();
+    }
+
+    private IRenderable CreateGameInfoArea()
+    {
+        var grid = new Grid();
+        grid.AddColumns([new GridColumn(), new GridColumn()]);
+        grid.AddRow("WPM:", $"{_engine.Stats.WordsPerMinute:F1}");
+        grid.AddRow("Accuracy:", $"{_engine.Stats.Accuracy:F1}%");
+        grid.AddRow("Correct Chars:", $"{_engine.Stats.Chars.Correct}");
+        grid.AddRow("Incorrect Chars:", $"{_engine.Stats.Chars.Incorrect}");
+        grid.AddRow("Extra Chars:", $"{_engine.Stats.Chars.Extra}");
+        var panel = new Panel(grid);
+        var applied = _theme.Apply(panel, LayoutSection.GameInfo);
+        return applied;
     }
 
     private IRenderable CreateTypingArea()

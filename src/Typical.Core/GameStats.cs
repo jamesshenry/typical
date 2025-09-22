@@ -4,21 +4,35 @@ namespace Typical.Core;
 
 public class GameStats(TimeProvider? timeProvider = null)
 {
+    private readonly KeystrokeHistory _keystrokeHistory = [];
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
     private long? _startTimestamp;
     private long? _endTimestamp;
 
     public double WordsPerMinute { get; private set; }
     public double Accuracy { get; private set; }
+    public CharacterStats Chars { get; private set; } = new(0, 0, 0);
     public bool IsRunning => _startTimestamp.HasValue && !_endTimestamp.HasValue;
+    public TimeSpan ElapsedTime =>
+        _timeProvider.GetElapsedTime(
+            _startTimestamp ?? 0,
+            _endTimestamp ?? _timeProvider.GetTimestamp()
+        );
 
     public void Start()
     {
-        if (!_startTimestamp.HasValue || _endTimestamp.HasValue)
-        {
-            _startTimestamp = _timeProvider.GetTimestamp();
-            _endTimestamp = null;
-        }
+        Reset();
+        _startTimestamp = _timeProvider.GetTimestamp();
+    }
+
+    public void Reset()
+    {
+        _startTimestamp = null;
+        _endTimestamp = null;
+        _keystrokeHistory.Clear();
+        WordsPerMinute = 0;
+        Accuracy = 100;
+        Chars = new CharacterStats(0, 0, 0);
     }
 
     public void Stop()
@@ -29,33 +43,19 @@ public class GameStats(TimeProvider? timeProvider = null)
         }
     }
 
-    public void Update(string targetText, string typedText)
+    public void CalculateStats()
     {
-        if (!IsRunning || string.IsNullOrEmpty(typedText))
+        WordsPerMinute = _keystrokeHistory.CalculateWpm(ElapsedTime);
+        Accuracy = _keystrokeHistory.CalculateAccuracy();
+        Chars = _keystrokeHistory.GetCharacterStats();
+    }
+
+    internal void LogKeystroke(char keyChar, KeystrokeType extra)
+    {
+        if (!IsRunning)
         {
-            WordsPerMinute = 0;
-            Accuracy = 100;
-            return;
+            Start();
         }
-
-        long now = _timeProvider.GetTimestamp();
-        var elapsed = _timeProvider.GetElapsedTime(_startTimestamp!.Value, now);
-        double elapsedSeconds = elapsed.TotalSeconds;
-        if (elapsedSeconds <= 0)
-            return;
-
-        var wordCount = typedText.Length / 5.0;
-        WordsPerMinute = wordCount / (elapsedSeconds / 60);
-
-        int correctChars = 0;
-        for (int i = 0; i < typedText.Length; i++)
-        {
-            if (i < targetText.Length && typedText[i] == targetText[i])
-            {
-                correctChars++;
-            }
-        }
-
-        Accuracy = (double)correctChars / typedText.Length * 100.0;
+        _keystrokeHistory.Add(new KeystrokeLog(keyChar, extra, _timeProvider.GetTimestamp()));
     }
 }
