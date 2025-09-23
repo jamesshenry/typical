@@ -11,3 +11,8 @@ public class GameEndedEventArgs : EventArgs
 
     public GameStatisticsSnapshot Snapshot { get; }
 }
+
+public class GameStateChangedEventArgs : EventArgs
+{
+    // You could add data here if needed, e.g., the new UserInput string
+}

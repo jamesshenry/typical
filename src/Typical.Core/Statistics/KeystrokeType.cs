@@ -5,4 +5,5 @@ public enum KeystrokeType
     Correct,
     Incorrect,
     Extra,
+    Correction,
 }

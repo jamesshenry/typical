@@ -11,11 +11,12 @@ public class KeystrokeHistory : IEnumerable<KeystrokeLog>
     public int IncorrectCount => _logs.Count(log => log.Type == KeystrokeType.Incorrect);
     public int ExtraCount => _logs.Count(log => log.Type == KeystrokeType.Extra);
 
-    private (int Correct, int Incorrect, int Extra) GetCounts()
+    private (int Correct, int Incorrect, int Extra, int Corrections) GetCounts()
     {
         int correct = 0;
         int incorrect = 0;
         int extra = 0;
+        int corrections = 0;
 
         foreach (var log in _logs)
         {
@@ -27,13 +28,15 @@ public class KeystrokeHistory : IEnumerable<KeystrokeLog>
                 case KeystrokeType.Incorrect:
                     incorrect++;
                     break;
-
                 case KeystrokeType.Extra:
                     extra++;
                     break;
+                case KeystrokeType.Correction:
+                    corrections++;
+                    break;
             }
         }
-        return (correct, incorrect, extra);
+        return (correct, incorrect, extra, corrections);
     }
 
     public void Add(KeystrokeLog log)
@@ -56,7 +59,7 @@ public class KeystrokeHistory : IEnumerable<KeystrokeLog>
         if (Count == 0)
             return 100.0;
 
-        var (correct, incorrect, _) = GetCounts();
+        var (correct, incorrect, _, _) = GetCounts();
         int totalChars = correct + incorrect;
         return totalChars == 0 ? 100.0 : (double)correct / totalChars * 100.0;
     }
@@ -67,11 +70,28 @@ public class KeystrokeHistory : IEnumerable<KeystrokeLog>
         return new CharacterStats(
             Correct: counts.Correct,
             Incorrect: counts.Incorrect,
-            Extra: counts.Extra
+            Extra: counts.Extra,
+            Corrections: counts.Corrections
         );
     }
 
     public IEnumerator<KeystrokeLog> GetEnumerator() => _logs.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public void RemoveLastCharacterLog()
+    {
+        // Use FindLastIndex to search from the end of the list.
+        int indexToRemove = _logs.FindLastIndex(log =>
+            log.Type == KeystrokeType.Correct
+            || log.Type == KeystrokeType.Incorrect
+            || log.Type == KeystrokeType.Extra
+        );
+
+        // If a log was found (index is not -1), remove it.
+        if (indexToRemove != -1)
+        {
+            _logs.RemoveAt(indexToRemove);
+        }
+    }
 }

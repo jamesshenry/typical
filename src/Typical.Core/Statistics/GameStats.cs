@@ -9,7 +9,7 @@ internal class GameStats(TimeProvider? timeProvider = null)
     private bool _statsAreDirty = true; // Start dirty
     private double _cachedWpm;
     private double _cachedAccuracy;
-    private CharacterStats _cachedChars = new(0, 0, 0);
+    private CharacterStats _cachedChars = new(0, 0, 0, 0);
     public double WordsPerMinute
     {
         get
@@ -59,7 +59,7 @@ internal class GameStats(TimeProvider? timeProvider = null)
         _keystrokeHistory.Clear();
         _cachedWpm = 0;
         _cachedAccuracy = 100;
-        _cachedChars = new CharacterStats(0, 0, 0);
+        _cachedChars = new CharacterStats(0, 0, 0, 0);
     }
 
     public void Stop()
@@ -102,6 +102,17 @@ internal class GameStats(TimeProvider? timeProvider = null)
             Start();
         }
         _keystrokeHistory.Add(new KeystrokeLog(keyChar, extra, _timeProvider.GetTimestamp()));
+        _statsAreDirty = true;
+    }
+
+    internal void LogCorrection()
+    {
+        _keystrokeHistory.RemoveLastCharacterLog();
+
+        _keystrokeHistory.Add(
+            new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp())
+        );
+
         _statsAreDirty = true;
     }
 }

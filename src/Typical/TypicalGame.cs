@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 using Typical.Core;
+using Typical.Core.Events;
 using Typical.TUI;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
@@ -15,6 +16,8 @@ public class TypicalGame
     private readonly ThemeManager _theme;
     private readonly LayoutFactory _layoutFactory;
     private readonly IAnsiConsole _console;
+    private bool _needsTypingRefresh;
+    private bool _needsStatsRefresh;
 
     public TypicalGame(
         GameEngine engine,
@@ -25,10 +28,22 @@ public class TypicalGame
     )
     {
         _engine = engine;
+        _engine.GameEnded += OnEngineGameEnded;
+        _engine.StateChanged += StateChanged;
         _theme = theme;
         _markupGenerator = markupGenerator;
         _layoutFactory = layoutFactory;
         _console = console;
+    }
+
+    private void StateChanged(object? sender, GameStateChangedEventArgs e)
+    {
+        _needsTypingRefresh = true;
+    }
+
+    private void OnEngineGameEnded(object? sender, GameEndedEventArgs e)
+    {
+        throw new NotImplementedException();
     }
 
     public void Run()
@@ -54,15 +69,12 @@ public class TypicalGame
 
                 while (true)
                 {
-                    bool needsTypingRefresh = false;
-                    bool needsStatsRefresh = false;
-
                     if (Console.WindowWidth != lastWidth || Console.WindowHeight != lastHeight)
                     {
                         lastWidth = Console.WindowWidth;
                         lastHeight = Console.WindowHeight;
-                        needsTypingRefresh = true;
-                        needsStatsRefresh = true;
+                        _needsTypingRefresh = true;
+                        _needsStatsRefresh = true;
                     }
 
                     if (Console.KeyAvailable)
@@ -70,34 +82,25 @@ public class TypicalGame
                         var key = Console.ReadKey(true);
                         if (!_engine.ProcessKeyPress(key))
                             break;
-
-                        needsTypingRefresh = true;
                     }
 
                     if (_engine.IsRunning && statsTimer.ElapsedMilliseconds > statsUpdateIntervalMs)
                     {
-                        needsStatsRefresh = true;
+                        _needsStatsRefresh = true;
                         statsTimer.Restart(); // Reset the timer
                     }
 
-                    if (needsTypingRefresh)
+                    if (_needsTypingRefresh || _needsStatsRefresh)
                     {
                         typingArea.Update(CreateTypingArea());
-                    }
-                    if (needsStatsRefresh)
-                    {
                         statsArea.Update(CreateGameInfoArea());
-                    }
-
-                    if (needsTypingRefresh || needsStatsRefresh)
-                    {
                         ctx.Refresh();
+                        _needsTypingRefresh = false;
+                        _needsStatsRefresh = false;
                     }
 
                     if (_engine.IsOver)
                     {
-                        typingArea.Update(CreateTypingArea());
-                        statsArea.Update(CreateGameInfoArea());
                         ctx.Refresh();
                         Thread.Sleep(500);
                         break;

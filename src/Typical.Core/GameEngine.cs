@@ -30,6 +30,7 @@ public class GameEngine
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
     public event EventHandler<GameEndedEventArgs>? GameEnded;
+    public event EventHandler<GameStateChangedEventArgs>? StateChanged;
 
     public bool ProcessKeyPress(ConsoleKeyInfo key)
     {
@@ -40,38 +41,49 @@ public class GameEngine
             return false;
         }
 
-        if (key.Key == ConsoleKey.Backspace && _userInput.Length > 0)
+        // if (key.Key == ConsoleKey.Backspace && _userInput.Length > 0)
+        // {
+        //     _userInput.Remove(_userInput.Length - 1, 1);
+        //     // _stats.LogCorrection(); // Assuming you have/want this method
+        //     return true;
+        // }
+        if (char.IsControl(key.KeyChar))
         {
-            _userInput.Remove(_userInput.Length - 1, 1);
+            return true; // Ignore other control characters but continue the game
         }
-        else if (!char.IsControl(key.KeyChar))
-        {
-            int currentPos = _userInput.Length;
-            if (currentPos >= TargetText.Length)
-            {
-                _stats.LogKeystroke(key.KeyChar, KeystrokeType.Extra);
-            }
-            else if (key.KeyChar == TargetText[currentPos])
-            {
-                _stats.LogKeystroke(key.KeyChar, KeystrokeType.Correct);
-            }
-            else
-            {
-                _stats.LogKeystroke(key.KeyChar, KeystrokeType.Incorrect);
-            }
+        char inputChar = key.KeyChar;
 
-            if (
-                !_gameOptions.ForbidIncorrectEntries
-                || (currentPos < TargetText.Length && key.KeyChar == TargetText[currentPos])
-            )
-            {
-                _userInput.Append(key.KeyChar);
-            }
+        KeystrokeType type = DetermineKeystrokeType(inputChar);
+
+        _stats.LogKeystroke(inputChar, type);
+
+        bool isCorrect = type == KeystrokeType.Correct;
+        if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
+        {
+            _userInput.Append(key.KeyChar);
+            StateChanged?.Invoke(this, new GameStateChangedEventArgs());
         }
 
         CheckEndCondition();
 
         return true;
+    }
+
+    private KeystrokeType DetermineKeystrokeType(char inputChar)
+    {
+        int currentPos = _userInput.Length;
+
+        if (currentPos >= TargetText.Length)
+        {
+            return KeystrokeType.Extra;
+        }
+
+        if (inputChar == TargetText[currentPos])
+        {
+            return KeystrokeType.Correct;
+        }
+
+        return KeystrokeType.Incorrect;
     }
 
     private void CheckEndCondition()
