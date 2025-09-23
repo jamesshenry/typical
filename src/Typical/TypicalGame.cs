@@ -129,8 +129,9 @@ public class TypicalGame
 
     private IRenderable CreateTypingArea()
     {
-        var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
-        return _theme.Apply(markup, LayoutSection.TypingArea);
+        return new Panel(new Text(_engine.UserInput));
+        // var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
+        // return _theme.Apply(markup, LayoutSection.TypingArea);
     }
 
     private IRenderable CreateHeader()
