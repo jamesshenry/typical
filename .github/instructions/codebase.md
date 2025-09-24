@@ -25,10 +25,11 @@ Below is a summary of the directory structure to provide context for the file or
             - Core
             - TUI
 
-# --- Start of Code Files ---
+## --- Start of Code Files ---
 
 // File: src\Typical\TUI\Enums\HorizontalAlignment.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public enum HorizontalAlignment
@@ -37,9 +38,11 @@ public enum HorizontalAlignment
     Center,
     Right,
 }
+```
 
 // File: src\Typical\TUI\Enums\LayoutDirection.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public enum LayoutDirection
@@ -47,9 +50,11 @@ public enum LayoutDirection
     Rows,
     Columns,
 }
+```
 
 // File: src\Typical\TUI\Enums\VerticalAlignment.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public enum VerticalAlignment
@@ -58,9 +63,11 @@ public enum VerticalAlignment
     Middle,
     Bottom,
 }
+```
 
 // File: src\Typical\TUI\Runtime\LayoutConversion.cs
 
+```cs
 using Typical.TUI.Settings;
 
 namespace Typical.TUI.Runtime;
@@ -125,9 +132,11 @@ public static class LayoutConversion
             ),
         };
 }
+```
 
 // File: src\Typical\TUI\Runtime\LayoutFactory.cs
 
+```cs
 using Spectre.Console;
 using Typical.TUI.Settings;
 
@@ -174,9 +183,11 @@ public class LayoutFactory
         return layout;
     }
 }
+```
 
 // File: src\Typical\TUI\Runtime\LayoutNode.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public record LayoutNode(
@@ -184,9 +195,11 @@ public record LayoutNode(
     LayoutDirection Direction,
     Dictionary<LayoutSection, LayoutNode> Children
 );
+```
 
 // File: src\Typical\TUI\Runtime\ThemeConversion.cs
 
+```cs
 using Typical.TUI.Settings;
 
 namespace Typical.TUI.Runtime;
@@ -245,9 +258,11 @@ public class RuntimeLayoutDict : Dictionary<LayoutName, LayoutNode>
     public RuntimeLayoutDict(Dictionary<LayoutName, LayoutNode> dictionary)
         : base(dictionary) { }
 }
+```
 
 // File: src\Typical\TUI\Settings\AlignmentSettings.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public class AlignmentSettings
@@ -255,9 +270,11 @@ public class AlignmentSettings
     public VerticalAlignment Vertical { get; set; }
     public HorizontalAlignment Horizontal { get; set; }
 }
+```
 
 // File: src\Typical\TUI\Settings\AppSettings.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public class AppSettings
@@ -265,9 +282,11 @@ public class AppSettings
     public ThemeDict Themes { get; set; } = [];
     public LayoutPresetDict Layouts { get; set; } = [];
 }
+```
 
 // File: src\Typical\TUI\Settings\AppSettingsExtensions.cs
 
+```cs
 using Typical.TUI.Runtime;
 
 namespace Typical.TUI.Settings;
@@ -286,9 +305,11 @@ public static class AppSettingsExtensions
 
     // Themes can stay string-keyed or convert similarly if needed
 }
+```
 
 // File: src\Typical\TUI\Settings\BorderStyleSettings.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public class BorderStyleSettings
@@ -296,9 +317,11 @@ public class BorderStyleSettings
     public string? ForegroundColor { get; set; }
     public string? Decoration { get; set; }
 }
+```
 
 // File: src\Typical\TUI\Settings\ElementStyle.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public class ElementStyle
@@ -308,9 +331,11 @@ public class ElementStyle
     public AlignmentSettings? Alignment { get; set; }
     public bool WrapInPanel { get; internal set; } = true;
 }
+```
 
 // File: src\Typical\TUI\Settings\LayoutDefinition.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public class LayoutDefinition
@@ -320,9 +345,11 @@ public class LayoutDefinition
     public string? SplitDirection { get; set; } = "Columns";
     public List<LayoutDefinition> Children { get; set; } = [];
 }
+```
 
 // File: src\Typical\TUI\Settings\LayoutName.cs
 
+```cs
 using System.Diagnostics.CodeAnalysis;
 using Vogen;
 
@@ -340,9 +367,11 @@ public partial record LayoutName
         Dashboard,
     };
 }
+```
 
 // File: src\Typical\TUI\Settings\LayoutSection.cs
 
+```cs
 using Vogen;
 
 namespace Typical.TUI.Settings;
@@ -372,18 +401,22 @@ public partial record LayoutSection
         Center,
     };
 }
+```
 
 // File: src\Typical\TUI\Settings\PanelHeaderSettings.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public class PanelHeaderSettings
 {
     public string? Text { get; set; }
 }
+```
 
 // File: src\Typical\TUI\Settings\ThemeManager.cs
 
+```cs
 using Spectre.Console;
 using Spectre.Console.Rendering;
 using Typical.TUI.Runtime;
@@ -490,9 +523,11 @@ public class ThemeManager
         return exists && theme is not null;
     }
 }
+```
 
 // File: src\Typical\TUI\Settings\ThemeSettings.cs
 
+```cs
 namespace Typical.TUI.Settings;
 
 public class Theme : Dictionary<string, ElementStyle> { }
@@ -500,9 +535,11 @@ public class Theme : Dictionary<string, ElementStyle> { }
 public class LayoutPresetDict : Dictionary<string, LayoutDefinition>;
 
 public class ThemeDict : Dictionary<string, Theme> { }
+```
 
 // File: src\Typical\ConfigurationExtensions.cs
 
+```cs
 // using Microsoft.Extensions.Configuration;
 // using Typical.TUI;
 // using Typical.TUI.Settings;
@@ -542,9 +579,11 @@ public class ThemeDict : Dictionary<string, Theme> { }
 //         return dict;
 //     }
 // }
+```
 
 // File: src\Typical\MarkupGenerator.cs
 
+```cs
 using System.Text;
 using Spectre.Console;
 
@@ -624,9 +663,11 @@ public class MarkupGenerator
             _ => "[grey]",
         };
 }
+```
 
 // File: src\Typical\Program.cs
 
+```cs
 using System.Reflection;
 using DotNetPathUtils;
 using Microsoft.Extensions.Configuration;
@@ -681,9 +722,11 @@ var runner = new TypicalGame(
 );
 runner.Run();
 Console.Clear();
+```
 
 // File: src\Typical\StaticTextProvider.cs
 
+```cs
 using Typical.Core.Text;
 
 namespace Typical;
@@ -694,9 +737,11 @@ internal class StaticTextProvider(string text) : ITextProvider
 
     public Task<string> GetTextAsync() => Task.FromResult(_text);
 }
+```
 
 // File: src\Typical\TypicalGame.cs
 
+```cs
 using System.Diagnostics;
 using Spectre.Console;
 using Spectre.Console.Rendering;
@@ -841,9 +886,11 @@ public class TypicalGame
     private Action<string> DisplaySummary() =>
         summaryString => AnsiConsole.MarkupLineInterpolated($"[bold green]{summaryString}[/]");
 }
+```
 
 // File: src\Typical\TypingResult.cs
 
+```cs
 namespace Typical;
 
 internal enum TypingResult
@@ -852,9 +899,11 @@ internal enum TypingResult
     Correct,
     Incorrect,
 }
+```
 
 // File: src\Typical.Core\Events\GameEndedEventArgs.cs
 
+```cs
 using Typical.Core.Statistics;
 
 namespace Typical.Core.Events;
@@ -873,18 +922,23 @@ public class GameStateChangedEventArgs : EventArgs
 {
     // You could add data here if needed, e.g., the new UserInput string
 }
+```
 
 // File: src\Typical.Core\Events\GameStateChangedEventArgs.cs
 
+```cs```
 // File: src\Typical.Core\Statistics\CharacterStats.cs
 
+```cs
 namespace Typical.Core.Statistics;
 
 // A simple record to hold the results of GetCharacterStats
 public record CharacterStats(int Correct, int Incorrect, int Extra, int Corrections);
+```
 
 // File: src\Typical.Core\Statistics\GameStatisticsSnapshot.cs
 
+```cs
 namespace Typical.Core.Statistics;
 
 public record GameStatisticsSnapshot(
@@ -894,9 +948,11 @@ public record GameStatisticsSnapshot(
     TimeSpan ElapsedTime,
     bool IsRunning
 );
+```
 
 // File: src\Typical.Core\Statistics\GameStats.cs
 
+```cs
 namespace Typical.Core.Statistics;
 
 internal class GameStats(TimeProvider? timeProvider = null)
@@ -1015,9 +1071,11 @@ internal class GameStats(TimeProvider? timeProvider = null)
         _statsAreDirty = true;
     }
 }
+```
 
 // File: src\Typical.Core\Statistics\KeystrokeHistory.cs
 
+```cs
 using System.Collections;
 
 namespace Typical.Core.Statistics;
@@ -1115,15 +1173,19 @@ public class KeystrokeHistory : IEnumerable<KeystrokeLog>
         }
     }
 }
+```
 
 // File: src\Typical.Core\Statistics\KeystrokeLog.cs
 
+```cs
 namespace Typical.Core.Statistics;
 
 public record struct KeystrokeLog(char Character, KeystrokeType Type, long Timestamp);
+```
 
 // File: src\Typical.Core\Statistics\KeystrokeType.cs
 
+```cs
 namespace Typical.Core.Statistics;
 
 public enum KeystrokeType
@@ -1133,18 +1195,22 @@ public enum KeystrokeType
     Extra,
     Correction,
 }
+```
 
 // File: src\Typical.Core\Text\ITextProvider.cs
 
+```cs
 namespace Typical.Core.Text;
 
 public interface ITextProvider
 {
     Task<string> GetTextAsync();
 }
+```
 
 // File: src\Typical.Core\GameEngine.cs
 
+```cs
 using System.Text;
 using Typical.Core.Events;
 using Typical.Core.Statistics;
@@ -1257,9 +1323,11 @@ public class GameEngine
         return _stats.CreateSnapshot();
     }
 }
+```
 
 // File: src\Typical.Core\GameOptions.cs
 
+```cs
 namespace Typical.Core;
 
 public record GameOptions
@@ -1271,9 +1339,11 @@ public record GameOptions
     // public int TimeLimitSeconds { get; set; } = 0; // 0 for no limit
     // public bool ShowLiveWpm { get; set; } = false;
 }
+```
 
 // File: src\Typical.Tests\Core\GameStatsTests.cs
 
+```cs
 using System;
 using Microsoft.Extensions.Time.Testing;
 using TUnit;
@@ -1369,9 +1439,11 @@ namespace Typical.Tests
         }
     }
 }
+```
 
 // File: src\Typical.Tests\TUI\LayoutFactoryTests.cs
 
+```cs
 // using Spectre.Console;
 // using Spectre.Console.Rendering;
 // using Typical.TUI.Runtime;
@@ -1469,9 +1541,11 @@ namespace Typical.Tests
 //         // await Assert.That(layout.Renderable).IsNull(); // TODO: Use IAnsiConsole TestConsole
 //     }
 // }
+```
 
 // File: src\Typical.Tests\TUI\ThemeSettingsBindingTests.cs
 
+```cs
 // using System.Collections.Generic;
 // using System.ComponentModel;
 // using System.Threading.Tasks;
@@ -1522,9 +1596,11 @@ namespace Typical.Tests
 //             .IsEqualTo("TypingText");
 //     }
 // }
+```
 
 // File: src\Typical.Tests\TUI\ThemeTests.cs
 
+```cs
 using Spectre.Console;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
@@ -1725,9 +1801,11 @@ public class ThemeTests
     // more complex and often considered an implementation detail. For now, testing the
     // direct mutations of the panel provides excellent coverage of the core logic.
 }
+```
 
 // File: src\Typical.Tests\GameEngineTests.cs
 
+```cs
 using Typical.Core;
 
 namespace Typical.Tests;
@@ -1919,9 +1997,11 @@ public class TypicalGameTests
         await Assert.That(game.UserInput).IsEqualTo("x");
     }
 }
+```
 
 // File: src\Typical.Tests\MarkupGeneratorTests.cs
 
+```cs
 using Typical; // Your project's namespace
 
 public class MarkupGeneratorTests
@@ -2056,9 +2136,11 @@ public class MarkupGeneratorTests
         await Assert.That(result).IsEqualTo("[default on green][[[[Hello]]]][/]");
     }
 }
+```
 
 // File: src\Typical.Tests\MockTextProvider.cs
 
+```cs
 using Typical.Core.Text;
 
 namespace Typical.Tests;
@@ -2079,3 +2161,4 @@ public class MockTextProvider : ITextProvider
         return Task.FromResult(_textToReturn);
     }
 }
+```
