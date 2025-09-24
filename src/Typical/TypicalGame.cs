@@ -3,6 +3,7 @@ using Spectre.Console;
 using Spectre.Console.Rendering;
 using Typical.Core;
 using Typical.Core.Events;
+using Typical.Core.Statistics;
 using Typical.TUI;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
@@ -12,49 +13,55 @@ namespace Typical;
 public class TypicalGame
 {
     private readonly MarkupGenerator _markupGenerator;
+
     private readonly GameEngine _engine;
     private readonly ThemeManager _theme;
     private readonly LayoutFactory _layoutFactory;
     private readonly IAnsiConsole _console;
-    private bool _needsTypingRefresh;
-    private bool _needsStatsRefresh;
+    private string _targetText = string.Empty;
+    private string _userInput = string.Empty;
+    private GameStatisticsSnapshot _statistics = GameStatisticsSnapshot.Empty;
+    private bool _isGameOver;
+    private bool _needsRefresh;
 
     public TypicalGame(
         GameEngine engine,
         ThemeManager theme,
         MarkupGenerator markupGenerator,
         LayoutFactory layoutFactory,
+        IEventAggregator eventAggregator,
         IAnsiConsole console
     )
     {
         _engine = engine;
-        _engine.GameEnded += OnEngineGameEnded;
-        _engine.StateChanged += StateChanged;
         _theme = theme;
         _markupGenerator = markupGenerator;
         _layoutFactory = layoutFactory;
         _console = console;
+
+        eventAggregator.Subscribe<GameStateUpdatedEvent>(OnGameStateUpdated);
     }
 
-    private void StateChanged(object? sender, GameStateChangedEventArgs e)
+    private void OnGameStateUpdated(GameStateUpdatedEvent e)
     {
-        _needsTypingRefresh = true;
+        // Cache the new state
+        _targetText = e.TargetText;
+        _userInput = e.UserInput;
+        _statistics = e.Statistics;
+        _isGameOver = e.IsOver;
+
+        // Set a single flag to refresh the entire UI
+        _needsRefresh = true;
     }
 
-    private void OnEngineGameEnded(object? sender, GameEndedEventArgs e)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void Run()
+    public async Task RunAsync()
     {
         var layout = _layoutFactory.Build(LayoutName.Dashboard);
-        const int statsUpdateIntervalMs = 1000; // Update stats every 2 seconds
-        var statsTimer = Stopwatch.StartNew();
-        _console
+        await _console
             .Live(layout)
-            .Start(ctx =>
+            .StartAsync(async ctx =>
             {
+                await _engine.StartNewGame();
                 var typingArea = layout[LayoutSection.TypingArea.Value];
                 var statsArea = layout[LayoutSection.GameInfo.Value];
                 var headerArea = layout[LayoutSection.Header.Value];
@@ -67,14 +74,13 @@ public class TypicalGame
                 int lastHeight = Console.WindowHeight;
                 int lastWidth = Console.WindowWidth;
 
-                while (true)
+                while (!_isGameOver)
                 {
                     if (Console.WindowWidth != lastWidth || Console.WindowHeight != lastHeight)
                     {
                         lastWidth = Console.WindowWidth;
                         lastHeight = Console.WindowHeight;
-                        _needsTypingRefresh = true;
-                        _needsStatsRefresh = true;
+                        _needsRefresh = true;
                     }
 
                     if (Console.KeyAvailable)
@@ -84,22 +90,15 @@ public class TypicalGame
                             break;
                     }
 
-                    if (_engine.IsRunning && statsTimer.ElapsedMilliseconds > statsUpdateIntervalMs)
+                    if (_needsRefresh)
                     {
-                        _needsStatsRefresh = true;
-                        statsTimer.Restart(); // Reset the timer
-                    }
-
-                    if (_needsTypingRefresh || _needsStatsRefresh)
-                    {
-                        typingArea.Update(CreateTypingArea());
-                        statsArea.Update(CreateGameInfoArea());
+                        layout[LayoutSection.TypingArea.Value].Update(CreateTypingArea());
+                        layout[LayoutSection.GameInfo.Value].Update(CreateGameInfoArea());
                         ctx.Refresh();
-                        _needsTypingRefresh = false;
-                        _needsStatsRefresh = false;
+                        _needsRefresh = false; // Reset the flag
                     }
 
-                    if (_engine.IsOver)
+                    if (_isGameOver)
                     {
                         ctx.Refresh();
                         Thread.Sleep(500);
@@ -115,21 +114,25 @@ public class TypicalGame
 
     private IRenderable CreateGameInfoArea()
     {
-        var stats = _engine.GetGameStatistics();
+        // Use the cached statistics object
+        if (_statistics is null)
+            return new Text("");
+
         var grid = new Grid();
         grid.AddColumns([new GridColumn(), new GridColumn()]);
-        grid.AddRow("WPM:", $"{stats.WordsPerMinute:F1}");
-        grid.AddRow("Accuracy:", $"{stats.Accuracy:F1}%");
-        grid.AddRow("Correct Chars:", $"{stats.Chars.Correct}");
-        grid.AddRow("Incorrect Chars:", $"{stats.Chars.Incorrect}");
-        grid.AddRow("Extra Chars:", $"{stats.Chars.Extra}");
-        grid.AddRow("Elapsed:", $"{stats.ElapsedTime:mm\\:ss}");
+        grid.AddRow("WPM:", $"{_statistics.WordsPerMinute:F1}");
+        grid.AddRow("Accuracy:", $"{_statistics.Accuracy:F1}%");
+        grid.AddRow("Correct Chars:", $"{_statistics.Chars.Correct}");
+        grid.AddRow("Incorrect Chars:", $"{_statistics.Chars.Incorrect}");
+        grid.AddRow("Extra Chars:", $"{_statistics.Chars.Extra}");
+        grid.AddRow("Elapsed:", $"{_statistics.ElapsedTime:mm\\:ss}");
         return _theme.Apply(grid, LayoutSection.GameInfo);
     }
 
     private IRenderable CreateTypingArea()
     {
-        var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
+        // Use the cached text fields
+        var markup = _markupGenerator.BuildMarkupOptimized(_targetText, _userInput);
         return _theme.Apply(markup, LayoutSection.TypingArea);
     }
 

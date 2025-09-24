@@ -1,15 +1,55 @@
+using Typical.Core.Events;
+
 namespace Typical.Core.Statistics;
 
-internal class GameStats(TimeProvider? timeProvider = null)
+internal class GameStats
 {
+    private readonly IEventAggregator _eventAggregator;
+    private readonly TimeProvider _timeProvider;
     private readonly KeystrokeHistory _keystrokeHistory = [];
-    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
     private long? _startTimestamp;
     private long? _endTimestamp;
-    private bool _statsAreDirty = true; // Start dirty
+    private bool _statsAreDirty = true;
     private double _cachedWpm;
     private double _cachedAccuracy;
     private CharacterStats _cachedChars = new(0, 0, 0, 0);
+
+    public GameStats(IEventAggregator eventAggregator, TimeProvider? timeProvider = null)
+    {
+        _eventAggregator = eventAggregator;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _eventAggregator.Subscribe<KeyPressedEvent>(OnKeyPressed);
+        _eventAggregator.Subscribe<BackspacePressedEvent>(OnBackspacePressed);
+    }
+
+    private void OnBackspacePressed(BackspacePressedEvent @event)
+    {
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        _keystrokeHistory.RemoveLastCharacterLog();
+        _keystrokeHistory.Add(
+            new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp())
+        );
+
+        _statsAreDirty = true;
+    }
+
+    private void OnKeyPressed(KeyPressedEvent @event)
+    {
+        if (!IsRunning)
+        {
+            Start();
+        }
+
+        _keystrokeHistory.Add(
+            new KeystrokeLog(@event.Character, @event.Type, _timeProvider.GetTimestamp())
+        );
+        _statsAreDirty = true;
+    }
+
     public double WordsPerMinute
     {
         get
@@ -93,26 +133,5 @@ internal class GameStats(TimeProvider? timeProvider = null)
         _cachedChars = _keystrokeHistory.GetCharacterStats();
 
         _statsAreDirty = false;
-    }
-
-    internal void LogKeystroke(char keyChar, KeystrokeType extra)
-    {
-        if (!IsRunning)
-        {
-            Start();
-        }
-        _keystrokeHistory.Add(new KeystrokeLog(keyChar, extra, _timeProvider.GetTimestamp()));
-        _statsAreDirty = true;
-    }
-
-    internal void LogCorrection()
-    {
-        _keystrokeHistory.RemoveLastCharacterLog();
-
-        _keystrokeHistory.Add(
-            new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp())
-        );
-
-        _statsAreDirty = true;
     }
 }

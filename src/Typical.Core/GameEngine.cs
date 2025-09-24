@@ -10,17 +10,24 @@ public class GameEngine
     private readonly StringBuilder _userInput;
     private readonly ITextProvider _textProvider;
     private readonly GameOptions _gameOptions;
+    private readonly IEventAggregator _eventAggregator;
     private readonly GameStats _stats;
 
-    public GameEngine(ITextProvider textProvider)
-        : this(textProvider, new GameOptions()) { }
+    public GameEngine(ITextProvider textProvider, IEventAggregator eventAggregator)
+        : this(textProvider, eventAggregator, new GameOptions()) { }
 
-    public GameEngine(ITextProvider textProvider, GameOptions gameOptions)
+    public GameEngine(
+        ITextProvider textProvider,
+        IEventAggregator eventAggregator,
+        GameOptions gameOptions
+    )
     {
         _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
         _gameOptions = gameOptions;
         _userInput = new StringBuilder();
-        _stats = new GameStats();
+        _eventAggregator = eventAggregator;
+
+        _stats = new GameStats(_eventAggregator);
     }
 
     public string TargetText { get; private set; } = string.Empty;
@@ -29,43 +36,44 @@ public class GameEngine
     public bool IsRunning => !IsOver && _stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
-    public event EventHandler<GameEndedEventArgs>? GameEnded;
-    public event EventHandler<GameStateChangedEventArgs>? StateChanged;
-
     public bool ProcessKeyPress(ConsoleKeyInfo key)
     {
         if (key.Key == ConsoleKey.Escape)
         {
             IsOver = true;
             _stats.Stop();
+            _eventAggregator.Publish(new GameQuitEvent());
             return false;
         }
 
-        if (key.Key == ConsoleKey.Backspace && _userInput.Length > 0)
+        if (key.Key == ConsoleKey.Backspace)
         {
-            _userInput.Remove(_userInput.Length - 1, 1);
-            _stats.LogCorrection(); // Assuming you have/want this method
-            StateChanged?.Invoke(this, new GameStateChangedEventArgs());
+            if (_userInput.Length > 0)
+            {
+                _userInput.Remove(_userInput.Length - 1, 1);
+                _eventAggregator.Publish(new BackspacePressedEvent());
+                PublishStateUpdate();
+            }
             return true;
         }
+
         if (char.IsControl(key.KeyChar))
         {
-            return true; // Ignore other control characters but continue the game
+            return true;
         }
         char inputChar = key.KeyChar;
-
         KeystrokeType type = DetermineKeystrokeType(inputChar);
 
-        _stats.LogKeystroke(inputChar, type);
+        _eventAggregator.Publish(new KeyPressedEvent(inputChar, type, _userInput.Length));
 
         bool isCorrect = type == KeystrokeType.Correct;
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
             _userInput.Append(key.KeyChar);
-            StateChanged?.Invoke(this, new GameStateChangedEventArgs());
         }
 
         CheckEndCondition();
+        PublishStateUpdate();
 
         return true;
     }
@@ -94,7 +102,7 @@ public class GameEngine
             IsOver = true;
             _stats.Stop();
 
-            GameEnded?.Invoke(this, new GameEndedEventArgs(_stats.CreateSnapshot()));
+            _eventAggregator.Publish(new GameEndedEvent());
         }
     }
 
@@ -104,10 +112,13 @@ public class GameEngine
         _stats.Start();
         _userInput.Clear();
         IsOver = false;
+        PublishStateUpdate();
     }
 
-    public GameStatisticsSnapshot GetGameStatistics()
+    private void PublishStateUpdate()
     {
-        return _stats.CreateSnapshot();
+        var snapShot = _stats.CreateSnapshot();
+        var stateEvent = new GameStateUpdatedEvent(TargetText, UserInput, snapShot, IsOver);
+        _eventAggregator.Publish(stateEvent);
     }
 }
