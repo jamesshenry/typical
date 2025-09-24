@@ -44,7 +44,7 @@ public class GameEngine
         if (key.Key == ConsoleKey.Backspace && _userInput.Length > 0)
         {
             _userInput.Remove(_userInput.Length - 1, 1);
-            // _stats.LogCorrection(); // Assuming you have/want this method
+            _stats.LogCorrection(); // Assuming you have/want this method
             return true;
         }
         if (char.IsControl(key.KeyChar))
