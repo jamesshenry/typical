@@ -45,6 +45,7 @@ public class GameEngine
         {
             _userInput.Remove(_userInput.Length - 1, 1);
             _stats.LogCorrection(); // Assuming you have/want this method
+            StateChanged?.Invoke(this, new GameStateChangedEventArgs());
             return true;
         }
         if (char.IsControl(key.KeyChar))
