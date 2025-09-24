@@ -7,7 +7,6 @@ This is a console application similar to monkeytype, aimed at helping users impr
 ## Analysis Goals
 
 Please analyze the following codebase for potential bugs, performance improvements, and adherence to modern C# best practices.
-Specifically, there is currently a bug in the TypicalGame where backspaces arent registerd in the UI until the stats screen refreshes
 
 ## Directory Structure
 
