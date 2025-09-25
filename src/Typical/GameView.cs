@@ -10,7 +10,7 @@ using Typical.TUI.Settings;
 
 namespace Typical;
 
-public class TypicalGame
+public class GameView
 {
     private readonly MarkupGenerator _markupGenerator;
 
@@ -24,7 +24,7 @@ public class TypicalGame
     private bool _isGameOver;
     private bool _needsRefresh;
 
-    public TypicalGame(
+    public GameView(
         GameEngine engine,
         ThemeManager theme,
         MarkupGenerator markupGenerator,

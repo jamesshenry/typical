@@ -44,7 +44,7 @@ ITextProvider textProvider = new StaticTextProvider(text);
 var eventAggregator = new EventAggregator();
 var game = new GameEngine(textProvider, eventAggregator);
 var markupGenerator = new MarkupGenerator();
-var runner = new TypicalGame(
+var runner = new GameView(
     game,
     themeManager,
     markupGenerator,
