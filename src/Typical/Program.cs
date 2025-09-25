@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Spectre.Console;
 using Typical;
 using Typical.Core;
+using Typical.Core.Events;
 using Typical.Core.Text;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
@@ -40,15 +41,16 @@ string text = File.Exists(quotePath)
 
 ITextProvider textProvider = new StaticTextProvider(text);
 
-var game = new GameEngine(textProvider);
-await game.StartNewGame();
+var eventAggregator = new EventAggregator();
+var game = new GameEngine(textProvider, eventAggregator);
 var markupGenerator = new MarkupGenerator();
 var runner = new TypicalGame(
     game,
     themeManager,
     markupGenerator,
     layoutFactory,
+    eventAggregator,
     AnsiConsole.Console
 );
-runner.Run();
+await runner.RunAsync();
 Console.Clear();

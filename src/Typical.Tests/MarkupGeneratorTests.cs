@@ -37,7 +37,9 @@ public class MarkupGeneratorTests
         var result = _generator.BuildMarkupString(target, typed);
 
         // Assert
-        await Assert.That(result).IsEqualTo("[default on green]Hello[/][grey] world[/]");
+        await Assert
+            .That(result)
+            .IsEqualTo("[default on green]Hello[/][grey][underline] [/]world[/]");
     }
 
     [Test]
@@ -68,7 +70,7 @@ public class MarkupGeneratorTests
         var result = _generator.BuildMarkupString(target, typed);
 
         // Assert
-        await Assert.That(result).IsEqualTo("[grey]Hello world[/]");
+        await Assert.That(result).IsEqualTo("[grey][underline]H[/]ello world[/]");
     }
 
     // --- Edge Cases ---
