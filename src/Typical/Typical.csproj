@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Typical.Core\Typical.Core.csproj" />
+    <ProjectReference Include="..\Typical.DataAccess\Typical.DataAccess.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Typical.Tests" />

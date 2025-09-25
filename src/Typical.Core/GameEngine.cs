@@ -106,7 +106,8 @@ public class GameEngine
     public async Task StartNewGame()
     {
         CoreLogs.GameStarting(_logger);
-        TargetText = await _textProvider.GetTextAsync();
+        var text = await _textProvider.GetTextAsync();
+        TargetText = text.Text;
         _stats.Start();
         _userInput.Clear();
         IsOver = false;

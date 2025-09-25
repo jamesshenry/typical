@@ -7,9 +7,12 @@ using Serilog.Formatting.Display;
 using Serilog.Sinks.SystemConsole.Themes;
 using Spectre.Console;
 using Typical.Core;
+using Typical.Core.Data;
 using Typical.Core.Events;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
+using Typical.DataAccess;
+using Typical.DataAccess.LiteDB;
 using Typical.TUI;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
@@ -63,19 +66,11 @@ public static class ServiceExtensions
         ));
         services.AddSingleton(_ => new LayoutFactory(appSettings.Layouts.ToRuntimeLayouts()));
 
-        // SCOPED (useful for database contexts)
-        // services.AddDbContext<TypicalContext>();
-        // services.AddScoped<IQuoteRepository, SqliteQuoteRepository>();
+        services.AddScoped<IQuoteRepository, LiteDbQuoteRepository>(_ => new LiteDbQuoteRepository(
+            LiteDbConstants.ConnectionString
+        ));
         // ... other repositories
-        services.AddScoped<ITextProvider, StaticTextProvider>(_ =>
-        {
-            string quotePath = Path.Combine(AppContext.BaseDirectory, "quote.txt");
-            string text = File.Exists(quotePath)
-                ? File.ReadAllTextAsync(quotePath).Result
-                : "The quick brown fox jumps over the lazy dog.";
-
-            return new StaticTextProvider(text);
-        });
+        services.AddSingleton<ITextProvider, QuoteRepositoryTextProvider>();
         services.AddTransient<MarkupGenerator>();
         services.AddTransient<GameStats>();
         services.AddTransient<GameEngine>();
