@@ -41,11 +41,13 @@ public static class ServiceExtensions
                 )
                 .Enrich.WithProperty("ApplicationName", "<APP NAME>")
                 .Enrich.With<SourceClassEnricher>()
+#if DEBUG
                 .WriteTo.Console(
                     outputTemplate: outputTemplate,
                     theme: AnsiConsoleTheme.Sixteen,
                     restrictedToMinimumLevel: LogEventLevel.Information
                 )
+#endif
                 .CreateLogger()
         );
     }
