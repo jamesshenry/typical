@@ -8,6 +8,7 @@ using Typical.Core.Events;
 using Typical.Core.Text;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
+using Typical.TUI.Views;
 using Velopack;
 
 var pathHelper = new PathEnvironmentHelper(

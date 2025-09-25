@@ -8,7 +8,7 @@ using Typical.TUI;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
 
-namespace Typical;
+namespace Typical.TUI.Views;
 
 public class GameView
 {
