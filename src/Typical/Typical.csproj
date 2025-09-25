@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishSingleFile>true</PublishSingleFile>
-    <PublishAot>true</PublishAot>
+    <!-- <PublishAot>true</PublishAot> -->
     <DebugType>embedded</DebugType>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
@@ -47,7 +47,7 @@
     <None Include="config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="quote.txt">
+    <None Include="typical.db">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
