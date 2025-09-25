@@ -1,4 +1,8 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Typical.Core;
+using Typical.Core.Events;
+using Typical.Core.Statistics;
 
 namespace Typical.Tests;
 
@@ -7,6 +11,9 @@ public class TypicalGameTests
     private readonly MockTextProvider _mockTextProvider;
     private readonly GameOptions _defaultOptions;
     private readonly GameOptions _strictOptions;
+    private readonly ILogger<GameEngine> _logger;
+    private readonly IEventAggregator _eventAggregator;
+    private readonly GameStats _stats;
 
     public TypicalGameTests()
     {
@@ -14,6 +21,9 @@ public class TypicalGameTests
         _mockTextProvider = new MockTextProvider();
         _defaultOptions = new GameOptions();
         _strictOptions = new GameOptions { ForbidIncorrectEntries = true };
+        _logger = NullLogger<GameEngine>.Instance;
+        _eventAggregator = new EventAggregator();
+        _stats = new GameStats(_eventAggregator, null, NullLogger<GameStats>.Instance);
     }
 
     // --- StartNewGame Tests ---
@@ -24,7 +34,13 @@ public class TypicalGameTests
         // Arrange
         var expectedText = "This is a test.";
         _mockTextProvider.SetText(expectedText);
-        var game = new GameEngine(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(
+            _mockTextProvider,
+            _eventAggregator,
+            _defaultOptions,
+            _stats,
+            _logger
+        );
 
         // Act
         await game.StartNewGame();
@@ -38,7 +54,13 @@ public class TypicalGameTests
     {
         // Arrange
         _mockTextProvider.SetText("some text");
-        var game = new GameEngine(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(
+            _mockTextProvider,
+            _eventAggregator,
+            _defaultOptions,
+            _stats,
+            _logger
+        );
         await game.StartNewGame();
 
         // Simulate playing the game
@@ -65,7 +87,13 @@ public class TypicalGameTests
     public async Task ProcessKeyPress_EscapeKey_EndsGameAndReturnsFalse()
     {
         // Arrange
-        var game = new GameEngine(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(
+            _mockTextProvider,
+            _eventAggregator,
+            _defaultOptions,
+            _stats,
+            _logger
+        );
 
         // Act
         var result = game.ProcessKeyPress(
@@ -81,7 +109,13 @@ public class TypicalGameTests
     public async Task ProcessKeyPress_BackspaceKey_RemovesLastCharacter()
     {
         // Arrange
-        var game = new GameEngine(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(
+            _mockTextProvider,
+            _eventAggregator,
+            _defaultOptions,
+            _stats,
+            _logger
+        );
         game.ProcessKeyPress(new ConsoleKeyInfo('a', ConsoleKey.A, false, false, false));
         game.ProcessKeyPress(new ConsoleKeyInfo('b', ConsoleKey.B, false, false, false));
         await Assert.That(game.UserInput).IsEqualTo("ab");
@@ -105,7 +139,13 @@ public class TypicalGameTests
     public async Task ProcessKeyPress_BackspaceOnEmptyInput_DoesNothing()
     {
         // Arrange
-        var game = new GameEngine(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(
+            _mockTextProvider,
+            _eventAggregator,
+            _defaultOptions,
+            _stats,
+            _logger
+        );
         await Assert.That(game.UserInput).IsEmpty();
 
         // Act
@@ -128,7 +168,13 @@ public class TypicalGameTests
     {
         // Arrange
         _mockTextProvider.SetText("hi");
-        var game = new GameEngine(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(
+            _mockTextProvider,
+            _eventAggregator,
+            _defaultOptions,
+            _stats,
+            _logger
+        );
         await game.StartNewGame();
 
         // Act
@@ -147,7 +193,13 @@ public class TypicalGameTests
     {
         // Arrange
         _mockTextProvider.SetText("abc");
-        var game = new GameEngine(_mockTextProvider, _strictOptions);
+        var game = new GameEngine(
+            _mockTextProvider,
+            _eventAggregator,
+            _strictOptions,
+            _stats,
+            _logger
+        );
         await game.StartNewGame();
 
         // Act
@@ -162,7 +214,13 @@ public class TypicalGameTests
     {
         // Arrange
         _mockTextProvider.SetText("abc");
-        var game = new GameEngine(_mockTextProvider, _strictOptions);
+        var game = new GameEngine(
+            _mockTextProvider,
+            _eventAggregator,
+            _strictOptions,
+            _stats,
+            _logger
+        );
         await game.StartNewGame();
         await Assert.That(game.UserInput).IsEmpty();
 
@@ -178,7 +236,13 @@ public class TypicalGameTests
     {
         // Arrange
         _mockTextProvider.SetText("abc");
-        var game = new GameEngine(_mockTextProvider, _defaultOptions);
+        var game = new GameEngine(
+            _mockTextProvider,
+            _eventAggregator,
+            _defaultOptions,
+            _stats,
+            _logger
+        );
         await game.StartNewGame();
         await Assert.That(game.UserInput).IsEmpty();
 

@@ -2,11 +2,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Events;
 using Serilog.Formatting.Display;
 using Serilog.Sinks.SystemConsole.Themes;
 using Spectre.Console;
 using Typical.Core;
 using Typical.Core.Events;
+using Typical.Core.Statistics;
 using Typical.Core.Text;
 using Typical.TUI;
 using Typical.TUI.Runtime;
@@ -26,15 +28,21 @@ public static class ServiceExtensions
             "[{Timestamp:HH:mm:ss} {Level:u3}] ({SourceClass}) {Message:lj}{NewLine}{Exception}";
         builder.AddSerilog(
             new LoggerConfiguration()
+                .MinimumLevel.Debug()
                 .WriteTo.File(
                     formatter: new MessageTemplateTextFormatter(outputTemplate),
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "app-.log"),
                     shared: true,
-                    rollingInterval: RollingInterval.Day
+                    rollingInterval: RollingInterval.Day,
+                    restrictedToMinimumLevel: LogEventLevel.Debug
                 )
                 .Enrich.WithProperty("ApplicationName", "<APP NAME>")
                 .Enrich.With<SourceClassEnricher>()
-                .WriteTo.Console(outputTemplate: outputTemplate, theme: AnsiConsoleTheme.Sixteen)
+                .WriteTo.Console(
+                    outputTemplate: outputTemplate,
+                    theme: AnsiConsoleTheme.Sixteen,
+                    restrictedToMinimumLevel: LogEventLevel.Information
+                )
                 .CreateLogger()
         );
     }
@@ -44,18 +52,16 @@ public static class ServiceExtensions
         var configuration = CreateConfiguration();
         var appSettings = configuration.Get<AppSettings>()!;
         services.AddLogging(ConfigureSerilog);
-
+        services.AddSingleton<IGameEngineFactory, GameEngineFactory>();
         services.AddSingleton(configuration);
-
         services.AddSingleton<IEventAggregator, EventAggregator>();
         services.AddSingleton(AnsiConsole.Console);
-        services.AddSingleton<ThemeManager>(_ => new ThemeManager(
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton(_ => new ThemeManager(
             appSettings.Themes.ToRuntimeThemes(),
             defaultTheme: "Default"
-        )); // etc.
-        services.AddSingleton<LayoutFactory>(_ => new LayoutFactory(
-            appSettings.Layouts.ToRuntimeLayouts()
         ));
+        services.AddSingleton(_ => new LayoutFactory(appSettings.Layouts.ToRuntimeLayouts()));
 
         // SCOPED (useful for database contexts)
         // services.AddDbContext<TypicalContext>();
@@ -70,8 +76,8 @@ public static class ServiceExtensions
 
             return new StaticTextProvider(text);
         });
-        // TRANSIENT (a new instance every time)
         services.AddTransient<MarkupGenerator>();
+        services.AddTransient<GameStats>();
         services.AddTransient<GameEngine>();
         services.AddTransient<AppShell>();
         services.AddTransient<MainMenuView>();

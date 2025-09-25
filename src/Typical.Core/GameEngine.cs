@@ -1,5 +1,7 @@
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Typical.Core.Events;
+using Typical.Core.Logging;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
 
@@ -12,22 +14,22 @@ public class GameEngine
     private readonly GameOptions _gameOptions;
     private readonly IEventAggregator _eventAggregator;
     private readonly GameStats _stats;
-
-    public GameEngine(ITextProvider textProvider, IEventAggregator eventAggregator)
-        : this(textProvider, eventAggregator, new GameOptions()) { }
+    private readonly ILogger<GameEngine> _logger;
 
     public GameEngine(
         ITextProvider textProvider,
         IEventAggregator eventAggregator,
-        GameOptions gameOptions
+        GameOptions gameOptions,
+        GameStats stats,
+        ILogger<GameEngine> logger
     )
     {
-        _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
-        _gameOptions = gameOptions;
         _userInput = new StringBuilder();
+        _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
         _eventAggregator = eventAggregator;
-
-        _stats = new GameStats(_eventAggregator);
+        _gameOptions = gameOptions;
+        _stats = stats;
+        _logger = logger;
     }
 
     public string TargetText { get; private set; } = string.Empty;
@@ -42,6 +44,7 @@ public class GameEngine
         {
             IsOver = true;
             _stats.Stop();
+            CoreLogs.GameQuit(_logger);
             _eventAggregator.Publish(new GameQuitEvent());
             return false;
         }
@@ -64,6 +67,7 @@ public class GameEngine
         char inputChar = key.KeyChar;
         KeystrokeType type = DetermineKeystrokeType(inputChar);
 
+        CoreLogs.KeyProcessed(_logger, inputChar, type);
         _eventAggregator.Publish(new KeyPressedEvent(inputChar, type, _userInput.Length));
 
         bool isCorrect = type == KeystrokeType.Correct;
@@ -81,17 +85,10 @@ public class GameEngine
     private KeystrokeType DetermineKeystrokeType(char inputChar)
     {
         int currentPos = _userInput.Length;
-
         if (currentPos >= TargetText.Length)
-        {
             return KeystrokeType.Extra;
-        }
-
         if (inputChar == TargetText[currentPos])
-        {
             return KeystrokeType.Correct;
-        }
-
         return KeystrokeType.Incorrect;
     }
 
@@ -101,13 +98,14 @@ public class GameEngine
         {
             IsOver = true;
             _stats.Stop();
-
+            CoreLogs.GameFinished(_logger);
             _eventAggregator.Publish(new GameEndedEvent());
         }
     }
 
     public async Task StartNewGame()
     {
+        CoreLogs.GameStarting(_logger);
         TargetText = await _textProvider.GetTextAsync();
         _stats.Start();
         _userInput.Clear();
@@ -117,6 +115,7 @@ public class GameEngine
 
     private void PublishStateUpdate()
     {
+        CoreLogs.PublishingState(_logger);
         var snapShot = _stats.CreateSnapshot();
         var stateEvent = new GameStateUpdatedEvent(TargetText, UserInput, snapShot, IsOver);
         _eventAggregator.Publish(stateEvent);

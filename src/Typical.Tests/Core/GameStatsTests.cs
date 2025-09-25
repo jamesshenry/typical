@@ -1,6 +1,8 @@
 using System;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using TUnit;
+using Typical.Core.Events;
 using Typical.Core.Statistics;
 
 namespace Typical.Tests
@@ -10,7 +12,8 @@ namespace Typical.Tests
         [Test]
         public async Task InitialState_ShouldBeDefaults()
         {
-            var stats = new GameStats();
+            var eventAggregator = new EventAggregator();
+            var stats = new GameStats(eventAggregator, null, NullLogger<GameStats>.Instance);
 
             await Assert.That(stats.WordsPerMinute).IsEqualTo(0);
             await Assert.That(stats.Accuracy).IsEqualTo(100);
@@ -21,7 +24,8 @@ namespace Typical.Tests
         public async Task Start_ShouldSetIsRunningTrue()
         {
             var fakeTime = new FakeTimeProvider();
-            var stats = new GameStats(fakeTime);
+            var eventAggregator = new EventAggregator();
+            var stats = new GameStats(eventAggregator, fakeTime, NullLogger<GameStats>.Instance);
 
             stats.Start();
 
@@ -32,7 +36,8 @@ namespace Typical.Tests
         public async Task Stop_ShouldSetIsRunningFalse()
         {
             var fakeTime = new FakeTimeProvider();
-            var stats = new GameStats(fakeTime);
+            var eventAggregator = new EventAggregator();
+            var stats = new GameStats(eventAggregator, fakeTime, NullLogger<GameStats>.Instance);
 
             stats.Start();
             fakeTime.Advance(TimeSpan.FromSeconds(1));
@@ -45,7 +50,8 @@ namespace Typical.Tests
         public async Task Update_ShouldCalculateAccuracy()
         {
             var fakeTime = new FakeTimeProvider();
-            var stats = new GameStats(fakeTime);
+            var eventAggregator = new EventAggregator();
+            var stats = new GameStats(eventAggregator, fakeTime, NullLogger<GameStats>.Instance);
 
             stats.Start();
             fakeTime.Advance(TimeSpan.FromSeconds(1));
@@ -54,14 +60,8 @@ namespace Typical.Tests
 
             foreach (var (c, i) in target.Zip(input))
             {
-                if (c == i)
-                {
-                    stats.LogKeystroke(c, KeystrokeType.Correct);
-                }
-                else
-                {
-                    stats.LogKeystroke(i, KeystrokeType.Incorrect);
-                }
+                var type = c == i ? KeystrokeType.Correct : KeystrokeType.Incorrect;
+                eventAggregator.Publish(new KeyPressedEvent(i, type, 0));
             }
             await Assert.That(stats.Accuracy).IsEqualTo(80);
         }
@@ -70,7 +70,8 @@ namespace Typical.Tests
         public async Task Update_ShouldCalculateWordsPerMinute()
         {
             var fakeTime = new FakeTimeProvider();
-            var stats = new GameStats(fakeTime);
+            var eventAggregator = new EventAggregator();
+            var stats = new GameStats(eventAggregator, fakeTime, NullLogger<GameStats>.Instance);
 
             stats.Start();
             fakeTime.Advance(TimeSpan.FromSeconds(1));
@@ -79,14 +80,8 @@ namespace Typical.Tests
 
             foreach (var (c, i) in target.Zip(input))
             {
-                if (c == i)
-                {
-                    stats.LogKeystroke(c, KeystrokeType.Correct);
-                }
-                else
-                {
-                    stats.LogKeystroke(i, KeystrokeType.Incorrect);
-                }
+                var type = c == i ? KeystrokeType.Correct : KeystrokeType.Incorrect;
+                eventAggregator.Publish(new KeyPressedEvent(i, type, 0));
             }
 
             await Assert.That(stats.WordsPerMinute).IsEqualTo(60);

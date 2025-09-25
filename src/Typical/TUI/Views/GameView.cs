@@ -12,7 +12,8 @@ public class GameView : IView
 {
     private readonly MarkupGenerator _markupGenerator;
 
-    private readonly GameEngine _engine;
+    private GameEngine _engine = default!;
+    private readonly IGameEngineFactory _gameEngineFactory;
     private readonly ThemeManager _theme;
     private readonly LayoutFactory _layoutFactory;
     private readonly IAnsiConsole _console;
@@ -23,7 +24,7 @@ public class GameView : IView
     private bool _needsRefresh;
 
     public GameView(
-        GameEngine engine,
+        IGameEngineFactory gameEngineFactory,
         ThemeManager theme,
         MarkupGenerator markupGenerator,
         LayoutFactory layoutFactory,
@@ -31,7 +32,7 @@ public class GameView : IView
         IAnsiConsole console
     )
     {
-        _engine = engine;
+        _gameEngineFactory = gameEngineFactory;
         _theme = theme;
         _markupGenerator = markupGenerator;
         _layoutFactory = layoutFactory;
@@ -48,12 +49,17 @@ public class GameView : IView
         _statistics = e.Statistics;
         _isGameOver = e.IsOver;
 
-        // Set a single flag to refresh the entire UI
         _needsRefresh = true;
     }
 
     public async Task RenderAsync()
     {
+        await RenderAsync(GameOptions.Default);
+    }
+
+    public async Task RenderAsync(GameOptions options)
+    {
+        _engine = _gameEngineFactory.Create(options);
         var layout = _layoutFactory.Build(LayoutName.Dashboard);
         await _console
             .Live(layout)
@@ -93,7 +99,7 @@ public class GameView : IView
                         layout[LayoutSection.TypingArea.Value].Update(CreateTypingArea());
                         layout[LayoutSection.GameInfo.Value].Update(CreateGameInfoArea());
                         ctx.Refresh();
-                        _needsRefresh = false; // Reset the flag
+                        _needsRefresh = false;
                     }
 
                     if (_isGameOver)
@@ -112,7 +118,6 @@ public class GameView : IView
 
     private IRenderable CreateGameInfoArea()
     {
-        // Use the cached statistics object
         if (_statistics is null)
             return new Text("");
 
@@ -129,7 +134,6 @@ public class GameView : IView
 
     private IRenderable CreateTypingArea()
     {
-        // Use the cached text fields
         var markup = _markupGenerator.BuildMarkupOptimized(_targetText, _userInput);
         return _theme.Apply(markup, LayoutSection.TypingArea);
     }

@@ -5,11 +5,15 @@ using Typical.TUI;
 public static partial class AppLogs
 {
     // Define a log message with ID, level, template
-    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Application starting...")]
+    [LoggerMessage(
+        EventId = 1000,
+        Level = LogLevel.Information,
+        Message = "Application starting..."
+    )]
     public static partial void ApplicationStarting(ILogger logger);
 
     [LoggerMessage(
-        EventId = 2,
+        EventId = 1001,
         Level = LogLevel.Information,
         Message = "No commands specified, starting interactive AppShell."
     )]
@@ -17,21 +21,21 @@ public static partial class AppLogs
 
     // Example with parameters
     [LoggerMessage(
-        EventId = 3,
+        EventId = 1002,
         Level = LogLevel.Warning,
         Message = "Failed to process user {UserId}"
     )]
     public static partial void FailedToProcessUser(ILogger logger, int userId);
 
     [LoggerMessage(
-        EventId = 4,
+        EventId = 1003,
         Level = LogLevel.Warning,
         Message = "Starting direct game with Mode: {Mode}, Duration: {Duration}"
     )]
     public static partial void StartingGame(ILogger logger, string mode, int duration);
 
     [LoggerMessage(
-        EventId = 0,
+        EventId = 1004,
         Level = LogLevel.Information,
         Message = ("Application shutting down.")
     )]

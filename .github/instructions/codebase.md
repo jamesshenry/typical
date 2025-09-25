@@ -7,6 +7,7 @@ This is a console application similar to monkeytype, aimed at helping users impr
 ## Analysis Goals
 
 Please analyze the following codebase for potential bugs, performance improvements, and adherence to modern C# best practices.
+Your current task is to improve the logging system of the application. Focus on a specific area each time and plan your steps. Never run an external command unless requested
 
 ## Directory Structure
 
@@ -26,9 +27,181 @@ Below is a summary of the directory structure to provide context for the file or
 
 ## --- Start of Code Files ---
 
+- Typical
+- Typical.Core
+- Typical.Tests
+  - Commands
+  - Configuration
+  - Data
+  - Filters
+  - Logging
+  - Properties
+  - Services
+  - TUI
+    - Enums
+    - Runtime
+    - Settings
+    - Views
+  - Events
+  - Statistics
+  - Text
+  - Core
+  - TUI
+
+# --- Start of Code Files ---
+
+// File: src\Typical\Logging\AppLogs.cs
+
+using Microsoft.Extensions.Logging;
+using Typical;
+using Typical.TUI;
+
+public static partial class AppLogs
+{
+    // Define a log message with ID, level, template
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Application starting...")]
+    public static partial void ApplicationStarting(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 2,
+        Level = LogLevel.Information,
+        Message = "No commands specified, starting interactive AppShell."
+    )]
+    public static partial void NoCommandsInteractive(ILogger logger);
+
+    // Example with parameters
+    [LoggerMessage(
+        EventId = 3,
+        Level = LogLevel.Warning,
+        Message = "Failed to process user {UserId}"
+    )]
+    public static partial void FailedToProcessUser(ILogger logger, int userId);
+
+    [LoggerMessage(
+        EventId = 4,
+        Level = LogLevel.Warning,
+        Message = "Starting direct game with Mode: {Mode}, Duration: {Duration}"
+    )]
+    public static partial void StartingGame(ILogger logger, string mode, int duration);
+
+    [LoggerMessage(
+        EventId = 0,
+        Level = LogLevel.Information,
+        Message = ("Application shutting down.")
+    )]
+    public static partial void ApplicationStopping(ILogger<AppShell> logger);
+}
+
+// File: src\Typical\Logging\SourceClassEnricher.cs
+
+using Serilog.Core;
+using Serilog.Events;
+
+public class SourceClassEnricher : ILogEventEnricher
+{
+    public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
+    {
+        if (
+            logEvent.Properties.TryGetValue("SourceContext", out var value)
+            && value is ScalarValue sv
+            && sv.Value is string fullName
+        )
+        {
+            var shortName = fullName.Split('.').Last();
+            var property = propertyFactory.CreateProperty("SourceClass", shortName);
+            logEvent.AddOrUpdateProperty(property);
+        }
+    }
+}
+
+// File: src\Typical\Services\ServiceExtensions.cs
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Formatting.Display;
+using Serilog.Sinks.SystemConsole.Themes;
+using Spectre.Console;
+using Typical.Core;
+using Typical.Core.Events;
+using Typical.Core.Text;
+using Typical.TUI;
+using Typical.TUI.Runtime;
+using Typical.TUI.Settings;
+using Typical.TUI.Views;
+
+namespace Typical.Services;
+
+public static class ServiceExtensions
+{
+    public static IConfiguration CreateConfiguration() =>
+        new ConfigurationBuilder().AddJsonFile("./config.json", false).Build();
+
+    public static void ConfigureSerilog(this ILoggingBuilder builder)
+    {
+        const string outputTemplate =
+            "[{Timestamp:HH:mm:ss} {Level:u3}] ({SourceClass}) {Message:lj}{NewLine}{Exception}";
+        builder.AddSerilog(
+            new LoggerConfiguration()
+                .WriteTo.File(
+                    formatter: new MessageTemplateTextFormatter(outputTemplate),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "app-.log"),
+                    shared: true,
+                    rollingInterval: RollingInterval.Day
+                )
+                .Enrich.WithProperty("ApplicationName", "<APP NAME>")
+                .Enrich.With<SourceClassEnricher>()
+                .WriteTo.Console(outputTemplate: outputTemplate, theme: AnsiConsoleTheme.Sixteen)
+                .CreateLogger()
+        );
+    }
+
+    public static IServiceCollection RegisterAppServices(this IServiceCollection services)
+    {
+        var configuration = CreateConfiguration();
+        var appSettings = configuration.Get<AppSettings>()!;
+        services.AddLogging(ConfigureSerilog);
+
+        services.AddSingleton(configuration);
+
+        services.AddSingleton<IEventAggregator, EventAggregator>();
+        services.AddSingleton(AnsiConsole.Console);
+        services.AddSingleton<ThemeManager>(_ => new ThemeManager(
+            appSettings.Themes.ToRuntimeThemes(),
+            defaultTheme: "Default"
+        )); // etc.
+        services.AddSingleton<LayoutFactory>(_ => new LayoutFactory(
+            appSettings.Layouts.ToRuntimeLayouts()
+        ));
+
+        // SCOPED (useful for database contexts)
+        // services.AddDbContext<TypicalContext>();
+        // services.AddScoped<IQuoteRepository, SqliteQuoteRepository>();
+        // ... other repositories
+        services.AddScoped<ITextProvider, StaticTextProvider>(_ =>
+        {
+            string quotePath = Path.Combine(AppContext.BaseDirectory, "quote.txt");
+            string text = File.Exists(quotePath)
+                ? File.ReadAllTextAsync(quotePath).Result
+                : "The quick brown fox jumps over the lazy dog.";
+
+            return new StaticTextProvider(text);
+        });
+        // TRANSIENT (a new instance every time)
+        services.AddTransient<MarkupGenerator>();
+        services.AddTransient<GameEngine>();
+        services.AddTransient<AppShell>();
+        services.AddTransient<MainMenuView>();
+        services.AddTransient<GameView>();
+        services.AddTransient<StatsView>();
+
+        return services;
+    }
+}
+
 // File: src\Typical\TUI\Enums\HorizontalAlignment.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public enum HorizontalAlignment
@@ -37,11 +210,9 @@ public enum HorizontalAlignment
     Center,
     Right,
 }
-```
 
 // File: src\Typical\TUI\Enums\LayoutDirection.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public enum LayoutDirection
@@ -49,11 +220,9 @@ public enum LayoutDirection
     Rows,
     Columns,
 }
-```
 
 // File: src\Typical\TUI\Enums\VerticalAlignment.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public enum VerticalAlignment
@@ -62,11 +231,9 @@ public enum VerticalAlignment
     Middle,
     Bottom,
 }
-```
 
 // File: src\Typical\TUI\Runtime\LayoutConversion.cs
 
-```cs
 using Typical.TUI.Settings;
 
 namespace Typical.TUI.Runtime;
@@ -131,11 +298,9 @@ public static class LayoutConversion
             ),
         };
 }
-```
 
 // File: src\Typical\TUI\Runtime\LayoutFactory.cs
 
-```cs
 using Spectre.Console;
 using Typical.TUI.Settings;
 
@@ -182,11 +347,9 @@ public class LayoutFactory
         return layout;
     }
 }
-```
 
 // File: src\Typical\TUI\Runtime\LayoutNode.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public record LayoutNode(
@@ -194,11 +357,9 @@ public record LayoutNode(
     LayoutDirection Direction,
     Dictionary<LayoutSection, LayoutNode> Children
 );
-```
 
 // File: src\Typical\TUI\Runtime\ThemeConversion.cs
 
-```cs
 using Typical.TUI.Settings;
 
 namespace Typical.TUI.Runtime;
@@ -257,11 +418,9 @@ public class RuntimeLayoutDict : Dictionary<LayoutName, LayoutNode>
     public RuntimeLayoutDict(Dictionary<LayoutName, LayoutNode> dictionary)
         : base(dictionary) { }
 }
-```
 
 // File: src\Typical\TUI\Settings\AlignmentSettings.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public class AlignmentSettings
@@ -269,11 +428,9 @@ public class AlignmentSettings
     public VerticalAlignment Vertical { get; set; }
     public HorizontalAlignment Horizontal { get; set; }
 }
-```
 
 // File: src\Typical\TUI\Settings\AppSettings.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public class AppSettings
@@ -281,11 +438,9 @@ public class AppSettings
     public ThemeDict Themes { get; set; } = [];
     public LayoutPresetDict Layouts { get; set; } = [];
 }
-```
 
 // File: src\Typical\TUI\Settings\AppSettingsExtensions.cs
 
-```cs
 using Typical.TUI.Runtime;
 
 namespace Typical.TUI.Settings;
@@ -304,11 +459,9 @@ public static class AppSettingsExtensions
 
     // Themes can stay string-keyed or convert similarly if needed
 }
-```
 
 // File: src\Typical\TUI\Settings\BorderStyleSettings.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public class BorderStyleSettings
@@ -316,11 +469,9 @@ public class BorderStyleSettings
     public string? ForegroundColor { get; set; }
     public string? Decoration { get; set; }
 }
-```
 
 // File: src\Typical\TUI\Settings\ElementStyle.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public class ElementStyle
@@ -330,11 +481,9 @@ public class ElementStyle
     public AlignmentSettings? Alignment { get; set; }
     public bool WrapInPanel { get; internal set; } = true;
 }
-```
 
 // File: src\Typical\TUI\Settings\LayoutDefinition.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public class LayoutDefinition
@@ -344,11 +493,9 @@ public class LayoutDefinition
     public string? SplitDirection { get; set; } = "Columns";
     public List<LayoutDefinition> Children { get; set; } = [];
 }
-```
 
 // File: src\Typical\TUI\Settings\LayoutName.cs
 
-```cs
 using System.Diagnostics.CodeAnalysis;
 using Vogen;
 
@@ -366,11 +513,9 @@ public partial record LayoutName
         Dashboard,
     };
 }
-```
 
 // File: src\Typical\TUI\Settings\LayoutSection.cs
 
-```cs
 using Vogen;
 
 namespace Typical.TUI.Settings;
@@ -400,22 +545,18 @@ public partial record LayoutSection
         Center,
     };
 }
-```
 
 // File: src\Typical\TUI\Settings\PanelHeaderSettings.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public class PanelHeaderSettings
 {
     public string? Text { get; set; }
 }
-```
 
 // File: src\Typical\TUI\Settings\ThemeManager.cs
 
-```cs
 using Spectre.Console;
 using Spectre.Console.Rendering;
 using Typical.TUI.Runtime;
@@ -522,11 +663,9 @@ public class ThemeManager
         return exists && theme is not null;
     }
 }
-```
 
 // File: src\Typical\TUI\Settings\ThemeSettings.cs
 
-```cs
 namespace Typical.TUI.Settings;
 
 public class Theme : Dictionary<string, ElementStyle> { }
@@ -534,11 +673,287 @@ public class Theme : Dictionary<string, ElementStyle> { }
 public class LayoutPresetDict : Dictionary<string, LayoutDefinition>;
 
 public class ThemeDict : Dictionary<string, Theme> { }
-```
+
+// File: src\Typical\TUI\Views\GameView.cs
+
+using Spectre.Console;
+using Spectre.Console.Rendering;
+using Typical.Core;
+using Typical.Core.Events;
+using Typical.Core.Statistics;
+using Typical.TUI.Runtime;
+using Typical.TUI.Settings;
+
+namespace Typical.TUI.Views;
+
+public class GameView : IView
+{
+    private readonly MarkupGenerator _markupGenerator;
+
+    private readonly GameEngine _engine;
+    private readonly ThemeManager _theme;
+    private readonly LayoutFactory _layoutFactory;
+    private readonly IAnsiConsole _console;
+    private string _targetText = string.Empty;
+    private string _userInput = string.Empty;
+    private GameStatisticsSnapshot _statistics = GameStatisticsSnapshot.Empty;
+    private bool _isGameOver;
+    private bool _needsRefresh;
+
+    public GameView(
+        GameEngine engine,
+        ThemeManager theme,
+        MarkupGenerator markupGenerator,
+        LayoutFactory layoutFactory,
+        IEventAggregator eventAggregator,
+        IAnsiConsole console
+    )
+    {
+        _engine = engine;
+        _theme = theme;
+        _markupGenerator = markupGenerator;
+        _layoutFactory = layoutFactory;
+        _console = console;
+
+        eventAggregator.Subscribe<GameStateUpdatedEvent>(OnGameStateUpdated);
+    }
+
+    private void OnGameStateUpdated(GameStateUpdatedEvent e)
+    {
+        // Cache the new state
+        _targetText = e.TargetText;
+        _userInput = e.UserInput;
+        _statistics = e.Statistics;
+        _isGameOver = e.IsOver;
+
+        // Set a single flag to refresh the entire UI
+        _needsRefresh = true;
+    }
+
+    public async Task RenderAsync()
+    {
+        var layout = _layoutFactory.Build(LayoutName.Dashboard);
+        await _console
+            .Live(layout)
+            .StartAsync(async ctx =>
+            {
+                await _engine.StartNewGame();
+                var typingArea = layout[LayoutSection.TypingArea.Value];
+                var statsArea = layout[LayoutSection.GameInfo.Value];
+                var headerArea = layout[LayoutSection.Header.Value];
+                typingArea.Update(CreateTypingArea());
+                statsArea.Update(CreateGameInfoArea());
+                headerArea.Update(CreateHeader());
+
+                ctx.Refresh();
+
+                int lastHeight = Console.WindowHeight;
+                int lastWidth = Console.WindowWidth;
+
+                while (!_isGameOver)
+                {
+                    if (Console.WindowWidth != lastWidth || Console.WindowHeight != lastHeight)
+                    {
+                        lastWidth = Console.WindowWidth;
+                        lastHeight = Console.WindowHeight;
+                        _needsRefresh = true;
+                    }
+
+                    if (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(true);
+                        if (!_engine.ProcessKeyPress(key))
+                            break;
+                    }
+
+                    if (_needsRefresh)
+                    {
+                        layout[LayoutSection.TypingArea.Value].Update(CreateTypingArea());
+                        layout[LayoutSection.GameInfo.Value].Update(CreateGameInfoArea());
+                        ctx.Refresh();
+                        _needsRefresh = false; // Reset the flag
+                    }
+
+                    if (_isGameOver)
+                    {
+                        ctx.Refresh();
+                        Thread.Sleep(500);
+                        break;
+                    }
+
+                    Thread.Sleep(_engine.TargetFrameDelayMilliseconds);
+                }
+            });
+
+        DisplaySummary();
+    }
+
+    private IRenderable CreateGameInfoArea()
+    {
+        // Use the cached statistics object
+        if (_statistics is null)
+            return new Text("");
+
+        var grid = new Grid();
+        grid.AddColumns([new GridColumn(), new GridColumn()]);
+        grid.AddRow("WPM:", $"{_statistics.WordsPerMinute:F1}");
+        grid.AddRow("Accuracy:", $"{_statistics.Accuracy:F1}%");
+        grid.AddRow("Correct Chars:", $"{_statistics.Chars.Correct}");
+        grid.AddRow("Incorrect Chars:", $"{_statistics.Chars.Incorrect}");
+        grid.AddRow("Extra Chars:", $"{_statistics.Chars.Extra}");
+        grid.AddRow("Elapsed:", $"{_statistics.ElapsedTime:mm\\:ss}");
+        return _theme.Apply(grid, LayoutSection.GameInfo);
+    }
+
+    private IRenderable CreateTypingArea()
+    {
+        // Use the cached text fields
+        var markup = _markupGenerator.BuildMarkupOptimized(_targetText, _userInput);
+        return _theme.Apply(markup, LayoutSection.TypingArea);
+    }
+
+    private IRenderable CreateHeader()
+    {
+        return _theme.Apply(new Markup("Typical - A Typing Tutor"), LayoutSection.Header);
+    }
+
+    private Action<string> DisplaySummary() =>
+        summaryString => AnsiConsole.MarkupLineInterpolated($"[bold green]{summaryString}[/]");
+}
+
+// File: src\Typical\TUI\Views\IView.cs
+
+namespace Typical.TUI.Views;
+
+public interface IView
+{
+    // Renders the content of the view.
+    Task RenderAsync();
+}
+
+public class StatsView : IView
+{
+    public Task RenderAsync()
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class MainMenuView : IView
+{
+    public Task RenderAsync()
+    {
+        throw new NotImplementedException();
+    }
+}
+
+// File: src\Typical\TUI\AppShell.cs
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Typical.TUI.Views;
+
+namespace Typical.TUI;
+
+public class AppShell
+{
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<AppShell>_logger;
+
+    public AppShell(IServiceProvider serviceProvider, ILogger<AppShell> logger)
+    {
+        _serviceProvider = serviceProvider;
+        _logger = logger;
+    }
+
+    public async Task RunAsync()
+    {
+        AppLogs.ApplicationStarting(_logger);
+        IView currentView = _serviceProvider.GetRequiredService<GameView>();
+
+        if (currentView != null)
+        {
+            await currentView.RenderAsync();
+
+            // The view's RenderAsync method would return the next view to transition to,
+            // or null to quit.
+            // e.g., MainMenuView returns a new GameView when the user selects "Start".
+            // currentView = await currentView.GetNextViewAsync();
+        }
+        AppLogs.ApplicationStopping(_logger);
+    }
+}
+
+// File: src\Typical\ApplicationCommands.cs
+
+using ConsoleAppFramework;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Typical.TUI;
+using Typical.TUI.Views;
+
+namespace Typical;
+
+// The [Command] attribute on the class is optional but good practice.
+public class ApplicationCommands
+{
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<ApplicationCommands>_logger;
+
+    // The DI container will inject the services we need here.
+    public ApplicationCommands(
+        IServiceProvider serviceProvider,
+        ILogger<ApplicationCommands> logger
+    )
+    {
+        _serviceProvider = serviceProvider;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// The entry point for interactive mode (when no arguments are given).
+    /// </summary>
+    [Command("")]
+    public async Task RunInteractive()
+    {
+        AppLogs.NoCommandsInteractive(_logger);
+
+        // Resolve the AppShell from the DI container and run it.
+        var appShell = _serviceProvider.GetRequiredService<AppShell>();
+        await appShell.RunAsync();
+    }
+
+    /// <summary>
+    /// Directly starts a typing game, bypassing the main menu.
+    /// </summary>
+    [Command("play")]
+    public async Task Play(string mode = "Quote", int duration = 60)
+    {
+        AppLogs.StartingGame(_logger, mode, duration);
+
+        // Resolve a GameView directly from the DI container.
+        // This is a "one-shot" game session.
+        var gameView = _serviceProvider.GetRequiredService<GameView>();
+
+        // We would need to pass these options to the GameView to configure the game.
+        // For example: await gameView.RunAsync(new GameOptions { Mode = mode, Duration = duration });
+        await gameView.RenderAsync(); // Simplified for this example
+    }
+
+    /// <summary>
+    /// Displays user statistics directly.
+    /// </summary>
+    [Command("stats")]
+    public async Task ShowStats()
+    {
+        _logger.LogInformation("Displaying stats view.");
+        var statsView = _serviceProvider.GetRequiredService<StatsView>();
+        await statsView.RenderAsync();
+    }
+}
 
 // File: src\Typical\ConfigurationExtensions.cs
 
-```cs
 // using Microsoft.Extensions.Configuration;
 // using Typical.TUI;
 // using Typical.TUI.Settings;
@@ -578,11 +993,9 @@ public class ThemeDict : Dictionary<string, Theme> { }
 //         return dict;
 //     }
 // }
-```
 
 // File: src\Typical\MarkupGenerator.cs
 
-```cs
 using System.Text;
 using Spectre.Console;
 
@@ -662,70 +1075,31 @@ public class MarkupGenerator
             _ => "[grey]",
         };
 }
-```
 
 // File: src\Typical\Program.cs
 
-```cs
-using System.Reflection;
-using DotNetPathUtils;
-using Microsoft.Extensions.Configuration;
-using Spectre.Console;
+using ConsoleAppFramework;
+using Microsoft.Extensions.DependencyInjection;
 using Typical;
-using Typical.Core;
-using Typical.Core.Text;
-using Typical.TUI.Runtime;
-using Typical.TUI.Settings;
+using Typical.Services;
 using Velopack;
 
-var pathHelper = new PathEnvironmentHelper(
-    new PathUtilsOptions()
-    {
-        DirectoryNameCase = DirectoryNameCase.CamelCase,
-        PrefixWithPeriod = false,
-    }
-);
-if (OperatingSystem.IsWindows())
-{
-    var appDirectory = Path.GetDirectoryName(AppContext.BaseDirectory);
-    VelopackApp
-        .Build()
-        .OnAfterInstallFastCallback(v => pathHelper.EnsureDirectoryIsInPath(appDirectory!))
-        .OnBeforeUninstallFastCallback(v => pathHelper.RemoveDirectoryFromPath(appDirectory!))
-        .Run();
-}
-var configuration = new ConfigurationBuilder().AddJsonFile("config.json").Build();
+VelopackApp.Build().Run();
 
-var appSettings = configuration.Get<AppSettings>()!;
+var services = new ServiceCollection();
 
-var themeManager = new ThemeManager(appSettings.Themes.ToRuntimeThemes(), defaultTheme: "Default");
-var layoutFactory = new LayoutFactory(appSettings.Layouts.ToRuntimeLayouts());
+services.RegisterAppServices();
 
-string quotePath = Path.Combine(AppContext.BaseDirectory, "quote.txt");
+ConsoleApp.ServiceProvider = services.BuildServiceProvider();
 
-string text = File.Exists(quotePath)
-    ? await File.ReadAllTextAsync(quotePath)
-    : "The quick brown fox jumps over the lazy dog.";
+var app = ConsoleApp.Create();
 
-ITextProvider textProvider = new StaticTextProvider(text);
+app.Add<ApplicationCommands>();
 
-var game = new GameEngine(textProvider);
-await game.StartNewGame();
-var markupGenerator = new MarkupGenerator();
-var runner = new TypicalGame(
-    game,
-    themeManager,
-    markupGenerator,
-    layoutFactory,
-    AnsiConsole.Console
-);
-runner.Run();
-Console.Clear();
-```
+await app.RunAsync(args);
 
 // File: src\Typical\StaticTextProvider.cs
 
-```cs
 using Typical.Core.Text;
 
 namespace Typical;
@@ -736,160 +1110,9 @@ internal class StaticTextProvider(string text) : ITextProvider
 
     public Task<string> GetTextAsync() => Task.FromResult(_text);
 }
-```
-
-// File: src\Typical\TypicalGame.cs
-
-```cs
-using System.Diagnostics;
-using Spectre.Console;
-using Spectre.Console.Rendering;
-using Typical.Core;
-using Typical.Core.Events;
-using Typical.TUI;
-using Typical.TUI.Runtime;
-using Typical.TUI.Settings;
-
-namespace Typical;
-
-public class TypicalGame
-{
-    private readonly MarkupGenerator _markupGenerator;
-    private readonly GameEngine_engine;
-    private readonly ThemeManager _theme;
-    private readonly LayoutFactory_layoutFactory;
-    private readonly IAnsiConsole _console;
-    private bool_needsTypingRefresh;
-    private bool _needsStatsRefresh;
-
-    public TypicalGame(
-        GameEngine engine,
-        ThemeManager theme,
-        MarkupGenerator markupGenerator,
-        LayoutFactory layoutFactory,
-        IAnsiConsole console
-    )
-    {
-        _engine = engine;
-        _engine.GameEnded += OnEngineGameEnded;
-        _engine.StateChanged += StateChanged;
-        _theme = theme;
-        _markupGenerator = markupGenerator;
-        _layoutFactory = layoutFactory;
-        _console = console;
-    }
-
-    private void StateChanged(object? sender, GameStateChangedEventArgs e)
-    {
-        _needsTypingRefresh = true;
-    }
-
-    private void OnEngineGameEnded(object? sender, GameEndedEventArgs e)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void Run()
-    {
-        var layout = _layoutFactory.Build(LayoutName.Dashboard);
-        const int statsUpdateIntervalMs = 1000; // Update stats every 2 seconds
-        var statsTimer = Stopwatch.StartNew();
-        _console
-            .Live(layout)
-            .Start(ctx =>
-            {
-                var typingArea = layout[LayoutSection.TypingArea.Value];
-                var statsArea = layout[LayoutSection.GameInfo.Value];
-                var headerArea = layout[LayoutSection.Header.Value];
-                typingArea.Update(CreateTypingArea());
-                statsArea.Update(CreateGameInfoArea());
-                headerArea.Update(CreateHeader());
-
-                ctx.Refresh();
-
-                int lastHeight = Console.WindowHeight;
-                int lastWidth = Console.WindowWidth;
-
-                while (true)
-                {
-                    if (Console.WindowWidth != lastWidth || Console.WindowHeight != lastHeight)
-                    {
-                        lastWidth = Console.WindowWidth;
-                        lastHeight = Console.WindowHeight;
-                        _needsTypingRefresh = true;
-                        _needsStatsRefresh = true;
-                    }
-
-                    if (Console.KeyAvailable)
-                    {
-                        var key = Console.ReadKey(true);
-                        if (!_engine.ProcessKeyPress(key))
-                            break;
-                    }
-
-                    if (_engine.IsRunning && statsTimer.ElapsedMilliseconds > statsUpdateIntervalMs)
-                    {
-                        _needsStatsRefresh = true;
-                        statsTimer.Restart(); // Reset the timer
-                    }
-
-                    if (_needsTypingRefresh || _needsStatsRefresh)
-                    {
-                        typingArea.Update(CreateTypingArea());
-                        statsArea.Update(CreateGameInfoArea());
-                        ctx.Refresh();
-                        _needsTypingRefresh = false;
-                        _needsStatsRefresh = false;
-                    }
-
-                    if (_engine.IsOver)
-                    {
-                        ctx.Refresh();
-                        Thread.Sleep(500);
-                        break;
-                    }
-
-                    Thread.Sleep(_engine.TargetFrameDelayMilliseconds);
-                }
-            });
-
-        DisplaySummary();
-    }
-
-    private IRenderable CreateGameInfoArea()
-    {
-        var stats = _engine.GetGameStatistics();
-        var grid = new Grid();
-        grid.AddColumns([new GridColumn(), new GridColumn()]);
-        grid.AddRow("WPM:", $"{stats.WordsPerMinute:F1}");
-        grid.AddRow("Accuracy:", $"{stats.Accuracy:F1}%");
-        grid.AddRow("Correct Chars:", $"{stats.Chars.Correct}");
-        grid.AddRow("Incorrect Chars:", $"{stats.Chars.Incorrect}");
-        grid.AddRow("Extra Chars:", $"{stats.Chars.Extra}");
-        grid.AddRow("Elapsed:", $"{stats.ElapsedTime:mm\\:ss}");
-        return _theme.Apply(grid, LayoutSection.GameInfo);
-    }
-
-    private IRenderable CreateTypingArea()
-    {
-        return new Panel(new Text(_engine.UserInput));
-        // var markup = _markupGenerator.BuildMarkupOptimized(_engine.TargetText, _engine.UserInput);
-        // return _theme.Apply(markup, LayoutSection.TypingArea);
-    }
-
-    private IRenderable CreateHeader()
-    {
-        return _theme.Apply(new Markup("Typical - A Typing Tutor"), LayoutSection.Header);
-    }
-
-    private Action<string> DisplaySummary() =>
-        summaryString => AnsiConsole.MarkupLineInterpolated($"[bold green]{summaryString}[/]");
-}
-```
 
 // File: src\Typical\TypingResult.cs
 
-```cs
 namespace Typical;
 
 internal enum TypingResult
@@ -898,46 +1121,134 @@ internal enum TypingResult
     Correct,
     Incorrect,
 }
-```
 
-// File: src\Typical.Core\Events\GameEndedEventArgs.cs
+// File: src\Typical.Core\Events\BackspacePressedEvent.cs
 
-```cs
+namespace Typical.Core.Events;
+
+internal record BackspacePressedEvent;
+
+// File: src\Typical.Core\Events\GameEndedEvent.cs
+
+namespace Typical.Core.Events;
+
+public record GameEndedEvent;
+
+// File: src\Typical.Core\Events\GameQuitEvent.cs
+
+namespace Typical.Core.Events;
+
+public record GameQuitEvent;
+
+// File: src\Typical.Core\Events\GameStateUpdatedEvent.cs
+
 using Typical.Core.Statistics;
 
 namespace Typical.Core.Events;
 
-public class GameEndedEventArgs : EventArgs
+public record GameStateUpdatedEvent(
+    string TargetText,
+    string UserInput,
+    GameStatisticsSnapshot Statistics,
+    bool IsOver
+);
+
+// File: src\Typical.Core\Events\IEventAggregator.cs
+
+using System.Reflection.Metadata;
+
+namespace Typical.Core.Events;
+
+public interface IEventAggregator
 {
-    public GameEndedEventArgs(GameStatisticsSnapshot snapshot)
+    void Subscribe<TEvent>(Action<TEvent> handler)
+        where TEvent : class;
+    void Unsubscribe<TEvent>(Action<TEvent> handler)
+        where TEvent : class;
+    void Publish<TEvent>(TEvent eventToPublish)
+        where TEvent : class;
+}
+
+public class EventAggregator : IEventAggregator
+{
+    private readonly Dictionary<Type, List<Delegate>> _handlers = [];
+    private readonly Lock_aggregatorLock = new();
+
+    public void Subscribe<TEvent>(Action<TEvent> handler)
+        where TEvent : class
     {
-        Snapshot = snapshot;
+        var eventType = typeof(TEvent);
+
+        lock (_aggregatorLock)
+        {
+            if (!_handlers.TryGetValue(eventType, out List<Delegate>? value))
+            {
+                value = [];
+                _handlers[eventType] = value;
+            }
+
+            value.Add(handler);
+        }
     }
 
-    public GameStatisticsSnapshot Snapshot { get; }
+    public void Unsubscribe<TEvent>(Action<TEvent> handler)
+        where TEvent : class
+    {
+        var eventType = typeof(TEvent);
+        lock (_aggregatorLock)
+        {
+            if (_handlers.TryGetValue(eventType, out var eventHandlers))
+            {
+                eventHandlers.Remove(handler);
+
+                if (eventHandlers.Count == 0)
+                {
+                    _handlers.Remove(eventType);
+                }
+            }
+        }
+    }
+
+    public void Publish<TEvent>(TEvent eventToPublish)
+        where TEvent : class
+    {
+        var eventType = typeof(TEvent);
+        List<Delegate> handlersSnapshot;
+
+        lock (_aggregatorLock)
+        {
+            if (!_handlers.TryGetValue(eventType, out var eventHandlers))
+            {
+                return;
+            }
+
+            handlersSnapshot = eventHandlers.ToList();
+        }
+
+        foreach (var handler in handlersSnapshot)
+        {
+            ((Action<TEvent>)handler)(eventToPublish);
+        }
+    }
 }
 
-public class GameStateChangedEventArgs : EventArgs
-{
-    // You could add data here if needed, e.g., the new UserInput string
-}
-```
+// File: src\Typical.Core\Events\KeyPressedEvent.cs
 
-// File: src\Typical.Core\Events\GameStateChangedEventArgs.cs
+using Typical.Core.Statistics;
 
-```cs```
+namespace Typical.Core.Events;
+
+internal record KeyPressedEvent(char Character, KeystrokeType Type, int Position);
+
 // File: src\Typical.Core\Statistics\CharacterStats.cs
 
-```cs
 namespace Typical.Core.Statistics;
 
 // A simple record to hold the results of GetCharacterStats
 public record CharacterStats(int Correct, int Incorrect, int Extra, int Corrections);
-```
 
 // File: src\Typical.Core\Statistics\GameStatisticsSnapshot.cs
 
-```cs
 namespace Typical.Core.Statistics;
 
 public record GameStatisticsSnapshot(
@@ -946,31 +1257,73 @@ public record GameStatisticsSnapshot(
     CharacterStats Chars,
     TimeSpan ElapsedTime,
     bool IsRunning
-);
-```
+)
+{
+    public static GameStatisticsSnapshot Empty =>
+        new(0, 100, new CharacterStats(0, 0, 0, 0), TimeSpan.Zero, false);
+}
 
 // File: src\Typical.Core\Statistics\GameStats.cs
 
-```cs
+using Typical.Core.Events;
+
 namespace Typical.Core.Statistics;
 
-internal class GameStats(TimeProvider? timeProvider = null)
+internal class GameStats
 {
+    private readonly IEventAggregator _eventAggregator;
+    private readonly TimeProvider_timeProvider;
     private readonly KeystrokeHistory _keystrokeHistory = [];
-    private readonly TimeProvider_timeProvider = timeProvider ?? TimeProvider.System;
-    private long? _startTimestamp;
-    private long?_endTimestamp;
-    private bool _statsAreDirty = true; // Start dirty
-    private double_cachedWpm;
-    private double _cachedAccuracy;
-    private CharacterStats_cachedChars = new(0, 0, 0, 0);
+    private long?_startTimestamp;
+    private long? _endTimestamp;
+    private bool_statsAreDirty = true;
+    private double _cachedWpm;
+    private double_cachedAccuracy;
+    private CharacterStats _cachedChars = new(0, 0, 0, 0);
+
+    public GameStats(IEventAggregator eventAggregator, TimeProvider? timeProvider = null)
+    {
+        _eventAggregator = eventAggregator;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _eventAggregator.Subscribe<KeyPressedEvent>(OnKeyPressed);
+        _eventAggregator.Subscribe<BackspacePressedEvent>(OnBackspacePressed);
+    }
+
+    private void OnBackspacePressed(BackspacePressedEvent @event)
+    {
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        _keystrokeHistory.RemoveLastCharacterLog();
+        _keystrokeHistory.Add(
+            new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp())
+        );
+
+        _statsAreDirty = true;
+    }
+
+    private void OnKeyPressed(KeyPressedEvent @event)
+    {
+        if (!IsRunning)
+        {
+            Start();
+        }
+
+        _keystrokeHistory.Add(
+            new KeystrokeLog(@event.Character, @event.Type, _timeProvider.GetTimestamp())
+        );
+        _statsAreDirty = true;
+    }
+
     public double WordsPerMinute
     {
         get
         {
             if (_statsAreDirty)
                 RecalculateAllStats();
-            return_cachedWpm;
+            return _cachedWpm;
         }
     }
 
@@ -1048,33 +1401,10 @@ internal class GameStats(TimeProvider? timeProvider = null)
 
         _statsAreDirty = false;
     }
-
-    internal void LogKeystroke(char keyChar, KeystrokeType extra)
-    {
-        if (!IsRunning)
-        {
-            Start();
-        }
-        _keystrokeHistory.Add(new KeystrokeLog(keyChar, extra, _timeProvider.GetTimestamp()));
-        _statsAreDirty = true;
-    }
-
-    internal void LogCorrection()
-    {
-        _keystrokeHistory.RemoveLastCharacterLog();
-
-        _keystrokeHistory.Add(
-            new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp())
-        );
-
-        _statsAreDirty = true;
-    }
 }
-```
 
 // File: src\Typical.Core\Statistics\KeystrokeHistory.cs
 
-```cs
 using System.Collections;
 
 namespace Typical.Core.Statistics;
@@ -1172,19 +1502,15 @@ public class KeystrokeHistory : IEnumerable<KeystrokeLog>
         }
     }
 }
-```
 
 // File: src\Typical.Core\Statistics\KeystrokeLog.cs
 
-```cs
 namespace Typical.Core.Statistics;
 
 public record struct KeystrokeLog(char Character, KeystrokeType Type, long Timestamp);
-```
 
 // File: src\Typical.Core\Statistics\KeystrokeType.cs
 
-```cs
 namespace Typical.Core.Statistics;
 
 public enum KeystrokeType
@@ -1194,22 +1520,18 @@ public enum KeystrokeType
     Extra,
     Correction,
 }
-```
 
 // File: src\Typical.Core\Text\ITextProvider.cs
 
-```cs
 namespace Typical.Core.Text;
 
 public interface ITextProvider
 {
     Task<string> GetTextAsync();
 }
-```
 
 // File: src\Typical.Core\GameEngine.cs
 
-```cs
 using System.Text;
 using Typical.Core.Events;
 using Typical.Core.Statistics;
@@ -1222,17 +1544,24 @@ public class GameEngine
     private readonly StringBuilder _userInput;
     private readonly ITextProvider_textProvider;
     private readonly GameOptions _gameOptions;
-    private readonly GameStats_stats;
+    private readonly IEventAggregator_eventAggregator;
+    private readonly GameStats _stats;
 
-    public GameEngine(ITextProvider textProvider)
-        : this(textProvider, new GameOptions()) { }
+    public GameEngine(ITextProvider textProvider, IEventAggregator eventAggregator)
+        : this(textProvider, eventAggregator, new GameOptions()) { }
 
-    public GameEngine(ITextProvider textProvider, GameOptions gameOptions)
+    public GameEngine(
+        ITextProvider textProvider,
+        IEventAggregator eventAggregator,
+        GameOptions gameOptions
+    )
     {
         _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
         _gameOptions = gameOptions;
         _userInput = new StringBuilder();
-        _stats = new GameStats();
+        _eventAggregator = eventAggregator;
+
+        _stats = new GameStats(_eventAggregator);
     }
 
     public string TargetText { get; private set; } = string.Empty;
@@ -1241,42 +1570,44 @@ public class GameEngine
     public bool IsRunning => !IsOver && _stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
-    public event EventHandler<GameEndedEventArgs>? GameEnded;
-    public event EventHandler<GameStateChangedEventArgs>? StateChanged;
-
     public bool ProcessKeyPress(ConsoleKeyInfo key)
     {
         if (key.Key == ConsoleKey.Escape)
         {
             IsOver = true;
             _stats.Stop();
+            _eventAggregator.Publish(new GameQuitEvent());
             return false;
         }
 
-        if (key.Key == ConsoleKey.Backspace && _userInput.Length > 0)
+        if (key.Key == ConsoleKey.Backspace)
         {
-            _userInput.Remove(_userInput.Length - 1, 1);
-            // _stats.LogCorrection(); // Assuming you have/want this method
+            if (_userInput.Length > 0)
+            {
+                _userInput.Remove(_userInput.Length - 1, 1);
+                _eventAggregator.Publish(new BackspacePressedEvent());
+                PublishStateUpdate();
+            }
             return true;
         }
+
         if (char.IsControl(key.KeyChar))
         {
-            return true; // Ignore other control characters but continue the game
+            return true;
         }
         char inputChar = key.KeyChar;
-
         KeystrokeType type = DetermineKeystrokeType(inputChar);
 
-        _stats.LogKeystroke(inputChar, type);
+        _eventAggregator.Publish(new KeyPressedEvent(inputChar, type, _userInput.Length));
 
         bool isCorrect = type == KeystrokeType.Correct;
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
             _userInput.Append(key.KeyChar);
-            StateChanged?.Invoke(this, new GameStateChangedEventArgs());
         }
 
         CheckEndCondition();
+        PublishStateUpdate();
 
         return true;
     }
@@ -1305,7 +1636,7 @@ public class GameEngine
             IsOver = true;
             _stats.Stop();
 
-            GameEnded?.Invoke(this, new GameEndedEventArgs(_stats.CreateSnapshot()));
+            _eventAggregator.Publish(new GameEndedEvent());
         }
     }
 
@@ -1315,18 +1646,19 @@ public class GameEngine
         _stats.Start();
         _userInput.Clear();
         IsOver = false;
+        PublishStateUpdate();
     }
 
-    public GameStatisticsSnapshot GetGameStatistics()
+    private void PublishStateUpdate()
     {
-        return _stats.CreateSnapshot();
+        var snapShot = _stats.CreateSnapshot();
+        var stateEvent = new GameStateUpdatedEvent(TargetText, UserInput, snapShot, IsOver);
+        _eventAggregator.Publish(stateEvent);
     }
 }
-```
 
 // File: src\Typical.Core\GameOptions.cs
 
-```cs
 namespace Typical.Core;
 
 public record GameOptions
@@ -1338,11 +1670,9 @@ public record GameOptions
     // public int TimeLimitSeconds { get; set; } = 0; // 0 for no limit
     // public bool ShowLiveWpm { get; set; } = false;
 }
-```
 
 // File: src\Typical.Tests\Core\GameStatsTests.cs
 
-```cs
 using System;
 using Microsoft.Extensions.Time.Testing;
 using TUnit;
@@ -1438,11 +1768,9 @@ namespace Typical.Tests
         }
     }
 }
-```
 
 // File: src\Typical.Tests\TUI\LayoutFactoryTests.cs
 
-```cs
 // using Spectre.Console;
 // using Spectre.Console.Rendering;
 // using Typical.TUI.Runtime;
@@ -1540,11 +1868,9 @@ namespace Typical.Tests
 //         // await Assert.That(layout.Renderable).IsNull(); // TODO: Use IAnsiConsole TestConsole
 //     }
 // }
-```
 
 // File: src\Typical.Tests\TUI\ThemeSettingsBindingTests.cs
 
-```cs
 // using System.Collections.Generic;
 // using System.ComponentModel;
 // using System.Threading.Tasks;
@@ -1595,11 +1921,9 @@ namespace Typical.Tests
 //             .IsEqualTo("TypingText");
 //     }
 // }
-```
 
 // File: src\Typical.Tests\TUI\ThemeTests.cs
 
-```cs
 using Spectre.Console;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
@@ -1800,11 +2124,9 @@ public class ThemeTests
     // more complex and often considered an implementation detail. For now, testing the
     // direct mutations of the panel provides excellent coverage of the core logic.
 }
-```
 
 // File: src\Typical.Tests\GameEngineTests.cs
 
-```cs
 using Typical.Core;
 
 namespace Typical.Tests;
@@ -1996,11 +2318,9 @@ public class TypicalGameTests
         await Assert.That(game.UserInput).IsEqualTo("x");
     }
 }
-```
 
 // File: src\Typical.Tests\MarkupGeneratorTests.cs
 
-```cs
 using Typical; // Your project's namespace
 
 public class MarkupGeneratorTests
@@ -2040,7 +2360,9 @@ public class MarkupGeneratorTests
         var result = _generator.BuildMarkupString(target, typed);
 
         // Assert
-        await Assert.That(result).IsEqualTo("[default on green]Hello[/][grey] world[/]");
+        await Assert
+            .That(result)
+            .IsEqualTo("[default on green]Hello[/][grey][underline] [/]world[/]");
     }
 
     [Test]
@@ -2071,7 +2393,7 @@ public class MarkupGeneratorTests
         var result = _generator.BuildMarkupString(target, typed);
 
         // Assert
-        await Assert.That(result).IsEqualTo("[grey]Hello world[/]");
+        await Assert.That(result).IsEqualTo("[grey][underline]H[/]ello world[/]");
     }
 
     // --- Edge Cases ---
@@ -2135,11 +2457,9 @@ public class MarkupGeneratorTests
         await Assert.That(result).IsEqualTo("[default on green][[[[Hello]]]][/]");
     }
 }
-```
 
 // File: src\Typical.Tests\MockTextProvider.cs
 
-```cs
 using Typical.Core.Text;
 
 namespace Typical.Tests;
@@ -2160,4 +2480,3 @@ public class MockTextProvider : ITextProvider
         return Task.FromResult(_textToReturn);
     }
 }
-```

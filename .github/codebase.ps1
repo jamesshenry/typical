@@ -1,8 +1,14 @@
 $repoRoot = Resolve-Path "$PSScriptRoot/.."
 
+Write-Host $repoRoot
+
 $sourceDirectory = Join-Path $repoRoot 'src'
 
-$outputFile = Join-Path $repoRoot '.github' 'instructions' 'codebase.txt'
+Write-Host $sourceDirectory
+
+$outputFile = "$repoRoot/.github/instructions/codebase.txt"
+
+Write-Host $outputFile
 
 $directoryTree = Get-ChildItem -Directory -Path $sourceDirectory -Recurse | ForEach-Object {
     $indent = '  ' * ($_.FullName.Split('\').Length - $sourceDirectory.Split('\').Length)
