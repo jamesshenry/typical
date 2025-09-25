@@ -21,7 +21,7 @@ public class MarkupGenerator
         var typedLength = typed.Length;
         TypingResult currentState = TypingResult.Untyped;
 
-        if (typedLength > 0)
+        if (typedLength > 0 && target.Length > 0)
         {
             currentState = target[0] == typed[0] ? TypingResult.Correct : TypingResult.Incorrect;
         }
@@ -45,8 +45,16 @@ public class MarkupGenerator
                 builder.Append(GetMarkupForState(charState));
                 currentState = charState;
             }
+            var escapedChar = Markup.Escape(target[i].ToString());
 
-            builder.Append(Markup.Escape(target[i].ToString()));
+            if (i == typedLength)
+            {
+                builder.Append($"[underline]{escapedChar}[/]");
+            }
+            else
+            {
+                builder.Append(escapedChar);
+            }
         }
 
         builder.Append("[/]");

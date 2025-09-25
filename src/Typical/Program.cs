@@ -1,11 +1,10 @@
-﻿using System.Reflection;
+﻿using ConsoleAppFramework;
 using DotNetPathUtils;
-using Microsoft.Extensions.Configuration;
-using Spectre.Console;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualBasic;
 using Typical;
-using Typical.Core;
-using Typical.TUI.Runtime;
-using Typical.TUI.Settings;
+using Typical.DataAccess;
+using Typical.Services;
 using Velopack;
 
 var pathHelper = new PathEnvironmentHelper(
@@ -17,37 +16,29 @@ var pathHelper = new PathEnvironmentHelper(
 );
 if (OperatingSystem.IsWindows())
 {
-    var appDirectory = Path.GetDirectoryName(AppContext.BaseDirectory);
+    var appDirectory = Path.GetDirectoryName(AppContext.BaseDirectory)!;
     VelopackApp
         .Build()
-        .OnAfterInstallFastCallback(v => pathHelper.EnsureDirectoryIsInPath(appDirectory!))
+        .OnAfterInstallFastCallback(v =>
+        {
+            pathHelper.EnsureDirectoryIsInPath(appDirectory);
+            var dbFile = Path.Combine(appDirectory, "typical.db");
+            if (!Directory.Exists(LiteDbConstants.DataDirectory))
+                Directory.CreateDirectory(LiteDbConstants.DataDirectory);
+            File.Move(dbFile, LiteDbConstants.DbFile, true);
+        })
         .OnBeforeUninstallFastCallback(v => pathHelper.RemoveDirectoryFromPath(appDirectory!))
         .Run();
 }
-var configuration = new ConfigurationBuilder().AddJsonFile("config.json").Build();
 
-var appSettings = configuration.Get<AppSettings>()!;
+var services = new ServiceCollection();
 
-var themeManager = new ThemeManager(appSettings.Themes.ToRuntimeThemes(), defaultTheme: "Default");
-var layoutFactory = new LayoutFactory(appSettings.Layouts.ToRuntimeLayouts());
+services.RegisterAppServices();
 
-string quotePath = Path.Combine(AppContext.BaseDirectory, "quote.txt");
+ConsoleApp.ServiceProvider = services.BuildServiceProvider();
 
-string text = File.Exists(quotePath)
-    ? await File.ReadAllTextAsync(quotePath)
-    : "The quick brown fox jumps over the lazy dog.";
+var app = ConsoleApp.Create();
 
-ITextProvider textProvider = new StaticTextProvider(text);
+app.Add<ApplicationCommands>();
 
-var game = new TypicalGame(textProvider);
-await game.StartNewGame();
-var markupGenerator = new MarkupGenerator();
-var runner = new GameRunner(
-    game,
-    themeManager,
-    markupGenerator,
-    layoutFactory,
-    AnsiConsole.Console
-);
-runner.Run();
-Console.Clear();
+await app.RunAsync(args);
