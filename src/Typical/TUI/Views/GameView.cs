@@ -1,16 +1,14 @@
-using System.Diagnostics;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 using Typical.Core;
 using Typical.Core.Events;
 using Typical.Core.Statistics;
-using Typical.TUI;
 using Typical.TUI.Runtime;
 using Typical.TUI.Settings;
 
 namespace Typical.TUI.Views;
 
-public class GameView
+public class GameView : IView
 {
     private readonly MarkupGenerator _markupGenerator;
 
@@ -54,7 +52,7 @@ public class GameView
         _needsRefresh = true;
     }
 
-    public async Task RunAsync()
+    public async Task RenderAsync()
     {
         var layout = _layoutFactory.Build(LayoutName.Dashboard);
         await _console

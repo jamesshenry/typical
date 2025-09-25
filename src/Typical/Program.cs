@@ -1,57 +1,19 @@
-﻿using System.Reflection;
-using DotNetPathUtils;
-using Microsoft.Extensions.Configuration;
-using Spectre.Console;
+﻿using ConsoleAppFramework;
+using Microsoft.Extensions.DependencyInjection;
 using Typical;
-using Typical.Core;
-using Typical.Core.Events;
-using Typical.Core.Text;
-using Typical.TUI.Runtime;
-using Typical.TUI.Settings;
-using Typical.TUI.Views;
+using Typical.Services;
 using Velopack;
 
-var pathHelper = new PathEnvironmentHelper(
-    new PathUtilsOptions()
-    {
-        DirectoryNameCase = DirectoryNameCase.CamelCase,
-        PrefixWithPeriod = false,
-    }
-);
-if (OperatingSystem.IsWindows())
-{
-    var appDirectory = Path.GetDirectoryName(AppContext.BaseDirectory);
-    VelopackApp
-        .Build()
-        .OnAfterInstallFastCallback(v => pathHelper.EnsureDirectoryIsInPath(appDirectory!))
-        .OnBeforeUninstallFastCallback(v => pathHelper.RemoveDirectoryFromPath(appDirectory!))
-        .Run();
-}
-var configuration = new ConfigurationBuilder().AddJsonFile("config.json").Build();
+VelopackApp.Build().Run();
 
-var appSettings = configuration.Get<AppSettings>()!;
+var services = new ServiceCollection();
 
-var themeManager = new ThemeManager(appSettings.Themes.ToRuntimeThemes(), defaultTheme: "Default");
-var layoutFactory = new LayoutFactory(appSettings.Layouts.ToRuntimeLayouts());
+services.RegisterAppServices();
 
-string quotePath = Path.Combine(AppContext.BaseDirectory, "quote.txt");
+ConsoleApp.ServiceProvider = services.BuildServiceProvider();
 
-string text = File.Exists(quotePath)
-    ? await File.ReadAllTextAsync(quotePath)
-    : "The quick brown fox jumps over the lazy dog.";
+var app = ConsoleApp.Create();
 
-ITextProvider textProvider = new StaticTextProvider(text);
+app.Add<ApplicationCommands>();
 
-var eventAggregator = new EventAggregator();
-var game = new GameEngine(textProvider, eventAggregator);
-var markupGenerator = new MarkupGenerator();
-var runner = new GameView(
-    game,
-    themeManager,
-    markupGenerator,
-    layoutFactory,
-    eventAggregator,
-    AnsiConsole.Console
-);
-await runner.RunAsync();
-Console.Clear();
+await app.RunAsync(args);
