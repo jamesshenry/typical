@@ -23,8 +23,9 @@ if (OperatingSystem.IsWindows())
         {
             pathHelper.EnsureDirectoryIsInPath(appDirectory);
             var dbFile = Path.Combine(appDirectory, "typical.db");
-            Directory.CreateDirectory(LiteDbConstants.DataDirectory);
-            File.Move(dbFile, LiteDbConstants.DbFile);
+            if (!Directory.Exists(LiteDbConstants.DataDirectory))
+                Directory.CreateDirectory(LiteDbConstants.DataDirectory);
+            File.Move(dbFile, LiteDbConstants.DbFile, true);
         })
         .OnBeforeUninstallFastCallback(v => pathHelper.RemoveDirectoryFromPath(appDirectory!))
         .Run();
