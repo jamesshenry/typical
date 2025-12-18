@@ -47,12 +47,3 @@ public static class ThemeConversion
 public class RuntimeTheme : Dictionary<LayoutSection, ElementStyle> { }
 
 public class RuntimeThemeDict : Dictionary<string, RuntimeTheme> { }
-
-public class RuntimeLayoutDict : Dictionary<LayoutName, LayoutNode>
-{
-    public RuntimeLayoutDict()
-        : base() { }
-
-    public RuntimeLayoutDict(Dictionary<LayoutName, LayoutNode> dictionary)
-        : base(dictionary) { }
-}

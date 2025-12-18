@@ -66,7 +66,7 @@ public static class ServiceExtensions
             appSettings.Themes.ToRuntimeThemes(),
             defaultTheme: "Default"
         ));
-        services.AddSingleton(_ => new LayoutFactory(appSettings.Layouts.ToRuntimeLayouts()));
+        services.AddSingleton(_ => new LayoutFactory(appSettings.Layouts));
 
         services.AddScoped<IQuoteRepository, LiteDbQuoteRepository>(_ => new LiteDbQuoteRepository(
             LiteDbConstants.ConnectionString
