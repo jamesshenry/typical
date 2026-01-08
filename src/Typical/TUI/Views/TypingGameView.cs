@@ -4,6 +4,7 @@ using System.Text;
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
+using Typical;
 using Attribute = Terminal.Gui.Drawing.Attribute;
 
 public class TypingGameView : View
@@ -28,8 +29,8 @@ public class TypingGameView : View
 
             Attribute color = status switch
             {
-                CharacterStatus.Correct => new Attribute(Color.Green, Color.Black),
-                CharacterStatus.Incorrect => new Attribute(Color.White, Color.Red),
+                TypingResult.Correct => new Attribute(Color.Green, Color.Black),
+                TypingResult.Incorrect => new Attribute(Color.White, Color.Red),
                 _ => new Attribute(Color.DarkGray, Color.Black),
             };
 
@@ -84,24 +85,17 @@ public class TypingViewModel : INotifyPropertyChanged
         }
     }
 
-    public CharacterStatus GetStatus(int index)
+    internal TypingResult GetStatus(int index)
     {
         if (index >= _typedText.Length)
-            return CharacterStatus.Pending;
+            return TypingResult.Untyped;
         return _typedText[index] == _targetText[index]
-            ? CharacterStatus.Correct
-            : CharacterStatus.Incorrect;
+            ? TypingResult.Correct
+            : TypingResult.Incorrect;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-}
-
-public enum CharacterStatus
-{
-    Pending,
-    Correct,
-    Incorrect,
 }

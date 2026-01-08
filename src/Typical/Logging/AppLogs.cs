@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Typical;
-using Typical.TUI;
 
 public static partial class AppLogs
 {
@@ -39,5 +38,5 @@ public static partial class AppLogs
         Level = LogLevel.Information,
         Message = ("Application shutting down.")
     )]
-    public static partial void ApplicationStopping(ILogger<AppShell> logger);
+    public static partial void ApplicationStopping(ILogger logger);
 }
