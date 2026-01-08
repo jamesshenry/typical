@@ -1,96 +1,70 @@
-﻿// using ConsoleAppFramework;
-// using DotNetPathUtils;
-// using Microsoft.Extensions.DependencyInjection;
-// using Microsoft.VisualBasic;
-// using Spectre.Console;
-// using Typical;
-// using Typical.DataAccess;
-// using Typical.Services;
-// using Velopack;
-
-// var pathHelper = new PathEnvironmentHelper(
-//     new PathUtilsOptions()
-//     {
-//         DirectoryNameCase = DirectoryNameCase.CamelCase,
-//         PrefixWithPeriod = false,
-//     }
-// );
-// if (OperatingSystem.IsWindows())
-// {
-//     var appDirectory = Path.GetDirectoryName(AppContext.BaseDirectory)!;
-// #if DEBUG
-//     pathHelper.EnsureDirectoryIsInPath(appDirectory);
-//     var dbFile = Path.Combine(appDirectory, "typical.db");
-//     if (!Directory.Exists(LiteDbConstants.DataDirectory))
-//         Directory.CreateDirectory(LiteDbConstants.DataDirectory);
-//     File.Move(dbFile, LiteDbConstants.DbFile, true);
-// #endif
-//     VelopackApp
-//         .Build()
-//         .OnAfterInstallFastCallback(v =>
-//         {
-//             pathHelper.EnsureDirectoryIsInPath(appDirectory);
-//             var dbFile = Path.Combine(appDirectory, "typical.db");
-//             if (!Directory.Exists(LiteDbConstants.DataDirectory))
-//                 Directory.CreateDirectory(LiteDbConstants.DataDirectory);
-//             File.Move(dbFile, LiteDbConstants.DbFile, true);
-//         })
-//         .OnBeforeUninstallFastCallback(v => pathHelper.RemoveDirectoryFromPath(appDirectory!))
-//         .Run();
-// }
-
-// var services = new ServiceCollection();
-
-// services.RegisterAppServices();
-
-// ConsoleApp.ServiceProvider = services.BuildServiceProvider();
-
-// var app = ConsoleApp.Create();
-
-// app.Add<ApplicationCommands>();
-// app.UseFilter<ChangeExitCodeFilter>();
-// await app.RunAsync(args);
-
-// internal class ChangeExitCodeFilter(ConsoleAppFilter next) : ConsoleAppFilter(next)
-// {
-//     public override async Task InvokeAsync(
-//         ConsoleAppContext context,
-//         CancellationToken cancellationToken
-//     )
-//     {
-//         try
-//         {
-//             await Next.InvokeAsync(context, cancellationToken);
-//         }
-//         catch (Exception exception)
-//         {
-//             if (exception is OperationCanceledException)
-//                 return;
-//             AnsiConsole.WriteException(exception, ExceptionFormats.NoStackTrace);
-//         }
-//     }
-// }
-
+﻿using DotNetPathUtils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+using Spectre.Console;
 using Terminal.Gui.App;
-using Terminal.Gui.ViewBase;
-using Terminal.Gui.Views;
+using Typical.Services;
+using Typical.Views;
+using Velopack;
 
-// Create the app
-using IApplication app = Application.Create();
-app.Init();
-
-var viewModel = new TypingViewModel();
-var win = new Window { Title = "Typing Game v2" };
-
-var typingView = new TypingGameView(viewModel)
+if (OperatingSystem.IsWindows())
 {
-    X = Pos.Center(),
-    Y = Pos.Center(),
-    Width = viewModel.TargetText.Length,
-    Height = 1,
-};
+    var appDirectory = Path.GetDirectoryName(AppContext.BaseDirectory)!;
+    var pathHelper = new PathEnvironmentHelper(new PathUtilsOptions() { PrefixWithPeriod = false });
+    VelopackApp
+        .Build()
+        .OnAfterInstallFastCallback(v => pathHelper.EnsureDirectoryIsInPath(appDirectory))
+        .OnBeforeUninstallFastCallback(v => pathHelper.RemoveDirectoryFromPath(appDirectory!))
+        .Run();
+}
 
-win.Add(typingView);
+Log.Logger = ServiceExtensions.CreateAppLogger();
+Log.Information("Application starting...");
 
-app.Run(win);
-// Shutdown is handled by Dispose in the 'using' block
+try
+{
+    var builder = Host.CreateApplicationBuilder(args);
+    builder.AddTuiLogging();
+    builder.AddTuiInfrastructure();
+    builder.AddTuiScreens();
+
+    using IHost host = builder.Build();
+
+    using var app = host.Services.GetRequiredService<IApplication>().Init();
+    var mainShell = host.Services.GetRequiredService<MainShell>();
+
+    app.Run(mainShell);
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Host terminated unexpectedly");
+    AnsiConsole.WriteException(ex);
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
+}
+// using Terminal.Gui.App;
+// using Terminal.Gui.ViewBase;
+// using Terminal.Gui.Views;
+
+// // Create the app
+// using IApplication app = Application.Create();
+// app.Init();
+
+// var viewModel = new TypingViewModel();
+// var win = new Window { Title = "Typing Game v2" };
+
+// var typingView = new TypingGameView(viewModel)
+// {
+//     X = Pos.Center(),
+//     Y = Pos.Center(),
+//     Width = viewModel.TargetText.Length,
+//     Height = 1,
+// };
+
+// win.Add(typingView);
+
+// app.Run(win);
+// // Shutdown is handled by Dispose in the 'using' block

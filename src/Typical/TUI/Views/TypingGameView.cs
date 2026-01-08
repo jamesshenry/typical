@@ -1,22 +1,27 @@
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Typical;
+using Typical.Core.ViewModels;
+using Typical.Views;
 using Attribute = Terminal.Gui.Drawing.Attribute;
 
-public class TypingGameView : View
+public class TypingGameView : BindableView<TypingViewModel>
 {
     private readonly TypingViewModel _viewModel;
 
     public TypingGameView(TypingViewModel viewModel)
+        : base(viewModel)
     {
         _viewModel = viewModel;
         CanFocus = true;
 
-        _viewModel.PropertyChanged += (s, e) => SetNeedsDraw();
+        X = Pos.Center();
+        Y = Pos.Center();
+        Width = viewModel.TargetText.Length;
+        Height = 1;
     }
 
     protected override bool OnDrawingContent(DrawContext? context)
@@ -64,38 +69,11 @@ public class TypingGameView : View
 
         return base.OnKeyDown(key);
     }
-}
 
-public class TypingViewModel : INotifyPropertyChanged
-{
-    private readonly string _targetText = "The quick brown fox jumped over the lazy dog.";
-    private string _typedText = "";
-
-    public string TargetText => _targetText;
-    public string TypedText
+    protected override void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        get => _typedText;
-        set
-        {
-            if (_typedText != value)
-            {
-                _typedText = value;
-                OnPropertyChanged();
-            }
-        }
+        SetNeedsDraw();
     }
 
-    internal TypingResult GetStatus(int index)
-    {
-        if (index >= _typedText.Length)
-            return TypingResult.Untyped;
-        return _typedText[index] == _targetText[index]
-            ? TypingResult.Correct
-            : TypingResult.Incorrect;
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    protected override void SetupBindings() { }
 }

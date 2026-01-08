@@ -1,6 +1,8 @@
 using Serilog.Core;
 using Serilog.Events;
 
+namespace Typical.Logging;
+
 public class SourceClassEnricher : ILogEventEnricher
 {
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)

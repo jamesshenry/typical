@@ -1,48 +1,36 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>typical</AssemblyName>
     <TargetFramework>net10.0</TargetFramework>
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64</RuntimeIdentifiers>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublishSingleFile>true</PublishSingleFile>
-    <!-- <PublishAot>true</PublishAot> -->
     <DebugType>embedded</DebugType>
-    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="ConsoleAppFramework" Version="5.6.1">
+    <PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="DotNetPathUtils" Version="0.3.1" />
+    <PackageReference Include="Kuddle.Net" Version="0.4.1" />
+    <PackageReference Include="Kuddle.Net.Extensions.Configuration" Version="0.4.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="MinVer" Version="6.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="DotNetPathUtils" Version="0.3.1" />
-    <PackageReference
-      Include="Microsoft.Extensions.Configuration"
-      Version="10.0.0-rc.1.25451.107"
-    />
-    <PackageReference
-      Include="Microsoft.Extensions.Configuration.Binder"
-      Version="10.0.0-rc.1.25451.107"
-    />
-    <PackageReference
-      Include="Microsoft.Extensions.Configuration.Json"
-      Version="10.0.0-rc.1.25451.107"
-    />
-    <PackageReference
-      Include="Microsoft.Extensions.DependencyInjection"
-      Version="10.0.0-rc.1.25451.107"
-    />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-rc.1.25451.107" />
     <PackageReference Include="Serilog" Version="4.3.0" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.2" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageReference Include="Spectre.Console" Version="0.51.1" />
+    <PackageReference Include="Spectre.Console" Version="0.53.0" />
+    <PackageReference Include="Terminal.Gui" Version="2.0.0-develop.4746" />
     <PackageReference Include="Velopack" Version="0.0.1298" />
-    <PackageReference Include="Vogen" Version="8.0.1" />
-    <PackageReference Include="Terminal.Gui" Version="2.0.0-develop.4753" />
+    <PackageReference Include="Xdg.Directories" Version="0.1.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.kdl" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json">
