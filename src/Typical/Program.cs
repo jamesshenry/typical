@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Spectre.Console;
 using Terminal.Gui.App;
+using Typical.Core.Services;
 using Typical.Services;
 using Typical.Views;
 using Velopack;
@@ -19,12 +20,13 @@ if (OperatingSystem.IsWindows())
         .Run();
 }
 
-Log.Logger = ServiceExtensions.CreateAppLogger();
+Log.Logger = Typical.Services.ServiceExtensions.CreateAppLogger();
 Log.Information("Application starting...");
 
 try
 {
     var builder = Host.CreateApplicationBuilder(args);
+    builder.Services.AddCoreServices();
     builder.AddTuiLogging();
     builder.AddTuiInfrastructure();
     builder.AddTuiScreens();

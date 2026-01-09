@@ -3,39 +3,41 @@ using System.Text;
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
+using Terminal.Gui.Views;
 using Typical;
+using Typical.Binding;
+using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
 using Typical.Views;
 using Attribute = Terminal.Gui.Drawing.Attribute;
 
 public class TypingGameView : BindableView<TypingViewModel>
 {
-    private readonly TypingViewModel _viewModel;
+    private readonly Label _statsLabel;
 
     public TypingGameView(TypingViewModel viewModel)
         : base(viewModel)
     {
-        _viewModel = viewModel;
         CanFocus = true;
-
         X = Pos.Center();
         Y = Pos.Center();
         Width = viewModel.TargetText.Length;
         Height = 1;
+        _statsLabel = new Label { Y = Pos.AnchorEnd(1) };
     }
 
     protected override bool OnDrawingContent(DrawContext? context)
     {
-        string text = _viewModel.TargetText;
+        string text = ViewModel.TargetText;
 
         for (int i = 0; i < text.Length; i++)
         {
-            var status = _viewModel.GetStatus(i);
+            var status = ViewModel.GetStatus(i);
 
             Attribute color = status switch
             {
-                TypingResult.Correct => new Attribute(Color.Green, Color.Black),
-                TypingResult.Incorrect => new Attribute(Color.White, Color.Red),
+                KeystrokeType.Correct => new Attribute(Color.Green, Color.Black),
+                KeystrokeType.Incorrect => new Attribute(Color.White, Color.Red),
                 _ => new Attribute(Color.DarkGray, Color.Black),
             };
 
@@ -54,16 +56,17 @@ public class TypingGameView : BindableView<TypingViewModel>
 
     protected override bool OnKeyDown(Key key)
     {
+        ViewModel.ProcessInput((char)key.AsRune.Value, false);
         if (key == Key.Backspace)
         {
-            if (_viewModel.TypedText.Length > 0)
-                _viewModel.TypedText = _viewModel.TypedText[..^1];
+            if (ViewModel.TypedText.Length > 0)
+                ViewModel.TypedText = ViewModel.TypedText[..^1];
             return true;
         }
 
         if (!Rune.IsControl(key.AsRune))
         {
-            _viewModel.TypedText += key.AsRune.ToString();
+            ViewModel.TypedText += key.AsRune.ToString();
             return true;
         }
 
@@ -75,5 +78,14 @@ public class TypingGameView : BindableView<TypingViewModel>
         SetNeedsDraw();
     }
 
-    protected override void SetupBindings() { }
+    protected override void SetupBindings()
+    {
+        var binding = _statsLabel.BindTextOneWay(
+            ViewModel,
+            () => $"WPM: {ViewModel.Wpm} | Acc: {ViewModel.Accuracy}",
+            nameof(ViewModel.Wpm)
+        );
+
+        BindingContext.AddBinding(binding);
+    }
 }

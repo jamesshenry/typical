@@ -9,76 +9,54 @@ namespace Typical.Core;
 
 public class GameEngine
 {
-    private readonly StringBuilder _userInput;
+    private readonly StringBuilder _userInput = new();
     private readonly ITextProvider _textProvider;
     private readonly GameOptions _gameOptions;
-    private readonly IEventAggregator _eventAggregator;
-    private readonly GameStats _stats;
+    public GameStats Stats { get; }
+
+    // TODO: Add HeatmapCollector
     private readonly ILogger<GameEngine> _logger;
 
     public GameEngine(
         ITextProvider textProvider,
-        IEventAggregator eventAggregator,
         GameOptions gameOptions,
-        GameStats stats,
         ILogger<GameEngine> logger
     )
     {
-        _userInput = new StringBuilder();
         _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
-        _eventAggregator = eventAggregator;
         _gameOptions = gameOptions;
-        _stats = stats;
+        Stats = new GameStats();
         _logger = logger;
     }
 
     public string TargetText { get; private set; } = string.Empty;
     public string UserInput => _userInput.ToString();
     public bool IsOver { get; private set; }
-    public bool IsRunning => !IsOver && _stats.IsRunning;
+    public bool IsRunning => !IsOver && Stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
-    public bool ProcessKeyPress(ConsoleKeyInfo key)
+    public bool ProcessKeyPress(char c, bool isBackspace)
     {
-        if (key.Key == ConsoleKey.Escape)
-        {
-            IsOver = true;
-            _stats.Stop();
-            CoreLogs.GameQuit(_logger);
-            _eventAggregator.Publish(new GameQuitEvent());
-            return false;
-        }
-
-        if (key.Key == ConsoleKey.Backspace)
+        if (isBackspace)
         {
             if (_userInput.Length > 0)
             {
                 _userInput.Remove(_userInput.Length - 1, 1);
-                _eventAggregator.Publish(new BackspacePressedEvent());
-                PublishStateUpdate();
+                Stats.RecordBackspace();
             }
             return true;
         }
 
-        if (char.IsControl(key.KeyChar))
-        {
-            return true;
-        }
-        char inputChar = key.KeyChar;
-        KeystrokeType type = DetermineKeystrokeType(inputChar);
-
-        CoreLogs.KeyProcessed(_logger, inputChar, type);
-        _eventAggregator.Publish(new KeyPressedEvent(inputChar, type, _userInput.Length));
+        var type = DetermineKeystrokeType(c);
+        Stats.RecordKey(c, type);
 
         bool isCorrect = type == KeystrokeType.Correct;
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
-            _userInput.Append(key.KeyChar);
+            _userInput.Append(c);
         }
 
         CheckEndCondition();
-        PublishStateUpdate();
-
         return true;
     }
 
@@ -97,9 +75,8 @@ public class GameEngine
         if (_userInput.ToString() == TargetText)
         {
             IsOver = true;
-            _stats.Stop();
+            Stats.Stop();
             CoreLogs.GameFinished(_logger);
-            _eventAggregator.Publish(new GameEndedEvent());
         }
     }
 
@@ -108,7 +85,7 @@ public class GameEngine
         CoreLogs.GameStarting(_logger);
         var text = await _textProvider.GetTextAsync();
         TargetText = text.Text;
-        _stats.Start();
+        Stats.Start();
         _userInput.Clear();
         IsOver = false;
         PublishStateUpdate();
@@ -117,8 +94,7 @@ public class GameEngine
     private void PublishStateUpdate()
     {
         CoreLogs.PublishingState(_logger);
-        var snapShot = _stats.CreateSnapshot();
+        var snapShot = Stats.CreateSnapshot();
         var stateEvent = new GameStateUpdatedEvent(TargetText, UserInput, snapShot, IsOver);
-        _eventAggregator.Publish(stateEvent);
     }
 }

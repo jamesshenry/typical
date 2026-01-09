@@ -2,16 +2,13 @@ using Kuddle.Extensions.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
-using Serilog.Filters;
 using Serilog.Formatting.Display;
 using Terminal.Gui.App;
 using Typical.Configuration;
 using Typical.Core.Interfaces;
-using Typical.Core.ViewModels;
 using Typical.Logging;
 using Typical.Views;
 
@@ -61,11 +58,6 @@ public static class ServiceExtensions
 
     public static void AddTuiScreens(this HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<MainViewModel>();
-        builder.Services.AddTransient<HomeViewModel>();
-        builder.Services.AddTransient<SettingsViewModel>();
-        builder.Services.AddTransient<TypingViewModel>();
-
         builder.Services.AddSingleton<MainShell>();
         builder.Services.AddTransient<HomeView>();
         builder.Services.AddTransient<SettingsView>();

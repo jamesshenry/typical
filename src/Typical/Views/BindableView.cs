@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Terminal.Gui.App;
 using Terminal.Gui.ViewBase;
 using Typical.Binding;
 using Typical.Core.Interfaces;
@@ -50,7 +51,10 @@ public abstract class BindableView<TViewModel> : View, IBindableView
     protected virtual void OnViewModelPropertyChanged(
         object? sender,
         System.ComponentModel.PropertyChangedEventArgs e
-    ) { }
+    )
+    {
+        SetNeedsDraw();
+    }
 
     /// <summary>
     /// Called when the view is navigated to.
