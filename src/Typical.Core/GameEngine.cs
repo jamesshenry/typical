@@ -25,6 +25,7 @@ public class GameEngine
     {
         _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
         _gameOptions = gameOptions;
+        _gameOptions.ForbidIncorrectEntries = true;
         Stats = new GameStats();
         _logger = logger;
     }
@@ -32,6 +33,8 @@ public class GameEngine
     public string TargetText { get; private set; } = string.Empty;
     public string UserInput => _userInput.ToString();
     public bool IsOver { get; private set; }
+    public bool IsInitialized { get; private set; }
+
     public bool IsRunning => !IsOver && Stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
@@ -75,20 +78,24 @@ public class GameEngine
         if (_userInput.ToString() == TargetText)
         {
             IsOver = true;
+            IsInitialized = false;
             Stats.Stop();
             CoreLogs.GameFinished(_logger);
         }
     }
 
-    public async Task StartNewGame()
+    public void StartNewGame()
     {
-        CoreLogs.GameStarting(_logger);
-        var text = await _textProvider.GetTextAsync();
-        TargetText = text.Text;
-        Stats.Start();
-        _userInput.Clear();
-        IsOver = false;
-        PublishStateUpdate();
+        if (IsInitialized)
+        {
+            CoreLogs.GameStarting(_logger);
+            Stats.Start();
+            PublishStateUpdate();
+        }
+        else
+        {
+            throw new Exception();
+        }
     }
 
     private void PublishStateUpdate()
@@ -96,5 +103,14 @@ public class GameEngine
         CoreLogs.PublishingState(_logger);
         var snapShot = Stats.CreateSnapshot();
         var stateEvent = new GameStateUpdatedEvent(TargetText, UserInput, snapShot, IsOver);
+    }
+
+    internal async Task InitializeAsync()
+    {
+        var text = await _textProvider.GetTextAsync();
+        TargetText = text.Text;
+        _userInput.Clear();
+        IsOver = false;
+        IsInitialized = true;
     }
 }

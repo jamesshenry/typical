@@ -47,26 +47,3 @@ finally
 {
     await Log.CloseAndFlushAsync();
 }
-// using Terminal.Gui.App;
-// using Terminal.Gui.ViewBase;
-// using Terminal.Gui.Views;
-
-// // Create the app
-// using IApplication app = Application.Create();
-// app.Init();
-
-// var viewModel = new TypingViewModel();
-// var win = new Window { Title = "Typing Game v2" };
-
-// var typingView = new TypingGameView(viewModel)
-// {
-//     X = Pos.Center(),
-//     Y = Pos.Center(),
-//     Width = viewModel.TargetText.Length,
-//     Height = 1,
-// };
-
-// win.Add(typingView);
-
-// app.Run(win);
-// // Shutdown is handled by Dispose in the 'using' block

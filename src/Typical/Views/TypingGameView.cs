@@ -2,9 +2,9 @@ using System.ComponentModel;
 using System.Text;
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
+using Terminal.Gui.Text;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
-using Typical;
 using Typical.Binding;
 using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
@@ -14,6 +14,7 @@ using Attribute = Terminal.Gui.Drawing.Attribute;
 public class TypingGameView : BindableView<TypingViewModel>
 {
     private readonly Label _statsLabel;
+    private readonly TextFormatter _formatter = new();
 
     public TypingGameView(TypingViewModel viewModel)
         : base(viewModel)
@@ -21,71 +22,117 @@ public class TypingGameView : BindableView<TypingViewModel>
         CanFocus = true;
         X = Pos.Center();
         Y = Pos.Center();
-        Width = viewModel.TargetText.Length;
-        Height = 1;
+        Width = Dim.Fill();
+        Height = Dim.Fill();
+        BorderStyle = LineStyle.RoundedDashed;
+        _formatter.WordWrap = true;
+
         _statsLabel = new Label { Y = Pos.AnchorEnd(1) };
+        Add(_statsLabel);
+        Initialized += (s, e) => _ = InitializeViewAsync();
     }
 
     protected override bool OnDrawingContent(DrawContext? context)
     {
-        string text = ViewModel.TargetText;
+        if (context == null)
+            return true;
 
-        for (int i = 0; i < text.Length; i++)
+        _formatter.Text = ViewModel.TargetText;
+        _formatter.ConstrainToWidth = Viewport.Width;
+        _formatter.ConstrainToHeight = Viewport.Height;
+
+        var lines = _formatter.GetLines();
+
+        int globalCharIndex = 0;
+        for (int y = 0; y < lines.Count; y++)
         {
-            var status = ViewModel.GetStatus(i);
+            string lineText = lines[y];
+            Move(0, y);
 
-            Attribute color = status switch
+            for (int x = 0; x < lineText.Length; x++)
             {
-                KeystrokeType.Correct => new Attribute(Color.Green, Color.Black),
-                KeystrokeType.Incorrect => new Attribute(Color.White, Color.Red),
-                _ => new Attribute(Color.DarkGray, Color.Black),
-            };
+                var status = ViewModel.GetStatus(globalCharIndex);
 
-            Move(i, 0);
+                var back = this.GetScheme().Normal.Background;
+                Attribute color = status switch
+                {
+                    KeystrokeType.Correct => new Attribute(Color.Green, back),
+                    KeystrokeType.Incorrect => new Attribute(Color.White, Color.Red),
+                    _ => new Attribute(Color.DarkGray, back),
+                };
 
-            SetAttribute(color);
+                SetAttribute(color);
+                AddRune(new Rune(lineText[x]));
 
-            AddRune(new Rune(text[i]));
+                globalCharIndex++;
+            }
         }
-
-        var drawnRect = new System.Drawing.Rectangle(0, 0, text.Length, 1);
-        context?.AddDrawnRectangle(ViewportToScreen(drawnRect));
 
         return true;
     }
 
     protected override bool OnKeyDown(Key key)
     {
-        ViewModel.ProcessInput((char)key.AsRune.Value, false);
-        if (key == Key.Backspace)
+        bool isBackspace = key == Key.Backspace;
+        Rune rune = key.AsRune;
+
+        if (rune == default && !isBackspace)
         {
-            if (ViewModel.TypedText.Length > 0)
-                ViewModel.TypedText = ViewModel.TypedText[..^1];
-            return true;
+            return base.OnKeyDown(key);
         }
 
-        if (!Rune.IsControl(key.AsRune))
-        {
-            ViewModel.TypedText += key.AsRune.ToString();
-            return true;
-        }
+        char c = isBackspace ? '\0' : (char)rune.Value;
 
-        return base.OnKeyDown(key);
+        _ = HandleInputAsync(c, isBackspace);
+
+        return true;
+    }
+
+    private async Task HandleInputAsync(char c, bool isBackspace)
+    {
+        try
+        {
+            await ViewModel.ProcessInput(c, isBackspace);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Input Error: {ex.Message}");
+        }
     }
 
     protected override void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        SetNeedsDraw();
+        App?.Invoke(() =>
+        {
+            if (e.PropertyName == nameof(ViewModel.TargetText))
+            {
+                SetNeedsLayout();
+            }
+            SetNeedsDraw();
+        });
     }
 
     protected override void SetupBindings()
     {
         var binding = _statsLabel.BindTextOneWay(
             ViewModel,
-            () => $"WPM: {ViewModel.Wpm} | Acc: {ViewModel.Accuracy}",
-            nameof(ViewModel.Wpm)
+            () =>
+                $"Elapsed: {ViewModel.TimeElapsed} WPM: {ViewModel.Wpm} | Acc: {ViewModel.Accuracy}",
+            nameof(ViewModel.TypedText)
         );
 
         BindingContext.AddBinding(binding);
+    }
+
+    private async Task InitializeViewAsync()
+    {
+        try
+        {
+            await ViewModel.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Init Error: {ex.Message}");
+        }
     }
 }

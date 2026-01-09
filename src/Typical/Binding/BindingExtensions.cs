@@ -8,8 +8,6 @@ namespace Typical.Binding;
 /// </summary>
 public static class BindingExtensions
 {
-    // Extension methods for binding Terminal.Gui controls to ViewModel properties
-
     /// <summary>
     /// Binds a Label's Text property one-way to a ViewModel property.
     /// </summary>
@@ -20,10 +18,8 @@ public static class BindingExtensions
         string propertyName
     )
     {
-        // Initial sync
         label.Text = getter();
 
-        // Subscribe to changes
         void Handler(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == propertyName)
@@ -48,16 +44,13 @@ public static class BindingExtensions
         string propertyName
     )
     {
-        // Initial sync
         textField.Text = getter();
 
-        // View → ViewModel
         void TextChangedHandler(object? sender, EventArgs e)
         {
             setter(textField.Text.ToString() ?? string.Empty);
         }
 
-        // ViewModel → View
         void PropertyChangedHandler(
             object? sender,
             System.ComponentModel.PropertyChangedEventArgs e
@@ -90,16 +83,13 @@ public static class BindingExtensions
         string propertyName
     )
     {
-        // Initial sync
         checkBox.CheckedState = getter() ? CheckState.Checked : CheckState.UnChecked;
 
-        // View → ViewModel
         void AcceptedHandler(object? sender, EventArgs e)
         {
             setter(checkBox.CheckedState == CheckState.Checked);
         }
 
-        // ViewModel → View
         void PropertyChangedHandler(
             object? sender,
             System.ComponentModel.PropertyChangedEventArgs e

@@ -11,7 +11,7 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     private readonly ILogger<TypingViewModel> _logger;
 
     [ObservableProperty]
-    private string _targetText = "The quick brown fox jumped over the lazy dog.";
+    private string _targetText = "";
 
     [ObservableProperty]
     private string _typedText = "";
@@ -38,11 +38,15 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     /// Processes input received from the View.
     /// Maps Key events to Core Game Logic.
     /// </summary>
-    public void ProcessInput(char c, bool isBackspace)
+    public async Task ProcessInput(char c, bool isBackspace)
     {
         if (IsGameOver)
             return;
-
+        if (!_engine.IsRunning && _engine.IsInitialized)
+        {
+            _engine.StartNewGame();
+            TargetText = _engine.TargetText;
+        }
         // Pass to engine
         bool handled = _engine.ProcessKeyPress(c, isBackspace);
 
@@ -59,25 +63,17 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     private void UpdateState()
     {
         TypedText = _engine.UserInput;
-        TargetText = _engine.TargetText;
         IsGameOver = _engine.IsOver;
 
-        // Pull current stats snapshot
-        // Assuming GameEngine exposes a way to get the latest stats
-        // If not, calculate accuracy manually here
-        if (TypedText.Length > 0)
-        {
-            int correct = 0;
-            for (int i = 0; i < TypedText.Length; i++)
-                if (TypedText[i] == TargetText[i])
-                    correct++;
-
-            Accuracy = (double)correct / TypedText.Length * 100;
-        }
+        var snapshot = _engine.Stats.CreateSnapshot();
+        Accuracy = snapshot.Accuracy;
+        Wpm = snapshot.WordsPerMinute;
+        TimeElapsed = snapshot.ElapsedTime.ToString(@"mm\:ss");
     }
 
     public KeystrokeType GetStatus(int index)
     {
+        var state = _engine.Stats.CreateSnapshot();
         return index >= TypedText.Length ? KeystrokeType.Untyped
             : TypedText[index] == TargetText[index] ? KeystrokeType.Correct
             : KeystrokeType.Incorrect;
@@ -93,28 +89,9 @@ public partial class TypingViewModel : ObservableObject, IBindableView
         _logger.LogInformation($"Navigated from {nameof(TypingViewModel)}");
     }
 
-    /// <summary>
-    /// Updates WPM and Timer independently of keystrokes.
-    /// </summary>
-    private async Task UpdateStatsLoop()
+    public async Task InitializeAsync()
     {
-        while (!IsGameOver)
-        {
-            // Assuming GameEngine/Stats provides these values
-            // Calculate WPM: (characters / 5) / minutes
-            // This ensures the UI updates even if the user stops typing
-            Wpm = CalculateWpm();
-
-            // Example of a simple timer logic
-            // TimeElapsed = ...
-
-            await Task.Delay(500); // Update twice per second for smoothness
-        }
-    }
-
-    private double CalculateWpm()
-    {
-        var snapShot = _engine.Stats.CreateSnapshot();
-        return snapShot.WordsPerMinute;
+        await _engine.InitializeAsync();
+        TargetText = _engine.TargetText;
     }
 }

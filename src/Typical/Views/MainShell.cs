@@ -41,7 +41,6 @@ public class MainShell : Window
 
         Add(_contentContainer, _statusLabel);
 
-        // Set up bindings
         _bindingContext.AddBinding(
             _statusLabel.BindTextOneWay(
                 _viewModel,

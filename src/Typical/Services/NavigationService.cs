@@ -29,7 +29,6 @@ public class NavigationService : ObservableObject, INavigationService
     public void NavigateTo<TViewModel>()
         where TViewModel : ObservableObject
     {
-        // Call OnNavigatedFrom on current ViewModel if it supports it
         if (CurrentViewModel is IBindableView currentViewModel)
         {
             currentViewModel.OnNavigatedFrom();
@@ -37,7 +36,6 @@ public class NavigationService : ObservableObject, INavigationService
 
         CurrentViewModel = _services.GetRequiredService<TViewModel>();
 
-        // Call OnNavigatedTo on new ViewModel if it supports it
         if (CurrentViewModel is IBindableView newViewModel)
         {
             newViewModel.OnNavigatedTo();

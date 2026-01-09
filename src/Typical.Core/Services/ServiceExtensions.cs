@@ -10,9 +10,11 @@ public static class ServiceExtensions
     {
         services.AddSingleton(TimeProvider.System);
         // Singleton: The provider and factory live for the app lifetime
-        services.AddSingleton<ITextProvider, StaticTextProvider>();
-        services.AddSingleton<IGameEngineFactory, GameEngineFactory>();
-
+        services.AddSingleton<ITextProvider, StaticTextProvider>(
+            (_) => new StaticTextProvider("The quick brown fox jumped over the lazy dog.")
+        );
+        services.AddSingleton<GameOptions>(GameOptions.Default);
+        services.AddSingleton<GameEngine>();
         services.AddSingleton<MainViewModel>();
 
         // Transient: A fresh ViewModel and Engine logic for every game session
