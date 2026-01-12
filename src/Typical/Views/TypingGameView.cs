@@ -31,11 +31,16 @@ public class TypingGameView : BindableView<TypingViewModel>
         _statsLabel = new Label { Y = Pos.AnchorEnd(1) };
         Add(_statsLabel);
         Initialized += (s, e) => _ = InitializeViewAsync();
+        this.Activating += (s, e) =>
+        {
+            this.SetFocus();
+            e.Handled = true; // Prevents the click from reaching MainShell
+        };
     }
 
     protected override bool OnDrawingContent(DrawContext? context)
     {
-        if (context == null)
+        if (context == null || string.IsNullOrEmpty(ViewModel.TargetText))
             return true;
 
         _formatter.Text = ViewModel.TargetText;
@@ -43,6 +48,12 @@ public class TypingGameView : BindableView<TypingViewModel>
         _formatter.ConstrainToHeight = Viewport.Height;
 
         var lines = _formatter.GetLines();
+        var scheme = this.GetScheme();
+        var normalBack = scheme.Normal.Background;
+
+        var correctAttr = new Attribute(Color.Green, normalBack);
+        var incorrectAttr = new Attribute(Color.White, Color.Red);
+        var untypedAttr = new Attribute(Color.DarkGray, normalBack);
 
         int globalCharIndex = 0;
         for (int y = 0; y < lines.Count; y++)
@@ -54,12 +65,11 @@ public class TypingGameView : BindableView<TypingViewModel>
             {
                 var status = ViewModel.GetStatus(globalCharIndex);
 
-                var back = this.GetScheme().Normal.Background;
                 Attribute color = status switch
                 {
-                    KeystrokeType.Correct => new Attribute(Color.Green, back),
-                    KeystrokeType.Incorrect => new Attribute(Color.White, Color.Red),
-                    _ => new Attribute(Color.DarkGray, back),
+                    KeystrokeType.Correct => correctAttr,
+                    KeystrokeType.Incorrect => incorrectAttr,
+                    _ => untypedAttr,
                 };
 
                 SetAttribute(color);
@@ -74,19 +84,28 @@ public class TypingGameView : BindableView<TypingViewModel>
 
     protected override bool OnKeyDown(Key key)
     {
-        bool isBackspace = key == Key.Backspace;
-        Rune rune = key.AsRune;
-
-        if (rune == default && !isBackspace)
+        if (key.IsCtrl || key.IsAlt)
         {
             return base.OnKeyDown(key);
         }
 
-        char c = isBackspace ? '\0' : (char)rune.Value;
+        if (key == Key.Tab || key == Key.Esc || key == Key.F4)
+        {
+            return base.OnKeyDown(key);
+        }
 
-        _ = HandleInputAsync(c, isBackspace);
+        bool isBackspace = key == Key.Backspace;
+        Rune rune = key.AsRune;
 
-        return true;
+        if (rune != default || isBackspace)
+        {
+            char c = isBackspace ? '\0' : (char)rune.Value;
+            _ = HandleInputAsync(c, isBackspace);
+
+            return true;
+        }
+
+        return base.OnKeyDown(key);
     }
 
     private async Task HandleInputAsync(char c, bool isBackspace)

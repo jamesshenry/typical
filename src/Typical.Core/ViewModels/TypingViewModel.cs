@@ -73,10 +73,9 @@ public partial class TypingViewModel : ObservableObject, IBindableView
 
     public KeystrokeType GetStatus(int index)
     {
-        var state = _engine.Stats.CreateSnapshot();
-        return index >= TypedText.Length ? KeystrokeType.Untyped
-            : TypedText[index] == TargetText[index] ? KeystrokeType.Correct
-            : KeystrokeType.Incorrect;
+        return index < 0 || index >= _engine.CharacterStates.Count
+            ? KeystrokeType.Untyped
+            : _engine.CharacterStates[index];
     }
 
     public void OnNavigatedTo()
@@ -93,5 +92,6 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     {
         await _engine.InitializeAsync();
         TargetText = _engine.TargetText;
+        UpdateState();
     }
 }

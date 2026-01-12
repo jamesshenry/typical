@@ -17,6 +17,9 @@ public class GameEngine
     // TODO: Add HeatmapCollector
     private readonly ILogger<GameEngine> _logger;
 
+    private KeystrokeType[] _charStates = [];
+    public IReadOnlyList<KeystrokeType> CharacterStates => _charStates;
+
     public GameEngine(
         ITextProvider textProvider,
         GameOptions gameOptions,
@@ -40,17 +43,25 @@ public class GameEngine
 
     public bool ProcessKeyPress(char c, bool isBackspace)
     {
+        int currentPos = _userInput.Length;
+
         if (isBackspace)
         {
-            if (_userInput.Length > 0)
+            if (currentPos > 0)
             {
-                _userInput.Remove(_userInput.Length - 1, 1);
+                _userInput.Remove(currentPos - 1, 1);
+                _charStates[currentPos - 1] = KeystrokeType.Untyped;
                 Stats.RecordBackspace();
             }
             return true;
         }
 
+        if (currentPos >= TargetText.Length)
+            return false;
+
         var type = DetermineKeystrokeType(c);
+
+        _charStates[currentPos] = type;
         Stats.RecordKey(c, type);
 
         bool isCorrect = type == KeystrokeType.Correct;
@@ -58,6 +69,7 @@ public class GameEngine
         {
             _userInput.Append(c);
         }
+        else { }
 
         CheckEndCondition();
         return true;
@@ -66,16 +78,14 @@ public class GameEngine
     private KeystrokeType DetermineKeystrokeType(char inputChar)
     {
         int currentPos = _userInput.Length;
-        if (currentPos >= TargetText.Length)
-            return KeystrokeType.Extra;
-        if (inputChar == TargetText[currentPos])
-            return KeystrokeType.Correct;
-        return KeystrokeType.Incorrect;
+        return currentPos >= TargetText.Length ? KeystrokeType.Extra
+            : inputChar == TargetText[currentPos] ? KeystrokeType.Correct
+            : KeystrokeType.Incorrect;
     }
 
     private void CheckEndCondition()
     {
-        if (_userInput.ToString() == TargetText)
+        if (_userInput.ToString().Equals(TargetText))
         {
             IsOver = true;
             IsInitialized = false;
@@ -110,6 +120,10 @@ public class GameEngine
         var text = await _textProvider.GetTextAsync();
         TargetText = text.Text;
         _userInput.Clear();
+
+        _charStates = new KeystrokeType[TargetText.Length];
+        Array.Fill(_charStates, KeystrokeType.Untyped);
+
         IsOver = false;
         IsInitialized = true;
     }

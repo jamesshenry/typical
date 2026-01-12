@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Terminal.Gui.Drawing;
+using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Typical.Binding;
@@ -54,6 +55,19 @@ public class MainShell : Window
         _navService.PropertyChanged += OnNavServicePropertyChanged;
 
         _viewModel.NavigateToGameViewCommand.Execute(null);
+
+        this.Activating += (s, e) =>
+        {
+            if (e.Context is CommandContext<MouseBinding> { Binding.MouseEventArgs: { } mouse })
+            {
+                if (mouse.Flags.HasFlag(MouseFlags.Button1Pressed))
+                {
+                    this.SetFocus();
+                }
+
+                e.Handled = true;
+            }
+        };
     }
 
     protected override void Dispose(bool disposing)
