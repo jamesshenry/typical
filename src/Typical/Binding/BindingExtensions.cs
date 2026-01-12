@@ -1,113 +1,133 @@
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 
 namespace Typical.Binding;
 
-/// <summary>
-/// Extension methods for binding Terminal.Gui controls to ViewModel properties.
-/// </summary>
 public static class BindingExtensions
 {
     /// <summary>
-    /// Binds a Label's Text property one-way to a ViewModel property.
+    /// Generic One-Way Binding: VM -> UI
+    /// Works for strings, bools, ints, or custom objects.
     /// </summary>
-    public static IDisposable BindTextOneWay(
-        this Label label,
-        ObservableObject viewModel,
-        Func<string> getter,
-        string propertyName
+    public static IDisposable Bind<T>(
+        this ObservableObject viewModel,
+        string propertyName,
+        Func<T> getter,
+        Action<T> updateUi
     )
     {
-        label.Text = getter();
-
-        void Handler(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        void Handler(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == propertyName)
+            if (string.Equals(e.PropertyName, propertyName, StringComparison.Ordinal))
             {
-                label.Text = getter();
+                updateUi(getter());
             }
         }
 
         viewModel.PropertyChanged += Handler;
+        updateUi(getter());
 
         return new DisposableAction(() => viewModel.PropertyChanged -= Handler);
     }
 
     /// <summary>
-    /// Binds a TextField's Text property two-way to a ViewModel property.
+    /// Two-Way String Binding: VM <-> TextField
     /// </summary>
-    public static IDisposable BindTextTwoWay(
-        this TextField textField,
-        ObservableObject viewModel,
+    public static IDisposable BindText(
+        this ObservableObject viewModel,
+        string propertyName,
+        View target,
         Func<string> getter,
-        Action<string> setter,
-        string propertyName
+        Action<string>? setter = null
     )
     {
-        textField.Text = getter();
-
-        void TextChangedHandler(object? sender, EventArgs e)
-        {
-            setter(textField.Text.ToString() ?? string.Empty);
-        }
-
-        void PropertyChangedHandler(
-            object? sender,
-            System.ComponentModel.PropertyChangedEventArgs e
-        )
-        {
-            if (e.PropertyName == propertyName)
+        var vmToUi = viewModel.Bind(
+            propertyName,
+            getter,
+            val =>
             {
-                textField.Text = getter();
+                if (target.Text != val)
+                {
+                    target.Text = val;
+                    target.SetNeedsDraw();
+                }
             }
+        );
+
+        if (setter != null)
+        {
+            void OnTextChanged(object? s, EventArgs e) => setter(target.Text);
+            target.TextChanged += OnTextChanged;
+
+            return new DisposableAction(() =>
+            {
+                vmToUi.Dispose();
+                target.TextChanged -= OnTextChanged;
+            });
         }
 
-        textField.TextChanged += TextChangedHandler;
-        viewModel.PropertyChanged += PropertyChangedHandler;
+        return vmToUi;
+    }
+
+    /// <summary>
+    /// Two-Way Boolean Binding: VM <-> CheckBox
+    /// </summary>
+    public static IDisposable BindChecked(
+        this ObservableObject viewModel,
+        string propertyName,
+        CheckBox checkBox,
+        Func<bool> getter,
+        Action<bool> setter
+    )
+    {
+        var vmToUi = viewModel.Bind(
+            propertyName,
+            getter,
+            val =>
+            {
+                var newState = val ? CheckState.Checked : CheckState.UnChecked;
+                if (checkBox.CheckedState != newState)
+                {
+                    checkBox.CheckedState = newState;
+                    checkBox.SetNeedsDraw();
+                }
+            }
+        );
+
+        void OnUiChanged(object? s, EventArgs e) =>
+            setter(checkBox.CheckedState == CheckState.Checked);
+        checkBox.Accepted += OnUiChanged;
 
         return new DisposableAction(() =>
         {
-            textField.TextChanged -= TextChangedHandler;
-            viewModel.PropertyChanged -= PropertyChangedHandler;
+            vmToUi.Dispose();
+            checkBox.Accepted -= OnUiChanged;
         });
     }
 
     /// <summary>
-    /// Binds a CheckBox's CheckedState property two-way to a ViewModel boolean property.
+    /// Command: Connects a ViewModel command to a Button.
     /// </summary>
-    public static IDisposable BindCheckedTwoWay(
-        this CheckBox checkBox,
-        ObservableObject viewModel,
-        Func<bool> getter,
-        Action<bool> setter,
-        string propertyName
+    public static IDisposable BindCommand(
+        this ObservableObject _,
+        IRelayCommand command,
+        Button button
     )
     {
-        checkBox.CheckedState = getter() ? CheckState.Checked : CheckState.UnChecked;
+        void UpdateEnabled(object? s, EventArgs e) => button.Enabled = command.CanExecute(null);
+        void OnAccept(object? s, EventArgs e) => command.Execute(null);
 
-        void AcceptedHandler(object? sender, EventArgs e)
-        {
-            setter(checkBox.CheckedState == CheckState.Checked);
-        }
-
-        void PropertyChangedHandler(
-            object? sender,
-            System.ComponentModel.PropertyChangedEventArgs e
-        )
-        {
-            if (e.PropertyName == propertyName)
-            {
-                checkBox.CheckedState = getter() ? CheckState.Checked : CheckState.UnChecked;
-            }
-        }
-
-        checkBox.Accepted += AcceptedHandler;
-        viewModel.PropertyChanged += PropertyChangedHandler;
+        command.CanExecuteChanged += UpdateEnabled;
+        button.Accepting += OnAccept;
+        button.Enabled = command.CanExecute(null);
 
         return new DisposableAction(() =>
         {
-            checkBox.Accepted -= AcceptedHandler;
-            viewModel.PropertyChanged -= PropertyChangedHandler;
+            command.CanExecuteChanged -= UpdateEnabled;
+            button.Accepting -= OnAccept;
         });
     }
 }

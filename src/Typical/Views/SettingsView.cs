@@ -9,6 +9,8 @@ public class SettingsView : BindableView<SettingsViewModel>
 {
     private readonly TextField _txtName;
     private readonly CheckBox _chkLog;
+    private readonly Button _btnSave;
+    private readonly Button _btnCancel;
 
     public SettingsView(SettingsViewModel viewModel)
         : base(viewModel)
@@ -21,44 +23,44 @@ public class SettingsView : BindableView<SettingsViewModel>
 
         _chkLog = new CheckBox { Y = Pos.Bottom(lblName) + 1, Text = "Enable Background Logging" };
 
-        var btnSave = new Button
+        _btnSave = new Button
         {
             X = 0,
             Y = Pos.Bottom(_chkLog) + 2,
             Text = "Save Settings",
         };
 
-        var btnCancel = new Button
+        _btnCancel = new Button
         {
-            X = Pos.Right(btnSave) + 2,
-            Y = Pos.Y(btnSave),
+            X = Pos.Right(_btnSave) + 2,
+            Y = Pos.Y(_btnSave),
             Text = "Cancel",
         };
 
-        btnSave.Accepting += (s, e) => ViewModel.SaveCommand.Execute(null);
-        btnCancel.Accepting += (s, e) => ViewModel.CancelCommand.Execute(null);
-
-        Add(lblName, _txtName, _chkLog, btnSave, btnCancel);
+        Add(lblName, _txtName, _chkLog, _btnSave, _btnCancel);
     }
 
     protected override void SetupBindings()
     {
         BindingContext.AddBinding(
-            _txtName.BindTextTwoWay(
-                ViewModel,
+            ViewModel.BindText(
+                nameof(ViewModel.Username),
+                _txtName,
                 () => ViewModel.Username,
-                value => ViewModel.Username = value,
-                nameof(ViewModel.Username)
+                value => ViewModel.Username = value
             )
         );
 
         BindingContext.AddBinding(
-            _chkLog.BindCheckedTwoWay(
-                ViewModel,
+            ViewModel.BindChecked(
+                nameof(ViewModel.EnableLogging),
+                _chkLog,
                 () => ViewModel.EnableLogging,
-                value => ViewModel.EnableLogging = value,
-                nameof(ViewModel.EnableLogging)
+                value => ViewModel.EnableLogging = value
             )
         );
+
+        BindingContext.AddBinding(ViewModel.BindCommand(ViewModel.SaveCommand, _btnSave));
+        BindingContext.AddBinding(ViewModel.BindCommand(ViewModel.CancelCommand, _btnCancel));
     }
 }

@@ -22,9 +22,10 @@ public class TypingGameView : BindableView<TypingViewModel>
         CanFocus = true;
         X = Pos.Center();
         Y = Pos.Center();
-        Width = Dim.Fill();
-        Height = Dim.Fill();
+        Width = Dim.Percent(80);
+        Height = Dim.Percent(50);
         BorderStyle = LineStyle.RoundedDashed;
+        Title = nameof(TypingGameView);
         _formatter.WordWrap = true;
 
         _statsLabel = new Label { Y = Pos.AnchorEnd(1) };
@@ -114,14 +115,14 @@ public class TypingGameView : BindableView<TypingViewModel>
 
     protected override void SetupBindings()
     {
-        var binding = _statsLabel.BindTextOneWay(
-            ViewModel,
-            () =>
-                $"Elapsed: {ViewModel.TimeElapsed} WPM: {ViewModel.Wpm} | Acc: {ViewModel.Accuracy}",
-            nameof(ViewModel.TypedText)
+        BindingContext.AddBinding(
+            ViewModel.BindText(
+                nameof(ViewModel.TypedText),
+                _statsLabel,
+                () =>
+                    $"Elapsed: {ViewModel.TimeElapsed} WPM: {ViewModel.Wpm} | Acc: {ViewModel.Accuracy}"
+            )
         );
-
-        BindingContext.AddBinding(binding);
     }
 
     private async Task InitializeViewAsync()

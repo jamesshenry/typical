@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Terminal.Gui.Drawing;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Typical.Binding;
@@ -24,17 +25,18 @@ public class MainShell : Window
         _navService = navService;
         _serviceProvider = sp;
         _bindingContext = new BindingContext();
-
+        BorderStyle = LineStyle.RoundedDashed;
         Title = _viewModel.AppTitle;
 
         _statusLabel = new Label { Y = Pos.AnchorEnd(1), Width = Dim.Fill() };
 
         _contentContainer = new FrameView
         {
+            Title = "Content Frame",
             X = Pos.Center(),
             Y = Pos.Center(),
             Width = Dim.Fill(),
-            Height = Dim.Fill() - 3,
+            Height = Dim.Fill() - 2,
             CanFocus = true,
             BorderStyle = DefaultBorderStyle,
         };
@@ -42,10 +44,10 @@ public class MainShell : Window
         Add(_contentContainer, _statusLabel);
 
         _bindingContext.AddBinding(
-            _statusLabel.BindTextOneWay(
-                _viewModel,
-                () => _viewModel.StatusText,
-                nameof(_viewModel.StatusText)
+            _viewModel.BindText(
+                nameof(_viewModel.StatusText),
+                _statusLabel,
+                () => _viewModel.StatusText
             )
         );
 
@@ -80,8 +82,8 @@ public class MainShell : Window
 
         var view = ViewLocator.GetView(_serviceProvider, viewModel);
 
-        view.Width = Dim.Fill();
-        view.Height = Dim.Fill();
+        view.X = Pos.Center();
+        view.Y = Pos.Center();
 
         _contentContainer.Add(view);
 
