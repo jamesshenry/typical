@@ -58,9 +58,9 @@ public class MainShell : Window
 
         this.Activating += (s, e) =>
         {
-            if (e.Context is CommandContext<MouseBinding> { Binding.MouseEventArgs: { } mouse })
+            if (e.Context?.Binding is MouseBinding { MouseEvent: { } mouse })
             {
-                if (mouse.Flags.HasFlag(MouseFlags.Button1Pressed))
+                if (mouse.Flags.HasFlag(MouseFlags.LeftButtonClicked))
                 {
                     this.SetFocus();
                 }

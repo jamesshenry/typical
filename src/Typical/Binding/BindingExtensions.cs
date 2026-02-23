@@ -89,16 +89,15 @@ public static class BindingExtensions
             val =>
             {
                 var newState = val ? CheckState.Checked : CheckState.UnChecked;
-                if (checkBox.CheckedState != newState)
+                if (checkBox.Value != newState)
                 {
-                    checkBox.CheckedState = newState;
+                    checkBox.Value = newState;
                     checkBox.SetNeedsDraw();
                 }
             }
         );
 
-        void OnUiChanged(object? s, EventArgs e) =>
-            setter(checkBox.CheckedState == CheckState.Checked);
+        void OnUiChanged(object? s, EventArgs e) => setter(checkBox.Value == CheckState.Checked);
         checkBox.Accepted += OnUiChanged;
 
         return new DisposableAction(() =>

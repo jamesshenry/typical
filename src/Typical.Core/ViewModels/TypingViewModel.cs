@@ -28,6 +28,9 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     [ObservableProperty]
     private string _timeElapsed = "00:00";
 
+    [ObservableProperty]
+    private IReadOnlyList<KeystrokeType> _characterStates = [];
+
     public TypingViewModel(GameEngine engine, ILogger<TypingViewModel> logger)
     {
         _engine = engine;
@@ -53,6 +56,7 @@ public partial class TypingViewModel : ObservableObject, IBindableView
         if (handled)
         {
             UpdateState();
+            CharacterStates = _engine.CharacterStates;
         }
     }
 

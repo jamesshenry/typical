@@ -39,7 +39,13 @@ public class TypingGameView : BindableView<TypingViewModel>
         };
     }
 
-    private void UpdateLayout()
+    protected override void OnSubViewsLaidOut(LayoutEventArgs args)
+    {
+        base.OnSubViewsLaidOut(args);
+        RefreshTextCache();
+    }
+
+    private void RefreshTextCache()
     {
         _formatter.Text = ViewModel.TargetText;
         _formatter.ConstrainToWidth = Viewport.Width;
@@ -89,12 +95,7 @@ public class TypingGameView : BindableView<TypingViewModel>
 
     protected override bool OnKeyDown(Key key)
     {
-        if (key.IsCtrl || key.IsAlt)
-        {
-            return base.OnKeyDown(key);
-        }
-
-        if (key == Key.Tab || key == Key.Esc || key == Key.F4)
+        if (key.IsCtrl || key.IsAlt || key == Key.Tab || key == Key.Esc || key == Key.F4)
         {
             return base.OnKeyDown(key);
         }
@@ -131,6 +132,7 @@ public class TypingGameView : BindableView<TypingViewModel>
         {
             if (e.PropertyName == nameof(ViewModel.TargetText))
             {
+                RefreshTextCache();
                 SetNeedsLayout();
             }
             SetNeedsDraw();
@@ -147,6 +149,13 @@ public class TypingGameView : BindableView<TypingViewModel>
                     $"Elapsed: {ViewModel.TimeElapsed} WPM: {ViewModel.Wpm} | Acc: {ViewModel.Accuracy}"
             )
         );
+        BindingContext.AddBinding(
+            ViewModel.Bind(
+                nameof(ViewModel.CharacterStates),
+                () => ViewModel.CharacterStates,
+                _ => SetNeedsDraw()
+            )
+        );
     }
 
     private async Task InitializeViewAsync()
@@ -154,11 +163,12 @@ public class TypingGameView : BindableView<TypingViewModel>
         try
         {
             await ViewModel.InitializeAsync();
+            RefreshTextCache();
+            SetNeedsDraw();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Init Error: {ex.Message}");
         }
-        UpdateLayout();
     }
 }
