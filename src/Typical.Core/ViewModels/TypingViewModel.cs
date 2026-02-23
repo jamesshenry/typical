@@ -38,7 +38,7 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     /// Processes input received from the View.
     /// Maps Key events to Core Game Logic.
     /// </summary>
-    public async Task ProcessInput(char c, bool isBackspace)
+    public void ProcessInput(char c, bool isBackspace)
     {
         if (IsGameOver)
             return;

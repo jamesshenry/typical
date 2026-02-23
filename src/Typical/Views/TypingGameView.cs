@@ -15,6 +15,7 @@ public class TypingGameView : BindableView<TypingViewModel>
 {
     private readonly Label _statsLabel;
     private readonly TextFormatter _formatter = new();
+    private List<string> _cachedLines = [];
 
     public TypingGameView(TypingViewModel viewModel)
         : base(viewModel)
@@ -38,16 +39,20 @@ public class TypingGameView : BindableView<TypingViewModel>
         };
     }
 
-    protected override bool OnDrawingContent(DrawContext? context)
+    private void UpdateLayout()
     {
-        if (context == null || string.IsNullOrEmpty(ViewModel.TargetText))
-            return true;
-
         _formatter.Text = ViewModel.TargetText;
         _formatter.ConstrainToWidth = Viewport.Width;
         _formatter.ConstrainToHeight = Viewport.Height;
 
-        var lines = _formatter.GetLines();
+        _cachedLines = _formatter.GetLines();
+    }
+
+    protected override bool OnDrawingContent(DrawContext? context)
+    {
+        if (context == null || _cachedLines.Count == 0)
+            return true;
+
         var scheme = this.GetScheme();
         var normalBack = scheme.Normal.Background;
 
@@ -56,9 +61,9 @@ public class TypingGameView : BindableView<TypingViewModel>
         var untypedAttr = new Attribute(Color.DarkGray, normalBack);
 
         int globalCharIndex = 0;
-        for (int y = 0; y < lines.Count; y++)
+        for (int y = 0; y < _cachedLines.Count; y++)
         {
-            string lineText = lines[y];
+            string lineText = _cachedLines[y];
             Move(0, y);
 
             for (int x = 0; x < lineText.Length; x++)
@@ -100,7 +105,7 @@ public class TypingGameView : BindableView<TypingViewModel>
         if (rune != default || isBackspace)
         {
             char c = isBackspace ? '\0' : (char)rune.Value;
-            _ = HandleInputAsync(c, isBackspace);
+            HandleInput(c, isBackspace);
 
             return true;
         }
@@ -108,11 +113,11 @@ public class TypingGameView : BindableView<TypingViewModel>
         return base.OnKeyDown(key);
     }
 
-    private async Task HandleInputAsync(char c, bool isBackspace)
+    private void HandleInput(char c, bool isBackspace)
     {
         try
         {
-            await ViewModel.ProcessInput(c, isBackspace);
+            ViewModel.ProcessInput(c, isBackspace);
         }
         catch (Exception ex)
         {
@@ -154,5 +159,6 @@ public class TypingGameView : BindableView<TypingViewModel>
         {
             System.Diagnostics.Debug.WriteLine($"Init Error: {ex.Message}");
         }
+        UpdateLayout();
     }
 }
