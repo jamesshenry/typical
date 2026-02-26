@@ -16,6 +16,9 @@ public class TypingGameView : BindableView<TypingViewModel>
     private readonly Label _statsLabel;
     private readonly TextFormatter _formatter = new();
     private List<string> _cachedLines = [];
+    private readonly Attribute _correctAttr;
+    private readonly Attribute _incorrectAttr;
+    private readonly Attribute _untypedAttr;
 
     public TypingGameView(TypingViewModel viewModel)
         : base(viewModel)
@@ -37,6 +40,13 @@ public class TypingGameView : BindableView<TypingViewModel>
             this.SetFocus();
             e.Handled = true; // Prevents the click from reaching MainShell
         };
+
+                var scheme = this.GetScheme();
+        var normalBack = scheme.Normal.Background;
+
+         _correctAttr = new Attribute(Color.Green, normalBack);
+         _incorrectAttr = new Attribute(Color.White, Color.Red);
+         _untypedAttr = new Attribute(Color.DarkGray, normalBack);
     }
 
     protected override void OnSubViewsLaidOut(LayoutEventArgs args)
@@ -54,44 +64,33 @@ public class TypingGameView : BindableView<TypingViewModel>
         _cachedLines = _formatter.GetLines();
     }
 
-    protected override bool OnDrawingContent(DrawContext? context)
+
+protected override bool OnDrawingContent(DrawContext? context)
+{
+    if (_cachedLines.Count == 0) return true;
+
+    int globalIdx = 0;
+    for (int y = 0; y < _cachedLines.Count; y++)
     {
-        if (context == null || _cachedLines.Count == 0)
-            return true;
-
-        var scheme = this.GetScheme();
-        var normalBack = scheme.Normal.Background;
-
-        var correctAttr = new Attribute(Color.Green, normalBack);
-        var incorrectAttr = new Attribute(Color.White, Color.Red);
-        var untypedAttr = new Attribute(Color.DarkGray, normalBack);
-
-        int globalCharIndex = 0;
-        for (int y = 0; y < _cachedLines.Count; y++)
+        for (int x = 0; x < _cachedLines[y].Length; x++)
         {
-            string lineText = _cachedLines[y];
-            Move(0, y);
-
-            for (int x = 0; x < lineText.Length; x++)
-            {
-                var status = ViewModel.GetStatus(globalCharIndex);
-
-                Attribute color = status switch
-                {
-                    KeystrokeType.Correct => correctAttr,
-                    KeystrokeType.Incorrect => incorrectAttr,
-                    _ => untypedAttr,
-                };
-
-                SetAttribute(color);
-                AddRune(new Rune(lineText[x]));
-
-                globalCharIndex++;
-            }
+            var state = ViewModel.DisplayStates[globalIdx];
+            
+            SetAttribute(GetAttributeForState(state));
+            AddRune(x, y, (Rune)_cachedLines[y][x]);
+            
+            globalIdx++;
         }
-
-        return true;
     }
+    return true;
+}
+
+private Attribute GetAttributeForState(KeystrokeType state) => state switch
+{
+    KeystrokeType.Correct => _correctAttr,
+    KeystrokeType.Incorrect => _incorrectAttr,
+    _ => _untypedAttr
+};
 
     protected override bool OnKeyDown(Key key)
     {

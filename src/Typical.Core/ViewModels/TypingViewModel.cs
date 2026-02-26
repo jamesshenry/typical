@@ -1,3 +1,5 @@
+using System.Security.AccessControl;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Typical.Core.Interfaces;
@@ -30,6 +32,7 @@ public partial class TypingViewModel : ObservableObject, IBindableView
 
     [ObservableProperty]
     private IReadOnlyList<KeystrokeType> _characterStates = [];
+    [ObservableProperty] private KeystrokeType[] _displayStates = [];
 
     public TypingViewModel(GameEngine engine, ILogger<TypingViewModel> logger)
     {
@@ -50,14 +53,22 @@ public partial class TypingViewModel : ObservableObject, IBindableView
             _engine.StartNewGame();
             TargetText = _engine.TargetText;
         }
-        // Pass to engine
-        bool handled = _engine.ProcessKeyPress(c, isBackspace);
 
-        if (handled)
+        bool engineAcceptedKey = _engine.ProcessKeyPress(c, isBackspace);
+
+        var display = _engine.CharacterStates.ToArray();
+
+    if (!engineAcceptedKey && !isBackspace && c != '\0')
+    {
+        int cursor = _engine.UserInput.Length;
+        if (cursor < display.Length)
         {
-            UpdateState();
-            CharacterStates = _engine.CharacterStates;
+            display[cursor] = KeystrokeType.Incorrect;
         }
+    }
+
+        UpdateState();
+        DisplayStates = display;
     }
 
     /// <summary>
