@@ -29,7 +29,6 @@ public class GameEngine
     {
         _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
         _gameOptions = gameOptions;
-        _gameOptions.ForbidIncorrectEntries = true;
         Stats = new GameStats();
         _logger = logger;
     }

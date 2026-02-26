@@ -8,8 +8,9 @@ using Terminal.Gui.Views;
 using Typical.Binding;
 using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
-using Typical.Views;
 using Attribute = Terminal.Gui.Drawing.Attribute;
+
+namespace Typical.Views;
 
 public class TypingView : BindableView<TypingViewModel>
 {
