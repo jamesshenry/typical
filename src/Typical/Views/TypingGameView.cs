@@ -11,7 +11,7 @@ using Typical.Core.ViewModels;
 using Typical.Views;
 using Attribute = Terminal.Gui.Drawing.Attribute;
 
-public class TypingGameView : BindableView<TypingViewModel>
+public class TypingView : BindableView<TypingViewModel>
 {
     private readonly Label _statsLabel;
     private readonly TextFormatter _formatter = new();
@@ -20,7 +20,7 @@ public class TypingGameView : BindableView<TypingViewModel>
     private readonly Attribute _incorrectAttr;
     private readonly Attribute _untypedAttr;
 
-    public TypingGameView(TypingViewModel viewModel)
+    public TypingView(TypingViewModel viewModel)
         : base(viewModel)
     {
         CanFocus = true;
@@ -29,11 +29,12 @@ public class TypingGameView : BindableView<TypingViewModel>
         Width = Dim.Percent(80);
         Height = Dim.Percent(50);
         BorderStyle = LineStyle.RoundedDashed;
-        Title = nameof(TypingGameView);
+        Title = nameof(TypingView);
         _formatter.WordWrap = true;
 
         _statsLabel = new Label { Y = Pos.AnchorEnd(1) };
         Add(_statsLabel);
+
         Initialized += (s, e) => _ = InitializeViewAsync();
         this.Activating += (s, e) =>
         {
@@ -41,12 +42,12 @@ public class TypingGameView : BindableView<TypingViewModel>
             e.Handled = true; // Prevents the click from reaching MainShell
         };
 
-                var scheme = this.GetScheme();
+        var scheme = this.GetScheme();
         var normalBack = scheme.Normal.Background;
 
-         _correctAttr = new Attribute(Color.Green, normalBack);
-         _incorrectAttr = new Attribute(Color.White, Color.Red);
-         _untypedAttr = new Attribute(Color.DarkGray, normalBack);
+        _correctAttr = new Attribute(Color.Green, Color.DarkGray);
+        _incorrectAttr = new Attribute(Color.White, Color.Red);
+        _untypedAttr = new Attribute(Color.DarkGray, normalBack);
     }
 
     protected override void OnSubViewsLaidOut(LayoutEventArgs args)
@@ -60,37 +61,38 @@ public class TypingGameView : BindableView<TypingViewModel>
         _formatter.Text = ViewModel.TargetText;
         _formatter.ConstrainToWidth = Viewport.Width;
         _formatter.ConstrainToHeight = Viewport.Height;
-
+        _formatter.PreserveTrailingSpaces = true;
         _cachedLines = _formatter.GetLines();
     }
 
-
-protected override bool OnDrawingContent(DrawContext? context)
-{
-    if (_cachedLines.Count == 0) return true;
-
-    int globalIdx = 0;
-    for (int y = 0; y < _cachedLines.Count; y++)
+    protected override bool OnDrawingContent(DrawContext? context)
     {
-        for (int x = 0; x < _cachedLines[y].Length; x++)
-        {
-            var state = ViewModel.DisplayStates[globalIdx];
-            
-            SetAttribute(GetAttributeForState(state));
-            AddRune(x, y, (Rune)_cachedLines[y][x]);
-            
-            globalIdx++;
-        }
-    }
-    return true;
-}
+        if (_cachedLines.Count == 0)
+            return true;
 
-private Attribute GetAttributeForState(KeystrokeType state) => state switch
-{
-    KeystrokeType.Correct => _correctAttr,
-    KeystrokeType.Incorrect => _incorrectAttr,
-    _ => _untypedAttr
-};
+        int globalIdx = 0;
+        for (int y = 0; y < _cachedLines.Count; y++)
+        {
+            for (int x = 0; x < _cachedLines[y].Length; x++)
+            {
+                var state = ViewModel.DisplayStates[globalIdx];
+
+                SetAttribute(GetAttributeForState(state));
+                AddRune(x, y, (Rune)_cachedLines[y][x]);
+
+                globalIdx++;
+            }
+        }
+        return true;
+    }
+
+    private Attribute GetAttributeForState(KeystrokeType state) =>
+        state switch
+        {
+            KeystrokeType.Correct => _correctAttr,
+            KeystrokeType.Incorrect => _incorrectAttr,
+            _ => _untypedAttr,
+        };
 
     protected override bool OnKeyDown(Key key)
     {
@@ -141,18 +143,15 @@ private Attribute GetAttributeForState(KeystrokeType state) => state switch
     protected override void SetupBindings()
     {
         BindingContext.AddBinding(
-            ViewModel.BindText(
-                nameof(ViewModel.TypedText),
-                _statsLabel,
-                () =>
-                    $"Elapsed: {ViewModel.TimeElapsed} WPM: {ViewModel.Wpm} | Acc: {ViewModel.Accuracy}"
-            )
-        );
-        BindingContext.AddBinding(
             ViewModel.Bind(
-                nameof(ViewModel.CharacterStates),
-                () => ViewModel.CharacterStates,
-                _ => SetNeedsDraw()
+                nameof(ViewModel.DisplayStates),
+                () => ViewModel.DisplayStates,
+                _ =>
+                {
+                    _statsLabel.Text =
+                        $"Elapsed: {ViewModel.TimeElapsed} WPM: {ViewModel.Wpm} | Acc: {ViewModel.Accuracy}";
+                    SetNeedsDraw();
+                }
             )
         );
     }

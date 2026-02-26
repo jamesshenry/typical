@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Typical.Core.Events;
@@ -60,14 +61,13 @@ public class GameEngine
             return false;
 
         var type = DetermineKeystrokeType(c);
-
-        _charStates[currentPos] = type;
         Stats.RecordKey(c, type);
 
         bool isCorrect = type == KeystrokeType.Correct;
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
             _userInput.Append(c);
+            _charStates[currentPos] = type;
         }
         else { }
 

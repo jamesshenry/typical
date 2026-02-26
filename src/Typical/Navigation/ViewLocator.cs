@@ -12,7 +12,7 @@ public static class ViewLocator
         {
             HomeViewModel => sp.GetRequiredService<HomeView>(),
             SettingsViewModel => sp.GetRequiredService<SettingsView>(),
-            TypingViewModel => sp.GetRequiredService<TypingGameView>(),
+            TypingViewModel => sp.GetRequiredService<TypingView>(),
             _ => throw new ArgumentException($"No view registered for {viewModel.GetType()}"),
         };
 }

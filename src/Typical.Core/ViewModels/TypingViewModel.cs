@@ -1,5 +1,4 @@
 using System.Security.AccessControl;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Typical.Core.Interfaces;
@@ -16,9 +15,6 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     private string _targetText = "";
 
     [ObservableProperty]
-    private string _typedText = "";
-
-    [ObservableProperty]
     private bool _isGameOver;
 
     [ObservableProperty]
@@ -31,8 +27,7 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     private string _timeElapsed = "00:00";
 
     [ObservableProperty]
-    private IReadOnlyList<KeystrokeType> _characterStates = [];
-    [ObservableProperty] private KeystrokeType[] _displayStates = [];
+    private KeystrokeType[] _displayStates = [];
 
     public TypingViewModel(GameEngine engine, ILogger<TypingViewModel> logger)
     {
@@ -58,17 +53,17 @@ public partial class TypingViewModel : ObservableObject, IBindableView
 
         var display = _engine.CharacterStates.ToArray();
 
-    if (!engineAcceptedKey && !isBackspace && c != '\0')
-    {
-        int cursor = _engine.UserInput.Length;
-        if (cursor < display.Length)
+        if (!engineAcceptedKey && !isBackspace && c != '\0')
         {
-            display[cursor] = KeystrokeType.Incorrect;
+            int cursor = _engine.UserInput.Length;
+            if (cursor < display.Length)
+            {
+                display[cursor] = KeystrokeType.Incorrect;
+            }
         }
-    }
+        DisplayStates = display;
 
         UpdateState();
-        DisplayStates = display;
     }
 
     /// <summary>
@@ -77,10 +72,11 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     /// </summary>
     private void UpdateState()
     {
-        TypedText = _engine.UserInput;
+        // TypedText = _engine.UserInput;
         IsGameOver = _engine.IsOver;
 
         var snapshot = _engine.Stats.CreateSnapshot();
+
         Accuracy = snapshot.Accuracy;
         Wpm = snapshot.WordsPerMinute;
         TimeElapsed = snapshot.ElapsedTime.ToString(@"mm\:ss");
@@ -107,6 +103,9 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     {
         await _engine.InitializeAsync();
         TargetText = _engine.TargetText;
+
+        DisplayStates = new KeystrokeType[TargetText.Length];
+        Array.Fill(DisplayStates, KeystrokeType.Untyped);
         UpdateState();
     }
 }

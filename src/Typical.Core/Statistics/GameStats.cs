@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Typical.Core.Statistics;
 
 public class GameStats
@@ -43,7 +45,7 @@ public class GameStats
             Start();
 
         UpdateCounts(type, 1);
-        _logs.Add(new KeystrokeLog(c, type, _timeProvider.GetTimestamp()));
+        _logs.AddAndDebug(new KeystrokeLog(c, type, _timeProvider.GetTimestamp()));
     }
 
     internal void RecordBackspace()
@@ -57,7 +59,9 @@ public class GameStats
         {
             _logs.RemoveAt(indexToRemove);
         }
-        _logs.Add(new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp()));
+        _logs.AddAndDebug(
+            new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp())
+        );
     }
 
     internal void Start() => _startTimestamp = _timeProvider.GetTimestamp();
@@ -97,4 +101,16 @@ public class GameStats
     public bool IsRunning => _startTimestamp.HasValue && !_endTimestamp.HasValue;
 
     public IReadOnlyList<KeystrokeLog> GetHistory() => _logs.AsReadOnly();
+}
+
+public static class ListExtensions
+{
+    extension(List<KeystrokeLog> logs)
+    {
+        public void AddAndDebug(KeystrokeLog log)
+        {
+            logs.Add(log);
+            Debug.WriteLine(log);
+        }
+    }
 }

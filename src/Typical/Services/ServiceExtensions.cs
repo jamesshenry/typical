@@ -61,7 +61,7 @@ public static class ServiceExtensions
         builder.Services.AddSingleton<MainShell>();
         builder.Services.AddTransient<HomeView>();
         builder.Services.AddTransient<SettingsView>();
-        builder.Services.AddTransient<TypingGameView>();
+        builder.Services.AddTransient<TypingView>();
     }
 }
 
