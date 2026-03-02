@@ -3,19 +3,21 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
+using Typical.Core.Text;
 
 namespace Typical.Core.ViewModels;
 
 public partial class TypingViewModel : ObservableObject, IBindableView
 {
     private readonly GameEngine _engine;
+    private readonly ITextProvider _textProvider;
     private readonly ILogger<TypingViewModel> _logger;
 
     [ObservableProperty]
     private string _targetText = "";
 
-    [ObservableProperty]
-    private bool _isGameOver;
+    // [ObservableProperty]
+    // private bool _isGameOver;
 
     [ObservableProperty]
     private double _wpm;
@@ -29,11 +31,18 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     [ObservableProperty]
     private KeystrokeType[] _displayStates = [];
 
-    public TypingViewModel(GameEngine engine, ILogger<TypingViewModel> logger)
+    public TypingViewModel(
+        GameEngine engine,
+        ITextProvider textProvider,
+        ILogger<TypingViewModel> logger
+    )
     {
         _engine = engine;
+        _textProvider = textProvider;
         _logger = logger;
     }
+
+    public bool IsGameOver => _engine.IsOver;
 
     /// <summary>
     /// Processes input received from the View.
@@ -41,28 +50,23 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     /// </summary>
     public void ProcessInput(char c, bool isBackspace)
     {
-        if (IsGameOver)
+        if (_engine.IsOver)
             return;
-        if (!_engine.IsRunning && _engine.IsInitialized)
+
+        bool accepted = _engine.ProcessKeyPress(c, isBackspace);
+
+        var states = _engine.CharacterStates.ToArray();
+
+        if (!accepted && !isBackspace && c != '\0')
         {
-            _engine.StartNewGame();
-            TargetText = _engine.TargetText;
-        }
-
-        bool engineAcceptedKey = _engine.ProcessKeyPress(c, isBackspace);
-
-        var display = _engine.CharacterStates.ToArray();
-
-        if (!engineAcceptedKey && !isBackspace && c != '\0')
-        {
-            int cursor = _engine.UserInput.Length;
-            if (cursor < display.Length)
+            int pos = _engine.UserInput.Length;
+            if (pos < states.Length)
             {
-                display[cursor] = KeystrokeType.Incorrect;
+                states[pos] = KeystrokeType.Incorrect;
             }
         }
-        DisplayStates = display;
 
+        DisplayStates = states;
         UpdateState();
     }
 
@@ -72,9 +76,6 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     /// </summary>
     private void UpdateState()
     {
-        // TypedText = _engine.UserInput;
-        IsGameOver = _engine.IsOver;
-
         var snapshot = _engine.Stats.CreateSnapshot();
 
         Accuracy = snapshot.Accuracy;
@@ -101,7 +102,8 @@ public partial class TypingViewModel : ObservableObject, IBindableView
 
     public async Task InitializeAsync()
     {
-        await _engine.InitializeAsync();
+        var result = await _textProvider.GetTextAsync();
+        _engine.LoadText(result);
         TargetText = _engine.TargetText;
 
         DisplayStates = new KeystrokeType[TargetText.Length];
