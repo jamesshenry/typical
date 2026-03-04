@@ -159,10 +159,6 @@ public class TypicalGameTests
         bool result = game.ProcessKeyPress('x', false);
 
         // Assert
-        await Assert.That(result).IsTrue(); // Engine accepted the mistake
-        await Assert.That(game.UserInput).IsEqualTo("x");
-        await Assert.That(game.CharacterStates[0]).IsEqualTo(KeystrokeType.Incorrect);
-        // Assert
         await Assert.That(result).IsFalse(); // Engine rejected the key
         await Assert.That(game.UserInput).IsEmpty();
         await Assert.That(game.CharacterStates[0]).IsEqualTo(KeystrokeType.Untyped);

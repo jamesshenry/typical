@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Terminal.Gui.App;
 using Terminal.Gui.Views;
+using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Navigation;
 
@@ -11,11 +13,17 @@ public class NavigationService : ObservableObject, INavigationService
 {
     private readonly IServiceProvider _services;
     private readonly IApplication _app;
+    private readonly IMessenger _messenger;
 
-    public NavigationService(IServiceProvider services, IApplication app)
+    public NavigationService(
+        IServiceProvider services,
+        IApplication app,
+        IMessenger? messenger = null
+    )
     {
         _services = services;
         _app = app;
+        _messenger = messenger ?? WeakReferenceMessenger.Default;
     }
 
     private ObservableObject? _currentViewModel;
@@ -29,17 +37,13 @@ public class NavigationService : ObservableObject, INavigationService
     public void NavigateTo<TViewModel>()
         where TViewModel : ObservableObject
     {
-        if (CurrentViewModel is IBindableView currentViewModel)
-        {
-            currentViewModel.OnNavigatedFrom();
-        }
+        (CurrentViewModel as IBindableView)?.OnNavigatedFrom();
 
         CurrentViewModel = _services.GetRequiredService<TViewModel>();
 
-        if (CurrentViewModel is IBindableView newViewModel)
-        {
-            newViewModel.OnNavigatedTo();
-        }
+        (CurrentViewModel as IBindableView)?.OnNavigatedTo();
+
+        _messenger.Send(new NavigationChangedMessage(CurrentViewModel));
     }
 
     public TResult? ShowModal<TViewModel, TResult>(Action<TViewModel>? configure = null)

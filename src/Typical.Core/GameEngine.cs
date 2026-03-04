@@ -67,7 +67,10 @@ public class GameEngine
             _userInput.Append(c);
             _charStates[currentPos] = type;
         }
-        else { }
+        else
+        {
+            return false;
+        }
 
         CheckEndCondition();
         return true;

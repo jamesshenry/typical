@@ -11,6 +11,7 @@ public partial class TypingViewModel : ObservableObject, IBindableView
 {
     private readonly GameEngine _engine;
     private readonly ITextProvider _textProvider;
+    private readonly INavigationService _navigationService;
     private readonly ILogger<TypingViewModel> _logger;
 
     [ObservableProperty]
@@ -34,11 +35,13 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     public TypingViewModel(
         GameEngine engine,
         ITextProvider textProvider,
+        INavigationService navigationService,
         ILogger<TypingViewModel> logger
     )
     {
         _engine = engine;
         _textProvider = textProvider;
+        _navigationService = navigationService;
         _logger = logger;
     }
 
@@ -51,7 +54,10 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     public void ProcessInput(char c, bool isBackspace)
     {
         if (_engine.IsOver)
+        {
+            _navigationService.NavigateTo<SettingsViewModel>();
             return;
+        }
 
         bool accepted = _engine.ProcessKeyPress(c, isBackspace);
 

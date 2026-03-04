@@ -1,29 +1,27 @@
-using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Typical.Binding;
-using Typical.Core.Interfaces;
+using Typical.Core.Events;
 using Typical.Core.ViewModels;
 using Typical.Navigation;
 
 namespace Typical.Views;
 
-public class MainShell : Window
+public class MainShell : Window, IRecipient<NavigationChangedMessage>
 {
     private readonly MainViewModel _viewModel;
-    private readonly INavigationService _navService;
     private readonly IServiceProvider _serviceProvider;
     private readonly View _contentContainer;
     private readonly Label _statusLabel;
     private readonly BindingContext _bindingContext;
 
-    public MainShell(MainViewModel viewModel, INavigationService navService, IServiceProvider sp)
+    public MainShell(MainViewModel viewModel, IServiceProvider sp)
     {
         _viewModel = viewModel;
-        _navService = navService;
         _serviceProvider = sp;
         _bindingContext = new BindingContext();
         BorderStyle = LineStyle.RoundedDashed;
@@ -52,7 +50,7 @@ public class MainShell : Window
             )
         );
 
-        _navService.PropertyChanged += OnNavServicePropertyChanged;
+        WeakReferenceMessenger.Default.Register(this);
 
         _viewModel.NavigateToGameViewCommand.Execute(null);
 
@@ -75,16 +73,14 @@ public class MainShell : Window
         if (disposing)
         {
             _bindingContext.Dispose();
+            WeakReferenceMessenger.Default.UnregisterAll(this);
         }
         base.Dispose(disposing);
     }
 
-    private void OnNavServicePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    public void Receive(NavigationChangedMessage message)
     {
-        if (e.PropertyName == nameof(INavigationService.CurrentViewModel))
-        {
-            UpdateContent(_navService.CurrentViewModel);
-        }
+        UpdateContent(message.Value);
     }
 
     private void UpdateContent(ObservableObject? viewModel)
