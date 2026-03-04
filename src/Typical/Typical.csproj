@@ -2,32 +2,28 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>typical</AssemblyName>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <DebugType>embedded</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="DotNetPathUtils" Version="0.3.1" />
-    <PackageReference Include="Kuddle.Net" Version="0.4.1" />
-    <PackageReference Include="Kuddle.Net.Extensions.Configuration" Version="0.4.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
-    <PackageReference Include="MinVer" Version="6.0.0">
+    <PackageReference Include="CommunityToolkit.Diagnostics" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="DotNetPathUtils" />
+    <PackageReference Include="Kuddle.Net" />
+    <PackageReference Include="Kuddle.Net.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="MinVer">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Serilog" Version="4.3.0" />
-    <PackageReference Include="Serilog.Extensions.Hosting" Version="10.0.0" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
-    <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
-    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageReference Include="Spectre.Console" Version="0.53.0" />
-    <PackageReference Include="Terminal.Gui" Version="2.0.0-develop.5039" />
-    <PackageReference Include="Velopack" Version="0.0.1298" />
-    <PackageReference Include="Xdg.Directories" Version="0.1.2" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Hosting" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Settings.Configuration" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.Sinks.File" />
+    <PackageReference Include="Spectre.Console" />
+    <PackageReference Include="Terminal.Gui" />
+    <PackageReference Include="Velopack" />
+    <PackageReference Include="Xdg.Directories" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.kdl" CopyToOutputDirectory="PreserveNewest" />
