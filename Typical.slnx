@@ -8,4 +8,5 @@
     <Project Path="src/Typical.Tests/Typical.Tests.csproj" />
     <Project Path="src/Typical/Typical.csproj" />
   </Folder>
+  <Project Path=".build/_build.csproj" />
 </Solution>

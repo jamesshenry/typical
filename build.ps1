@@ -1,1 +1,1 @@
-dotnet run .build/targets.cs -- $args
+dotnet run --no-launch-profile --project .\.build\_build.csproj -- $args
