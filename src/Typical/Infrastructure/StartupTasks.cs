@@ -2,9 +2,7 @@ using System.Text.Json;
 using DotNetPathUtils;
 using Microsoft.Extensions.Logging;
 using NuGet.Versioning;
-
 using Typical.Configuration;
-
 using Velopack.Locators;
 using Velopack.Logging;
 
@@ -55,8 +53,5 @@ public static class StartupTasks
                 JsonSerializer.Serialize(new AppConfig(), AppConfigContext.Default.AppConfig)
             );
         }
-
     }
-
-
 }

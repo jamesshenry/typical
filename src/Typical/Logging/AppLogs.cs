@@ -10,6 +10,7 @@ public static partial class AppLogs
         Message = "Application starting..."
     )]
     public static partial void ApplicationStarting(ILogger logger);
+
     [LoggerMessage(
         EventId = 1,
         Level = LogLevel.Information,
@@ -33,6 +34,7 @@ public static partial class AppLogs
         Message = "Adding path to $env.PATH: {Directory}"
     )]
     public static partial void AddingPathToEnvironment(this ILogger logger, string directory);
+
     [LoggerMessage(
         EventId = 1001,
         Level = LogLevel.Information,

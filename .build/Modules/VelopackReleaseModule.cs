@@ -1,10 +1,3 @@
-using Microsoft.Extensions.Logging;
-using ModularPipelines.Attributes;
-using ModularPipelines.Configuration;
-using ModularPipelines.Context;
-using ModularPipelines.Models;
-using ModularPipelines.Modules;
-
 namespace Build.Modules;
 
 [DependsOn<PublishModule>]

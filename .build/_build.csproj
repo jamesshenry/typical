@@ -7,7 +7,6 @@
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="ConsoleAppFramework" Version="5.*" />
     <PackageReference Include="ModularPipelines" Version="3.*" />
