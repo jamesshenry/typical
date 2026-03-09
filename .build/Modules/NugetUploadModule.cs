@@ -1,14 +1,17 @@
 namespace Build.Modules;
 
-public class NuGetUploadModule(ProjectMetadata meta) : Module<CommandResult[]>
+[DependsOn<CleanModule>]
+public class NuGetUploadModule(ProjectMetadata meta, IConfiguration configuration)
+    : Module<CommandResult[]>
 {
+    private readonly IConfiguration _configuration = configuration;
+
     protected override async Task<CommandResult[]?> ExecuteAsync(
         IModuleContext context,
         CancellationToken ct
     )
     {
-        var nupkgs = context.Files.Glob(meta.ArtifactsDirectory, "*.nupkg");
-
+        var nupkgs = context.Files.Glob("dist/**.nupkg");
         if (!nupkgs.Any())
         {
             context.Logger.LogWarning("No NuGet packages found to upload.");
@@ -16,11 +19,19 @@ public class NuGetUploadModule(ProjectMetadata meta) : Module<CommandResult[]>
         }
 
         var results = new List<CommandResult>();
-        var apiKey = context.Environment.GetEnvironmentVariable("NUGET_API_KEY");
+        var apiKey = _configuration.GetValue<string>("Settings:NUGET_API_KEY");
+        var count = 0;
 
         foreach (var package in nupkgs)
         {
-            context.Logger.LogInformation("Preparing to push package: {Package}", package.Name);
+            count++;
+
+            context.Logger.LogInformation(
+                "Preparing to push package: {Package} {count}/{totalCount}",
+                package.Name,
+                count,
+                nupkgs.Count()
+            );
 
             // SAFETY GATE: Skip the actual push if no API key or running locally without --publish
             if (string.IsNullOrEmpty(apiKey))
@@ -34,8 +45,8 @@ public class NuGetUploadModule(ProjectMetadata meta) : Module<CommandResult[]>
 
             var result = await context
                 .DotNet()
-                .NuGetPush(
-                    new DotNetNuGetPushOptions
+                .Nuget.Push(
+                    new DotNetNugetPushOptions
                     {
                         Path = package,
                         Source = "https://api.nuget.org/v3/index.json",
@@ -47,6 +58,6 @@ public class NuGetUploadModule(ProjectMetadata meta) : Module<CommandResult[]>
             results.Add(result);
         }
 
-        return results.ToArray();
+        return [.. results];
     }
 }

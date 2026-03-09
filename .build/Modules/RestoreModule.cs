@@ -3,9 +3,11 @@ using ModularPipelines.Git.Options;
 
 namespace Build.Modules;
 
-public class RestoreModule(ProjectMetadata meta) : Module<CommandResult>
+public class RestoreModule(ProjectMetadata meta, IConfiguration configuration)
+    : Module<CommandResult>
 {
     private readonly ProjectMetadata _meta = meta;
+    private readonly IConfiguration _configuration = configuration;
 
     protected override async Task<CommandResult?> ExecuteAsync(
         IModuleContext context,

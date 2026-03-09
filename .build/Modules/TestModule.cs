@@ -1,8 +1,10 @@
 namespace Build.Modules;
 
 [DependsOn<BuildModule>]
-public class TestModule(ProjectMetadata meta) : Module<CommandResult>
+public class TestModule(ProjectMetadata meta, IConfiguration configuration) : Module<CommandResult>
 {
+    private readonly IConfiguration _configuration = configuration;
+
     protected override async Task<CommandResult?> ExecuteAsync(
         IModuleContext context,
         CancellationToken ct

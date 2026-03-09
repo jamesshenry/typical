@@ -1,3 +1,4 @@
+global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.Logging;
 global using ModularPipelines.Attributes;
 global using ModularPipelines.Configuration;

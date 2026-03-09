@@ -2,8 +2,11 @@ namespace Build.Modules;
 
 [DependsOn<PublishModule>]
 [DependsOn<MinVerModule>]
-public class VelopackReleaseModule(ProjectMetadata meta) : Module<CommandResult>
+public class VelopackReleaseModule(ProjectMetadata meta, IConfiguration configuration)
+    : Module<CommandResult>
 {
+    private readonly IConfiguration _configuration = configuration;
+
     protected override ModuleConfiguration Configure()
     {
         return ModuleConfiguration

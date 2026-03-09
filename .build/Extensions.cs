@@ -27,7 +27,7 @@ public static class Extensions
                 },
 
                 // Test & Restore: Usually faster in Debug, packaging is skipped
-                TargetEnum.Test or TargetEnum.Restore => meta with
+                TargetEnum.Test or TargetEnum.Restore or TargetEnum.Clean => meta with
                 {
                     Configuration = "Debug",
                     Rid = rid,
@@ -35,7 +35,7 @@ public static class Extensions
                 },
 
                 // Default Build
-                TargetEnum.Build => meta with
+                TargetEnum.Build or TargetEnum.NugetUpload => meta with
                 {
                     // If --quick is true, use Debug, otherwise Release
                     Configuration = globalOptions.Quick ? "Debug" : "Release",
@@ -63,6 +63,12 @@ public static class Extensions
                     break;
                 case TargetEnum.Test:
                     services.AddModule<TestModule>();
+                    break;
+                case TargetEnum.NugetUpload:
+                    services.AddModule<NuGetUploadModule>();
+                    break;
+                case TargetEnum.Clean:
+                    services.AddModule<CleanModule>();
                     break;
                 case TargetEnum.Build:
                 default:
@@ -111,6 +117,8 @@ internal enum TargetEnum
     Publish,
     Restore,
     Release,
+    NugetUpload,
+    Clean,
 }
 
 internal record GlobalOptions

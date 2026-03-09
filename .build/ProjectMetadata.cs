@@ -9,4 +9,5 @@ public record ProjectMetadata(
 )
 {
     public bool SkipPackaging { get; internal set; }
+    public string ArtifactsDirectory { get; internal set; } = default!;
 }

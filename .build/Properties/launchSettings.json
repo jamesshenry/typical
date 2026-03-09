@@ -2,7 +2,7 @@
   "profiles": {
     "targets2": {
       "commandName": "Project",
-      "commandLineArgs": "--rid win-x64 --target test"
+      "commandLineArgs": "--rid win-x64 --target clean"
     }
   }
 }

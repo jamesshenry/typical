@@ -25,8 +25,14 @@ var builder = Pipeline.CreateBuilder(args);
 
 builder.Options.PrintLogo = true;
 builder.Options.ShowProgressInConsole = true;
+
+builder.Configuration.AddJsonFile("appsettings.json", optional: true).AddEnvironmentVariables();
 builder.Services.AddServices(meta, options);
 
 var pipeline = await builder.BuildAsync();
 
 await pipeline.RunAsync();
+
+#pragma warning disable ConsoleUse // Use of Console detected
+Console.ReadLine();
+#pragma warning restore ConsoleUse // Use of Console detected
