@@ -1,18 +1,16 @@
 namespace Build.Modules;
 
+[ModuleCategory("Packaging")]
 [DependsOn<PublishModule>]
 [DependsOn<MinVerModule>]
-public class VelopackReleaseModule(ProjectMetadata meta, IConfiguration configuration)
-    : Module<CommandResult>
+public class VelopackReleaseModule(BuildContext buildContext) : Module<CommandResult>
 {
-    private readonly IConfiguration _configuration = configuration;
-
     protected override ModuleConfiguration Configure()
     {
         return ModuleConfiguration
             .Create()
             .WithSkipWhen(() =>
-                meta.SkipPackaging
+                buildContext.SkipPkg
                     ? SkipDecision.Skip("Packaging explicitly skipped")
                     : SkipDecision.DoNotSkip
             )
@@ -28,32 +26,32 @@ public class VelopackReleaseModule(ProjectMetadata meta, IConfiguration configur
         var version = versionModule.ValueOrDefault;
 
         ArgumentException.ThrowIfNullOrWhiteSpace(version, nameof(version));
-        ArgumentException.ThrowIfNullOrWhiteSpace(meta.Rid, nameof(meta.Rid));
+        ArgumentException.ThrowIfNullOrWhiteSpace(buildContext.Rid, nameof(buildContext.Rid));
 
         var root = context.Environment.WorkingDirectory;
-        var publishDir = Path.Combine(root, "dist", "publish", meta.Rid);
-        var releaseDir = Path.Combine(root, "dist", "release", meta.Rid);
+        var publishDir = Path.Combine(root, "dist", "publish", buildContext.Rid);
+        var releaseDir = Path.Combine(root, "dist", "release", buildContext.Rid);
 
-        string directive = meta.Rid.ToLower() switch
+        string directive = buildContext.Rid.ToLower() switch
         {
             var r when r.StartsWith("win") => "[win]",
             var r when r.StartsWith("osx") => "[osx]",
             var r when r.StartsWith("linux") => "[linux]",
-            _ => throw new NotSupportedException($"RID {meta.Rid} is not supported by Velopack."),
+            _ => throw new NotSupportedException(
+                $"RID {buildContext.Rid} is not supported by Velopack."
+            ),
         };
 
         context.Logger.LogInformation(
             "Packaging {Id} v{Version} for {Rid} using directive {Directive}",
-            meta.VelopackId,
+            buildContext.Project.VelopackId,
             version,
-            meta.Rid,
+            buildContext.Rid,
             directive
         );
 
-        // 5. Run Velopack (vpk)
-        // Note: Using 'dotnet vpk' assumes 'vpk' is installed as a dotnet tool
         return await context.Shell.Command.ExecuteCommandLineTool(
-            new VelopackOptions(rid: meta.Rid, useDnx: false)
+            new VelopackOptions(rid: buildContext.Rid, useDnx: false)
             {
                 Arguments =
                 [
@@ -61,7 +59,7 @@ public class VelopackReleaseModule(ProjectMetadata meta, IConfiguration configur
                     directive,
                     "pack",
                     "--packId",
-                    meta.VelopackId,
+                    buildContext.Project.VelopackId,
                     "--packVersion",
                     version,
                     "--packDir",

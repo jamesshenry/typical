@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DebugType>embedded</DebugType>
+    <ArtifactsPath>$(MSBuildThisFileDirectory)..\.artifacts</ArtifactsPath>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Roslynator.Analyzers">

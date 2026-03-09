@@ -1,11 +1,9 @@
 namespace Build.Modules;
 
-[DependsOn<CleanModule>]
-public class NuGetUploadModule(ProjectMetadata meta, IConfiguration configuration)
-    : Module<CommandResult[]>
+[ModuleCategory("Delivery")]
+[DependsOn<PackModule>]
+public class NuGetUploadModule(BuildContext buildContext) : Module<CommandResult[]>
 {
-    private readonly IConfiguration _configuration = configuration;
-
     protected override async Task<CommandResult[]?> ExecuteAsync(
         IModuleContext context,
         CancellationToken ct
@@ -19,7 +17,7 @@ public class NuGetUploadModule(ProjectMetadata meta, IConfiguration configuratio
         }
 
         var results = new List<CommandResult>();
-        var apiKey = _configuration.GetValue<string>("Settings:NUGET_API_KEY");
+        var apiKey = buildContext.NugetApiKey;
         var count = 0;
 
         foreach (var package in nupkgs)
@@ -33,7 +31,6 @@ public class NuGetUploadModule(ProjectMetadata meta, IConfiguration configuratio
                 nupkgs.Count()
             );
 
-            // SAFETY GATE: Skip the actual push if no API key or running locally without --publish
             if (string.IsNullOrEmpty(apiKey))
             {
                 context.Logger.LogWarning(
@@ -59,5 +56,34 @@ public class NuGetUploadModule(ProjectMetadata meta, IConfiguration configuratio
         }
 
         return [.. results];
+    }
+}
+
+[ModuleCategory("Packaging")]
+[DependsOn<BuildModule>] // Pack usually depends on Build
+public class PackModule(BuildContext buildContext) : Module<CommandResult>
+{
+    protected override async Task<CommandResult?> ExecuteAsync(
+        IModuleContext context,
+        CancellationToken ct
+    )
+    {
+        var outputDir = Path.Combine(context.Environment.WorkingDirectory, "dist");
+
+        context.Logger.LogInformation("Packing {Project}", buildContext.Project.EntryProject);
+
+        return await context
+            .DotNet()
+            .Pack(
+                new DotNetPackOptions
+                {
+                    ProjectSolution = buildContext.Project.EntryProject,
+                    Configuration = buildContext.Configuration,
+                    Output = outputDir,
+                    NoBuild = true, // We already built in BuildModule
+                    IncludeSymbols = true,
+                },
+                cancellationToken: ct
+            );
     }
 }

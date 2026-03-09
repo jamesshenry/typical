@@ -2,7 +2,8 @@
   "profiles": {
     "targets2": {
       "commandName": "Project",
-      "commandLineArgs": "--rid win-x64 --target clean"
+      "commandLineArgs": "--rid win-x64 --target nugetUpload",
+      "workingDirectory": "$(ProjectDir)",
     }
   }
 }

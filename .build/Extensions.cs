@@ -5,72 +5,53 @@ using Microsoft.Extensions.DependencyInjection;
 using ModularPipelines.Extensions;
 using static ConsoleAppFramework.ConsoleApp;
 
-namespace _build;
+namespace Build;
 
 public static class Extensions
 {
-    extension(ProjectMetadata meta)
+    extension(Directory)
     {
-        internal ProjectMetadata ApplyOverrides(GlobalOptions globalOptions)
+        public static string GetRepoRoot(string? startPath = default)
         {
-            // Use the provided RID or fall back to a default
-            var rid = globalOptions.Rid ?? "win-x64";
-
-            return globalOptions.Target switch
+            var dir = new DirectoryInfo(startPath ?? Directory.GetCurrentDirectory());
+            while (dir != null)
             {
-                // Release & Publish: Must be Release config, packaging is active
-                TargetEnum.Release or TargetEnum.Publish => meta with
+                // Identify the root by looking for the .git folder OR your solution file
+                if (dir.GetDirectories(".git").Any() || dir.GetFiles("*.slnx").Any())
                 {
-                    Configuration = "Release",
-                    Rid = rid,
-                    SkipPackaging = false,
-                },
+                    return dir.FullName;
+                }
+                dir = dir.Parent;
+            }
 
-                // Test & Restore: Usually faster in Debug, packaging is skipped
-                TargetEnum.Test or TargetEnum.Restore or TargetEnum.Clean => meta with
-                {
-                    Configuration = "Debug",
-                    Rid = rid,
-                    SkipPackaging = true,
-                },
-
-                // Default Build
-                TargetEnum.Build or TargetEnum.NugetUpload => meta with
-                {
-                    // If --quick is true, use Debug, otherwise Release
-                    Configuration = globalOptions.Quick ? "Debug" : "Release",
-                    Rid = rid,
-                    SkipPackaging = globalOptions.Quick,
-                },
-
-                _ => throw new ArgumentOutOfRangeException(nameof(globalOptions.Target)),
-            };
+            // Fallback if we somehow can't find it
+            return startPath;
         }
     }
     extension(IServiceCollection services)
     {
-        internal IServiceCollection AddServices(ProjectMetadata meta, GlobalOptions globalOptions)
+        internal IServiceCollection AddServices(BuildContext context)
         {
-            services.AddSingleton(meta);
+            services.AddSingleton(context);
 
-            switch (globalOptions.Target)
+            switch (context.Target)
             {
-                case TargetEnum.Release:
+                case BuildTarget.Release:
                     services.AddModule<VelopackReleaseModule>();
                     break;
-                case TargetEnum.Publish:
+                case BuildTarget.Publish:
                     services.AddModule<PublishModule>();
                     break;
-                case TargetEnum.Test:
+                case BuildTarget.Test:
                     services.AddModule<TestModule>();
                     break;
-                case TargetEnum.NugetUpload:
+                case BuildTarget.NugetUpload:
                     services.AddModule<NuGetUploadModule>();
                     break;
-                case TargetEnum.Clean:
+                case BuildTarget.Clean:
                     services.AddModule<CleanModule>();
                     break;
-                case TargetEnum.Build:
+                case BuildTarget.Build:
                 default:
                     services.AddModule<BuildModule>();
                     break;
@@ -79,65 +60,58 @@ public static class Extensions
             return services;
         }
     }
-    extension(ConsoleAppBuilder appBuilder)
+    extension(IConfiguration config)
     {
-        internal GlobalOptions BuildConsoleApp()
+        public ProjectConfig BindProjectMetadata()
         {
-            var globalOptions = new GlobalOptions();
-            appBuilder.ConfigureGlobalOptions(
-                (ref optionsBuilder) =>
-                {
-                    var rid = optionsBuilder.AddGlobalOption<string>("--rid");
-                    var version = optionsBuilder.AddGlobalOption<string>("--version");
-                    var target = optionsBuilder.AddGlobalOption<TargetEnum>("--target");
-                    return new GlobalOptions(rid, version) { Target = target };
-                }
-            );
-
-            appBuilder.Add(
-                "",
-                (ConsoleAppContext context) =>
-                {
-                    if (context.GlobalOptions is GlobalOptions retrieved)
-                    {
-                        globalOptions.UpdateFrom(retrieved);
-                    }
-                }
-            );
-
-            return globalOptions;
+            var section = config.GetSection(nameof(ProjectConfig));
+            return new ProjectConfig
+            {
+                Solution =
+                    section[nameof(ProjectConfig.Solution)]
+                    ?? throw new Exception(
+                        $"{nameof(ProjectConfig)}:{nameof(ProjectConfig.Solution)} is missing"
+                    ),
+                EntryProject =
+                    section[nameof(ProjectConfig.EntryProject)]
+                    ?? throw new Exception(
+                        $"{nameof(ProjectConfig)}:{nameof(ProjectConfig.EntryProject)} is missing"
+                    ),
+                VelopackId =
+                    section[nameof(ProjectConfig.VelopackId)]
+                    ?? throw new Exception(
+                        $"{nameof(ProjectConfig)}:{nameof(ProjectConfig.VelopackId)} is missing"
+                    ),
+            };
         }
-    }
-}
 
-internal enum TargetEnum
-{
-    Build,
-    Test,
-    Publish,
-    Restore,
-    Release,
-    NugetUpload,
-    Clean,
-}
+        public BuildConfig BindGlobalOptions()
+        {
+            var section = config.GetSection(nameof(BuildConfig));
 
-internal record GlobalOptions
-{
-    public GlobalOptions(string? rid = null, string? version = null)
-    {
-        Rid = rid;
-        Version = version;
-    }
+            // Helper to parse bools
+            static bool? ParseBool(string? value) => bool.TryParse(value, out var b) ? b : null;
 
-    public string? Rid { get; set; }
-    public string? Version { get; set; }
-    public TargetEnum Target { get; set; } = TargetEnum.Build;
-    public bool Quick { get; set; }
+            // Helper to parse Enums
+            static T? ParseEnum<T>(string? value)
+                where T : struct => Enum.TryParse<T>(value, true, out var t) ? t : null;
 
-    public void UpdateFrom(GlobalOptions other)
-    {
-        Rid = other.Rid;
-        Version = other.Version;
-        Target = other.Target;
+            return new BuildConfig
+            {
+                Rid = section[nameof(BuildConfig.Rid)],
+                Version = section[nameof(BuildConfig.Version)],
+                Target = ParseEnum<BuildTarget>(section[nameof(BuildConfig.Target)]),
+                Quick = ParseBool(section[nameof(BuildConfig.Quick)]),
+                SkipPreparation = ParseBool(section[nameof(BuildConfig.SkipPreparation)]),
+                SkipPackaging = ParseBool(section[nameof(BuildConfig.SkipPackaging)]),
+                SkipDelivery = ParseBool(section[nameof(BuildConfig.SkipDelivery)]),
+            };
+        }
+
+        public NugetConfig BindDeliverySettings()
+        {
+            var section = config.GetSection(nameof(NugetConfig));
+            return new NugetConfig { ApiKey = section[nameof(NugetConfig.ApiKey)] };
+        }
     }
 }

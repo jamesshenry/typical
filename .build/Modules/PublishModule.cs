@@ -1,9 +1,10 @@
 namespace Build.Modules;
 
+[ModuleCategory("Packaging")]
 [DependsOn<RestoreModule>]
-public class PublishModule(ProjectMetadata meta, IConfiguration configuration) : Module<CommandResult>
+public class PublishModule(BuildContext buildContext, IConfiguration configuration)
+    : Module<CommandResult>
 {
-    private readonly ProjectMetadata _meta = meta;
     private readonly IConfiguration _configuration = configuration;
 
     protected override async Task<CommandResult?> ExecuteAsync(
@@ -11,13 +12,13 @@ public class PublishModule(ProjectMetadata meta, IConfiguration configuration) :
         CancellationToken ct
     )
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(_meta.Rid, nameof(_meta.Rid));
+        ArgumentException.ThrowIfNullOrWhiteSpace(buildContext.Rid, nameof(buildContext.Rid));
 
         var publishDir = Path.Combine(
             context.Environment.WorkingDirectory,
             "dist",
             "publish",
-            _meta.Rid
+            buildContext.Rid
         );
 
         if (Directory.Exists(publishDir))
@@ -31,9 +32,9 @@ public class PublishModule(ProjectMetadata meta, IConfiguration configuration) :
 
         context.Logger.LogInformation(
             "Publishing {Project} for {Rid} in {Config} mode",
-            _meta.MainProjectPath,
-            _meta.Rid,
-            _meta.Configuration
+            buildContext.Project.EntryProject,
+            buildContext.Rid,
+            buildContext.Configuration
         );
 
         return await context
@@ -41,10 +42,10 @@ public class PublishModule(ProjectMetadata meta, IConfiguration configuration) :
             .Publish(
                 new DotNetPublishOptions
                 {
-                    ProjectSolution = _meta.MainProjectPath,
-                    Configuration = _meta.Configuration,
+                    ProjectSolution = buildContext.Project.EntryProject,
+                    Configuration = buildContext.Configuration,
                     Output = publishDir,
-                    Runtime = _meta.Rid,
+                    Runtime = buildContext.Rid,
                     NoRestore = true,
                 },
                 cancellationToken: ct

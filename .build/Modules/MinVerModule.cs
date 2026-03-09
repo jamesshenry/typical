@@ -1,12 +1,8 @@
-using ModularPipelines.Options;
-
 namespace Build.Modules;
 
 [DependsOn<RestoreModule>]
-public class MinVerModule(IConfiguration configuration) : Module<string>
+public class MinVerModule : Module<string>
 {
-    private readonly IConfiguration _configuration = configuration;
-
     protected override async Task<string?> ExecuteAsync(
         IModuleContext context,
         CancellationToken ct

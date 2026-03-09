@@ -1,12 +1,10 @@
-using ModularPipelines.Git.Extensions;
-using ModularPipelines.Git.Options;
-
 namespace Build.Modules;
 
-public class RestoreModule(ProjectMetadata meta, IConfiguration configuration)
+[ModuleCategory("Preparation")]
+[DependsOn<CleanModule>]
+public class RestoreModule(BuildContext buildContext, IConfiguration configuration)
     : Module<CommandResult>
 {
-    private readonly ProjectMetadata _meta = meta;
     private readonly IConfiguration _configuration = configuration;
 
     protected override async Task<CommandResult?> ExecuteAsync(
@@ -14,20 +12,16 @@ public class RestoreModule(ProjectMetadata meta, IConfiguration configuration)
         CancellationToken ct
     )
     {
-        var dir = await context
-            .Git()
-            .Commands.RevParse(new GitRevParseOptions() { ShowToplevel = true }, token: ct);
-
-        context.Logger.LogDebug("CurrentDirectory: {Directory}", Environment.CurrentDirectory);
         context.Logger.LogDebug("Restoring slnx");
         var result = await context
             .DotNet()
             .Restore(
-                new DotNetRestoreOptions { ProjectSolution = _meta.Solution, Runtime = _meta.Rid },
-                executionOptions: new ModularPipelines.Options.CommandExecutionOptions()
+                new DotNetRestoreOptions
                 {
-                    ThrowOnNonZeroExitCode = true,
+                    ProjectSolution = buildContext.Project.Solution,
+                    Runtime = buildContext.Rid,
                 },
+                executionOptions: new CommandExecutionOptions() { ThrowOnNonZeroExitCode = true },
                 cancellationToken: ct
             );
         return result;

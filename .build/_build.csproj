@@ -1,21 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <AssemblyName>my-build</AssemblyName>
     <RootNamespace>Build</RootNamespace>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
+    <SelfContained>true</SelfContained>
+    <!-- Optional: Optimization for build tools -->
+    <OptimizationPreference>Size</OptimizationPreference>
+    <StackTraceSupport>true</StackTraceSupport>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>my-build</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ConsoleAppFramework" Version="5.*" />
     <PackageReference Include="ModularPipelines" Version="3.*" />
     <PackageReference Include="ModularPipelines.Git" Version="3.*" />
     <PackageReference Include="ModularPipelines.DotNet" Version="3.*" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="appsettings*.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>

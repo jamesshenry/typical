@@ -4,11 +4,12 @@
     <File Path=".editorconfig" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src/build.Tests/build.Tests.csproj" />
     <Project Path="src/Typical.Core/Typical.Core.csproj" />
     <Project Path="src/Typical.DataAccess/Typical.DataAccess.csproj" />
     <Project Path="src/Typical.Tests/Typical.Tests.csproj" />
     <Project Path="src/Typical/Typical.csproj" />
   </Folder>
-  <Project Path=".build/_build.csproj" />
+  <Project Path=".build/_build.csproj">
+    <Build Project="false" />
+  </Project>
 </Solution>

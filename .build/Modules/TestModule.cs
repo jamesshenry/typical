@@ -1,7 +1,8 @@
 namespace Build.Modules;
 
 [DependsOn<BuildModule>]
-public class TestModule(ProjectMetadata meta, IConfiguration configuration) : Module<CommandResult>
+public class TestModule(BuildContext buildContext, IConfiguration configuration)
+    : Module<CommandResult>
 {
     private readonly IConfiguration _configuration = configuration;
 
@@ -15,17 +16,19 @@ public class TestModule(ProjectMetadata meta, IConfiguration configuration) : Mo
 
         Directory.CreateDirectory(testResultsDir);
 
-        context.Logger.LogInformation("Running tests for {Solution}", meta.Solution);
+        context.Logger.LogInformation(
+            "Running tests for {Solution}",
+            buildContext.Project.Solution
+        );
 
         return await context
             .DotNet()
             .Test(
                 new DotNetTestOptions
                 {
-                    Solution = meta.Solution,
-                    Configuration = meta.Configuration,
-                    NoBuild = true, // Since we depend on BuildModule
-                    // Using Arguments to pass the specific coverage flags not covered by the default Options object
+                    Solution = buildContext.Project.Solution,
+                    Configuration = buildContext.Configuration,
+                    NoBuild = true,
                     Arguments =
                     [
                         "--coverage",

@@ -2,9 +2,9 @@ namespace Build.Modules;
 
 [DependsOn<RestoreModule>]
 [DependsOn<MinVerModule>]
-public class BuildModule(ProjectMetadata meta, IConfiguration configuration) : Module<CommandResult>
+public class BuildModule(BuildContext buildContext, IConfiguration configuration)
+    : Module<CommandResult>
 {
-    private readonly ProjectMetadata _meta = meta;
     private readonly IConfiguration _configuration = configuration;
 
     protected override async Task<CommandResult?> ExecuteAsync(
@@ -13,17 +13,23 @@ public class BuildModule(ProjectMetadata meta, IConfiguration configuration) : M
     )
     {
         var version = await context.GetModule<MinVerModule>();
+        bool isNativeBuild =
+            buildContext.Target == BuildTarget.Release
+            || buildContext.Target == BuildTarget.Publish;
+        var projectPath = isNativeBuild
+            ? buildContext.Project.EntryProject
+            : buildContext.Project.Solution;
 
         return await context
             .DotNet()
             .Build(
                 new DotNetBuildOptions
                 {
-                    ProjectSolution = _meta.MainProjectPath,
+                    ProjectSolution = projectPath,
                     NoRestore = true,
-                    Configuration = _meta.Configuration,
+                    Configuration = buildContext.Configuration,
                     Properties = [new("Version", version.ValueOrDefault!)],
-                    Runtime = _meta.Rid,
+                    Runtime = isNativeBuild ? buildContext.Rid : null,
                 },
                 cancellationToken: ct
             );

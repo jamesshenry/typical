@@ -1,5 +1,3 @@
-using ModularPipelines.Options;
-
 namespace Build.Modules;
 
 public record MinverOptions : CommandLineToolOptions
