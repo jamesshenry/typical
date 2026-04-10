@@ -24,6 +24,7 @@ public static class ServiceExtensions
         services.AddTransient<TypingViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<HomeViewModel>();
+        services.AddSingleton<StatsViewModel>();
 
         // If you need the EventAggregator for UI-wide messages (like "New High Score")
         // keep it, but don't use it for character-by-character logic.

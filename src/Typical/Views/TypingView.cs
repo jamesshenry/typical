@@ -14,7 +14,6 @@ namespace Typical.Views;
 
 public class TypingView : BindableView<TypingViewModel>
 {
-    private readonly Label _statsLabel;
     private readonly TextFormatter _formatter = new();
     private List<string> _cachedLines = [];
     private readonly Attribute _correctAttr;
@@ -32,9 +31,6 @@ public class TypingView : BindableView<TypingViewModel>
         BorderStyle = LineStyle.RoundedDashed;
         Title = nameof(TypingView);
         _formatter.WordWrap = true;
-
-        _statsLabel = new Label { Y = Pos.AnchorEnd(1) };
-        Add(_statsLabel);
 
         Initialized += (s, e) => _ = InitializeViewAsync();
         this.Activating += (s, e) =>
@@ -141,21 +137,7 @@ public class TypingView : BindableView<TypingViewModel>
         });
     }
 
-    protected override void SetupBindings()
-    {
-        BindingContext.AddBinding(
-            ViewModel.Bind(
-                nameof(ViewModel.DisplayStates),
-                () => ViewModel.DisplayStates,
-                _ =>
-                {
-                    _statsLabel.Text =
-                        $"Elapsed: {ViewModel.TimeElapsed} WPM: {ViewModel.Wpm} | Acc: {ViewModel.Accuracy}";
-                    SetNeedsDraw();
-                }
-            )
-        );
-    }
+    protected override void SetupBindings() { }
 
     private async Task InitializeViewAsync()
     {

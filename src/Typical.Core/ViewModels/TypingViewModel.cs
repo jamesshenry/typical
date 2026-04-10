@@ -1,6 +1,7 @@
-using System.Security.AccessControl;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
@@ -21,16 +22,7 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     // private bool _isGameOver;
 
     [ObservableProperty]
-    private double _wpm;
-
-    [ObservableProperty]
-    private double _accuracy;
-
-    [ObservableProperty]
-    private string _timeElapsed = "00:00";
-
-    [ObservableProperty]
-    private KeystrokeType[] _displayStates = [];
+    public partial KeystrokeType[] DisplayStates { get; set; } = [];
 
     public TypingViewModel(
         GameEngine engine,
@@ -84,9 +76,9 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     {
         var snapshot = _engine.Stats.CreateSnapshot();
 
-        Accuracy = snapshot.Accuracy;
-        Wpm = snapshot.WordsPerMinute;
-        TimeElapsed = snapshot.ElapsedTime.ToString(@"mm\:ss");
+        WeakReferenceMessenger.Default.Send(
+            new GameStateUpdatedEvent(TargetText, _engine.UserInput, snapshot, _engine.IsOver)
+        );
     }
 
     public KeystrokeType GetStatus(int index)

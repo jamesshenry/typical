@@ -33,7 +33,7 @@
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Spectre.Console" Version="0.54.0" />
-    <PackageVersion Include="Terminal.Gui" Version="2.0.0-develop.5100" />
+    <PackageVersion Include="Terminal.Gui" Version="2.0.0-beta.149" />
     <PackageVersion Include="Velopack" Version="0.0.1298" />
     <PackageVersion Include="Xdg.Directories" Version="0.1.2" />
     <PackageVersion Include="Imposter" Version="0.1.9" />

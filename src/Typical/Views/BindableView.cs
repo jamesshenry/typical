@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Terminal.Gui.App;
 using Terminal.Gui.ViewBase;
 using Typical.Binding;
 using Typical.Core.Interfaces;
@@ -32,8 +31,6 @@ public abstract class BindableView<TViewModel> : View, IBindableView
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         BindingContext = new BindingContext();
-
-        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         Initialized += (s, e) => SetupBindings();
     }
@@ -78,5 +75,10 @@ public abstract class BindableView<TViewModel> : View, IBindableView
             _disposed = true;
         }
         base.Dispose(disposing);
+    }
+
+    protected void Bind<T>(string propertyName, Func<T> getter, Action<T> updateUi)
+    {
+        BindingContext.AddBinding(ViewModel.Bind(propertyName, getter, updateUi));
     }
 }

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
@@ -16,7 +17,8 @@ public class MainShell : Window, IRecipient<NavigationChangedMessage>
     private readonly MainViewModel _viewModel;
     private readonly IServiceProvider _serviceProvider;
     private readonly View _contentContainer;
-    private readonly Label _statusLabel;
+
+    // private readonly Label _statusLabel;
     private readonly BindingContext _bindingContext;
 
     public MainShell(MainViewModel viewModel, IServiceProvider sp)
@@ -27,26 +29,30 @@ public class MainShell : Window, IRecipient<NavigationChangedMessage>
         BorderStyle = LineStyle.RoundedDashed;
         Title = _viewModel.AppTitle;
 
-        _statusLabel = new Label { Y = Pos.AnchorEnd(1), Width = Dim.Fill() };
-
+        // _statusLabel = new Label { Y = Pos.AnchorEnd(1), Width = Dim.Fill() };
+        var statsView = _serviceProvider.GetRequiredService<StatsView>();
+        statsView.Y = Pos.AnchorEnd(3);
+        statsView.X = Pos.Left(this);
+        statsView.Width = Dim.Fill();
+        statsView.Height = 3;
         _contentContainer = new FrameView
         {
             Title = "Content Frame",
             X = Pos.Center(),
             Y = Pos.Center(),
             Width = Dim.Fill(),
-            Height = Dim.Fill() - 2,
+            Height = Dim.Fill() - 6,
             CanFocus = true,
             BorderStyle = DefaultBorderStyle,
         };
 
-        Add(_contentContainer, _statusLabel);
+        Add(_contentContainer, statsView);
 
         _bindingContext.AddBinding(
-            _viewModel.BindText(
-                nameof(_viewModel.StatusText),
-                _statusLabel,
-                () => _viewModel.StatusText
+            _viewModel.Bind(
+                nameof(_viewModel.CurrentPage),
+                () => _viewModel.CurrentPage,
+                _ => UpdateContent(_viewModel.CurrentPage)
             )
         );
 
