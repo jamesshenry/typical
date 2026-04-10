@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Typical.Core.Events;
@@ -9,116 +10,102 @@ namespace Typical.Core;
 
 public class GameEngine
 {
-    private readonly StringBuilder _userInput;
-    private readonly ITextProvider _textProvider;
+    private readonly StringBuilder _userInput = new();
     private readonly GameOptions _gameOptions;
-    private readonly IEventAggregator _eventAggregator;
-    private readonly GameStats _stats;
+
+    // TODO: Add HeatmapCollector
     private readonly ILogger<GameEngine> _logger;
 
-    public GameEngine(
-        ITextProvider textProvider,
-        IEventAggregator eventAggregator,
-        GameOptions gameOptions,
-        GameStats stats,
-        ILogger<GameEngine> logger
-    )
+    private KeystrokeType[] _charStates = [];
+    public IReadOnlyList<KeystrokeType> CharacterStates => _charStates;
+
+    public GameEngine(GameOptions gameOptions, ILogger<GameEngine> logger)
     {
-        _userInput = new StringBuilder();
-        _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
-        _eventAggregator = eventAggregator;
         _gameOptions = gameOptions;
-        _stats = stats;
+        Stats = new GameStats();
         _logger = logger;
     }
 
+    public GameStats Stats { get; private set; }
     public string TargetText { get; private set; } = string.Empty;
+
     public string UserInput => _userInput.ToString();
     public bool IsOver { get; private set; }
-    public bool IsRunning => !IsOver && _stats.IsRunning;
+    public bool IsRunning => !IsOver && Stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
-    public bool ProcessKeyPress(ConsoleKeyInfo key)
+    public bool ProcessKeyPress(char c, bool isBackspace)
     {
-        if (key.Key == ConsoleKey.Escape)
+        if (!IsRunning && !IsOver && TargetText.Length > 0 && !isBackspace)
         {
-            IsOver = true;
-            _stats.Stop();
-            CoreLogs.GameQuit(_logger);
-            _eventAggregator.Publish(new GameQuitEvent());
-            return false;
+            Stats.Start();
+            CoreLogs.GameStarting(_logger);
         }
 
-        if (key.Key == ConsoleKey.Backspace)
+        int currentPos = _userInput.Length;
+
+        if (isBackspace)
         {
-            if (_userInput.Length > 0)
+            if (currentPos > 0)
             {
-                _userInput.Remove(_userInput.Length - 1, 1);
-                _eventAggregator.Publish(new BackspacePressedEvent());
-                PublishStateUpdate();
+                _userInput.Remove(currentPos - 1, 1);
+                _charStates[currentPos - 1] = KeystrokeType.Untyped;
+                Stats.RecordBackspace();
             }
             return true;
         }
 
-        if (char.IsControl(key.KeyChar))
-        {
-            return true;
-        }
-        char inputChar = key.KeyChar;
-        KeystrokeType type = DetermineKeystrokeType(inputChar);
+        if (currentPos >= TargetText.Length)
+            return false;
 
-        CoreLogs.KeyProcessed(_logger, inputChar, type);
-        _eventAggregator.Publish(new KeyPressedEvent(inputChar, type, _userInput.Length));
+        var type = DetermineKeystrokeType(c);
+        Stats.RecordKey(c, type);
 
         bool isCorrect = type == KeystrokeType.Correct;
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
-            _userInput.Append(key.KeyChar);
+            _userInput.Append(c);
+            _charStates[currentPos] = type;
+        }
+        else
+        {
+            return false;
         }
 
         CheckEndCondition();
-        PublishStateUpdate();
-
         return true;
     }
 
     private KeystrokeType DetermineKeystrokeType(char inputChar)
     {
         int currentPos = _userInput.Length;
-        if (currentPos >= TargetText.Length)
-            return KeystrokeType.Extra;
-        if (inputChar == TargetText[currentPos])
-            return KeystrokeType.Correct;
-        return KeystrokeType.Incorrect;
+        return currentPos >= TargetText.Length ? KeystrokeType.Extra
+            : inputChar == TargetText[currentPos] ? KeystrokeType.Correct
+            : KeystrokeType.Incorrect;
     }
 
     private void CheckEndCondition()
     {
-        if (_userInput.ToString() == TargetText)
+        if (_userInput.Length == TargetText.Length)
         {
-            IsOver = true;
-            _stats.Stop();
-            CoreLogs.GameFinished(_logger);
-            _eventAggregator.Publish(new GameEndedEvent());
+            if (_userInput.ToString().Equals(TargetText))
+            {
+                IsOver = true;
+                Stats.Stop();
+                CoreLogs.GameFinished(_logger);
+            }
         }
     }
 
-    public async Task StartNewGame()
+    public void LoadText(TextSample sample)
     {
-        CoreLogs.GameStarting(_logger);
-        var text = await _textProvider.GetTextAsync();
-        TargetText = text.Text;
-        _stats.Start();
+        var text = sample.Text;
+        TargetText = text;
         _userInput.Clear();
-        IsOver = false;
-        PublishStateUpdate();
-    }
+        _charStates = new KeystrokeType[text.Length];
+        Array.Fill(_charStates, KeystrokeType.Untyped);
 
-    private void PublishStateUpdate()
-    {
-        CoreLogs.PublishingState(_logger);
-        var snapShot = _stats.CreateSnapshot();
-        var stateEvent = new GameStateUpdatedEvent(TargetText, UserInput, snapShot, IsOver);
-        _eventAggregator.Publish(stateEvent);
+        IsOver = false;
+        Stats = new GameStats();
     }
 }

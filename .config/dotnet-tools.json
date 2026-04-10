@@ -3,7 +3,7 @@
   "isRoot": true,
   "tools": {
     "dotnet-reportgenerator-globaltool": {
-      "version": "5.4.12",
+      "version": "5.5.4",
       "commands": [
         "reportgenerator"
       ],
@@ -17,9 +17,16 @@
       "rollForward": false
     },
     "minver-cli": {
-      "version": "6.0.0",
+      "version": "7.0.0",
       "commands": [
         "minver"
+      ],
+      "rollForward": false
+    },
+    "loom.build": {
+      "version": "0.4.0",
+      "commands": [
+        "loom"
       ],
       "rollForward": false
     }

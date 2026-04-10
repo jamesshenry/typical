@@ -1,87 +1,88 @@
 {
-  "Layouts": {
+  "layouts": {
     "ClassicFocus": {
-      "Name": "Root",
-      "SplitDirection": "Rows",
-      "Children": [
+      "section": "Default",
+      "split": "rows",
+      "children": [
         {
-          "Name": "Header"
+          "section": "Header"
         },
         {
-          "Name": "TypingArea",
-          "Ratio": 3
+          "section": "TypingArea",
+          "size": 3
         },
         {
-          "Name": "Footer"
+          "section": "Footer"
         }
       ]
     },
     "Dashboard": {
-      "Name": "Root",
-      "Children": [
+      "section": "Default",
+      "split": "columns",
+      "children": [
         {
-          "Name": "GameInfo"
+          "section": "GameInfo"
         },
         {
-          "Name": "Center",
-          "Ratio": 3,
-          "SplitDirection": "Rows",
-          "Children": [
+          "section": "Center",
+          "size": 3,
+          "split": "rows",
+          "children": [
             {
-              "Name": "Header"
+              "section": "Header"
             },
             {
-              "Name": "TypingArea",
-              "Ratio": 3
+              "section": "TypingArea",
+              "size": 3
             },
             {
-              "Name": "Footer"
+              "section": "Footer"
             }
           ]
         },
         {
-          "Name": "TypingInfo"
+          "section": "TypingInfo"
         }
       ]
     }
   },
-  "Themes": {
+  "themes": {
     "Default": {
       "TypingArea": {
-        "BorderStyle": {
-          "ForegroundColor": "Yellow",
-          "Decoration": "None"
+        "border": {
+          "color": "Yellow",
+          "style": "None"
         },
-        "PanelHeader": {
-          "Text": "[yellow]Type here[/]"
+        "header": {
+          "text": "[yellow]Type here[/]"
         },
-        "Alignment": {
-          "Vertical": "Middle",
-          "Horizontal": "Center"
+        "align": {
+          "v": "middle",
+          "h": "center"
         }
       },
       "Header": {
-        "BorderStyle": {
-          "ForegroundColor": "Blue"
+        "border": {
+          "color": "Blue"
         },
-        "PanelHeader": {
-          "Text": "[bold blue]Typical[/]"
+        "header": {
+          "text": "[bold blue]Typical[/]"
         }
       },
       "GameInfo": {
-        "BorderStyle": {
-          "ForegroundColor": "Blue"
+        "border": {
+          "color": "Blue"
         },
-        "PanelHeader": {
-          "Text": "Stats"
+        "header": {
+          "text": "Stats"
         },
-        "Alignment": {
-          "Vertical": "Middle"
+        "align": {
+          "v": "middle"
         }
       },
       "Default": {
-        "BorderStyle": {
-          "ForegroundColor": "Gray50"
+        "border": {
+          "color": "Gray50"
         }
       }
     }

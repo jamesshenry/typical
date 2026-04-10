@@ -1,44 +1,49 @@
-﻿using ConsoleAppFramework;
-using DotNetPathUtils;
+﻿using DotNetPathUtils;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualBasic;
-using Typical;
-using Typical.DataAccess;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+using Spectre.Console;
+using Terminal.Gui.App;
+using Typical.Core.Services;
 using Typical.Services;
+using Typical.Views;
 using Velopack;
 
-var pathHelper = new PathEnvironmentHelper(
-    new PathUtilsOptions()
-    {
-        DirectoryNameCase = DirectoryNameCase.CamelCase,
-        PrefixWithPeriod = false,
-    }
-);
 if (OperatingSystem.IsWindows())
 {
     var appDirectory = Path.GetDirectoryName(AppContext.BaseDirectory)!;
+    var pathHelper = new PathEnvironmentHelper(new PathUtilsOptions() { PrefixWithPeriod = false });
     VelopackApp
         .Build()
-        .OnAfterInstallFastCallback(v =>
-        {
-            pathHelper.EnsureDirectoryIsInPath(appDirectory);
-            var dbFile = Path.Combine(appDirectory, "typical.db");
-            if (!Directory.Exists(LiteDbConstants.DataDirectory))
-                Directory.CreateDirectory(LiteDbConstants.DataDirectory);
-            File.Move(dbFile, LiteDbConstants.DbFile, true);
-        })
+        .OnAfterInstallFastCallback(v => pathHelper.EnsureDirectoryIsInPath(appDirectory))
         .OnBeforeUninstallFastCallback(v => pathHelper.RemoveDirectoryFromPath(appDirectory!))
         .Run();
 }
 
-var services = new ServiceCollection();
+Log.Logger = Typical.Services.ServiceExtensions.CreateAppLogger();
+Log.Information("Application starting...");
 
-services.RegisterAppServices();
+try
+{
+    var builder = Host.CreateApplicationBuilder(args);
+    builder.Services.AddCoreServices();
+    builder.AddTuiLogging();
+    builder.AddTuiInfrastructure();
+    builder.AddTuiScreens();
 
-ConsoleApp.ServiceProvider = services.BuildServiceProvider();
+    using IHost host = builder.Build();
 
-var app = ConsoleApp.Create();
+    using var app = host.Services.GetRequiredService<IApplication>().Init();
+    var mainShell = host.Services.GetRequiredService<MainShell>();
 
-app.Add<ApplicationCommands>();
-
-await app.RunAsync(args);
+    app.Run(mainShell);
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Host terminated unexpectedly");
+    AnsiConsole.WriteException(ex);
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
+}

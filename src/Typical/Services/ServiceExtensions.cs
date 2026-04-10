@@ -1,86 +1,78 @@
+using Kuddle.Extensions.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 using Serilog;
+using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting.Display;
-using Serilog.Sinks.SystemConsole.Themes;
-using Spectre.Console;
-using Typical.Core;
-using Typical.Core.Data;
-using Typical.Core.Events;
-using Typical.Core.Statistics;
-using Typical.Core.Text;
-using Typical.DataAccess;
-using Typical.DataAccess.LiteDB;
-using Typical.TUI;
-using Typical.TUI.Runtime;
-using Typical.TUI.Settings;
-using Typical.TUI.Views;
+using Terminal.Gui.App;
+using Typical.Configuration;
+using Typical.Core.Interfaces;
+using Typical.Logging;
+using Typical.Views;
 
 namespace Typical.Services;
 
 public static class ServiceExtensions
 {
-    public static IConfiguration CreateConfiguration() =>
-        new ConfigurationBuilder().AddJsonFile("./config.json", false).Build();
+    private const string OutputTemplate =
+        "[{Timestamp:HH:mm:ss} {Level:u3}] ({SourceClass}) {Message:lj}{NewLine}{Exception}";
 
-    public static void ConfigureSerilog(this ILoggingBuilder builder)
+    /// <summary>
+    /// Creates the application logger. Call this early in Program.cs to set Log.Logger.
+    /// </summary>
+    public static Logger CreateAppLogger() =>
+        new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.File(
+                formatter: new MessageTemplateTextFormatter(OutputTemplate),
+                Path.Combine("logs", "app-.log"),
+                restrictedToMinimumLevel: LogEventLevel.Debug,
+                shared: true,
+                rollingInterval: RollingInterval.Day
+            )
+            .Enrich.FromLogContext()
+            .Enrich.With<SourceClassEnricher>()
+            .CreateLogger();
+
+    public static void AddTuiLogging(this HostApplicationBuilder builder)
     {
-        const string outputTemplate =
-            "[{Timestamp:HH:mm:ss} {Level:u3}] ({SourceClass}) {Message:lj}{NewLine}{Exception}";
-        builder.AddSerilog(
-            new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.File(
-                    formatter: new MessageTemplateTextFormatter(outputTemplate),
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "app-.log"),
-                    shared: true,
-                    rollingInterval: RollingInterval.Day,
-                    restrictedToMinimumLevel: LogEventLevel.Debug
-                )
-                .Enrich.WithProperty("ApplicationName", "<APP NAME>")
-                .Enrich.With<SourceClassEnricher>()
-#if DEBUG
-                .WriteTo.Console(
-                    outputTemplate: outputTemplate,
-                    theme: AnsiConsoleTheme.Sixteen,
-                    restrictedToMinimumLevel: LogEventLevel.Information
-                )
-#endif
-                .CreateLogger()
-        );
+        builder.Services.AddSerilog();
     }
 
-    public static IServiceCollection RegisterAppServices(this IServiceCollection services)
+    public static void AddTuiInfrastructure(this HostApplicationBuilder builder)
     {
-        var configuration = CreateConfiguration();
-        var appSettings = configuration.Get<AppSettings>()!;
-        services.AddLogging(ConfigureSerilog);
-        services.AddSingleton<IGameEngineFactory, GameEngineFactory>();
-        services.AddSingleton(configuration);
-        services.AddSingleton<IEventAggregator, EventAggregator>();
-        services.AddSingleton(AnsiConsole.Console);
-        services.AddSingleton(TimeProvider.System);
-        services.AddSingleton(_ => new ThemeManager(
-            appSettings.Themes.ToRuntimeThemes(),
-            defaultTheme: "Default"
-        ));
-        services.AddSingleton(_ => new LayoutFactory(appSettings.Layouts.ToRuntimeLayouts()));
+        builder.Configuration.Sources.Clear();
 
-        services.AddScoped<IQuoteRepository, LiteDbQuoteRepository>(_ => new LiteDbQuoteRepository(
-            LiteDbConstants.ConnectionString
-        ));
-        // ... other repositories
-        services.AddSingleton<ITextProvider, QuoteRepositoryTextProvider>();
-        services.AddTransient<MarkupGenerator>();
-        services.AddTransient<GameStats>();
-        services.AddTransient<GameEngine>();
-        services.AddTransient<AppShell>();
-        services.AddTransient<MainMenuView>();
-        services.AddTransient<GameView>();
-        services.AddTransient<StatsView>();
+        builder.Configuration.AddKdlFile("config.kdl");
+        var settings = new AppConfig();
+        builder.Configuration.GetSection("tui-app-settings").Bind(settings);
 
-        return services;
+        builder.Services.AddSingleton(_ => Application.Create());
+
+        builder.Services.AddSingleton<INavigationService, NavigationService>();
+        builder.Services.AddSingleton<IDialogService, DialogService>();
+        builder.Services.AddSingleton<IAppLifetime, AppLifetime>();
     }
+
+    public static void AddTuiScreens(this HostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<MainShell>();
+        builder.Services.AddTransient<HomeView>();
+        builder.Services.AddTransient<SettingsView>();
+        builder.Services.AddTransient<TypingView>();
+    }
+}
+
+public interface IAppLifetime
+{
+    void Quit();
+}
+
+public class AppLifetime(IApplication app) : IAppLifetime
+{
+    private readonly IApplication _app = app;
+
+    public void Quit() => _app.RequestStop();
 }

@@ -1,0 +1,2498 @@
+  - Typical
+  - Typical.Core
+  - Typical.DataAccess
+  - typical.Lib
+  - Typical.Tests
+    - Binding
+    - Commands
+    - Configuration
+    - Logging
+    - Navigation
+    - Services
+    - Text
+    - Views
+    - Data
+    - Events
+    - Interfaces
+    - Logging
+    - Services
+    - Statistics
+    - Text
+    - ViewModels
+    - LiteDb
+    - Core
+
+# --- Start of Code Files ---
+
+
+// File: src\Typical\Binding\BindingContext.cs`$langnamespace Typical.Binding;
+
+/// <summary>
+/// Manages the lifecycle of multiple bindings, providing centralized cleanup.
+/// </summary>
+public class BindingContext : IDisposable
+{
+    private readonly List<IDisposable> _bindings = new();
+    private bool _disposed;
+
+    /// <summary>
+    /// Adds a binding to be managed by this context.
+    /// </summary>
+    public void AddBinding(IDisposable binding)
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(BindingContext));
+
+        _bindings.Add(binding);
+    }
+
+    /// <summary>
+    /// Disposes all managed bindings.
+    /// </summary>
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            foreach (var binding in _bindings)
+            {
+                binding.Dispose();
+            }
+            _bindings.Clear();
+            _disposed = true;
+            GC.SuppressFinalize(this);
+        }
+    }
+}
+
+```
+// File: src\Typical\Binding\BindingExtensions.cs`$langusing CommunityToolkit.Mvvm.ComponentModel;
+using Terminal.Gui.Views;
+
+namespace Typical.Binding;
+
+/// <summary>
+/// Extension methods for binding Terminal.Gui controls to ViewModel properties.
+/// </summary>
+public static class BindingExtensions
+{
+    /// <summary>
+    /// Binds a Label's Text property one-way to a ViewModel property.
+    /// </summary>
+    public static IDisposable BindTextOneWay(
+        this Label label,
+        ObservableObject viewModel,
+        Func<string> getter,
+        string propertyName
+    )
+    {
+        label.Text = getter();
+
+        void Handler(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == propertyName)
+            {
+                label.Text = getter();
+            }
+        }
+
+        viewModel.PropertyChanged += Handler;
+
+        return new DisposableAction(() => viewModel.PropertyChanged -= Handler);
+    }
+
+    /// <summary>
+    /// Binds a TextField's Text property two-way to a ViewModel property.
+    /// </summary>
+    public static IDisposable BindTextTwoWay(
+        this TextField textField,
+        ObservableObject viewModel,
+        Func<string> getter,
+        Action<string> setter,
+        string propertyName
+    )
+    {
+        textField.Text = getter();
+
+        void TextChangedHandler(object? sender, EventArgs e)
+        {
+            setter(textField.Text.ToString() ?? string.Empty);
+        }
+
+        void PropertyChangedHandler(
+            object? sender,
+            System.ComponentModel.PropertyChangedEventArgs e
+        )
+        {
+            if (e.PropertyName == propertyName)
+            {
+                textField.Text = getter();
+            }
+        }
+
+        textField.TextChanged += TextChangedHandler;
+        viewModel.PropertyChanged += PropertyChangedHandler;
+
+        return new DisposableAction(() =>
+        {
+            textField.TextChanged -= TextChangedHandler;
+            viewModel.PropertyChanged -= PropertyChangedHandler;
+        });
+    }
+
+    /// <summary>
+    /// Binds a CheckBox's CheckedState property two-way to a ViewModel boolean property.
+    /// </summary>
+    public static IDisposable BindCheckedTwoWay(
+        this CheckBox checkBox,
+        ObservableObject viewModel,
+        Func<bool> getter,
+        Action<bool> setter,
+        string propertyName
+    )
+    {
+        checkBox.CheckedState = getter() ? CheckState.Checked : CheckState.UnChecked;
+
+        void AcceptedHandler(object? sender, EventArgs e)
+        {
+            setter(checkBox.CheckedState == CheckState.Checked);
+        }
+
+        void PropertyChangedHandler(
+            object? sender,
+            System.ComponentModel.PropertyChangedEventArgs e
+        )
+        {
+            if (e.PropertyName == propertyName)
+            {
+                checkBox.CheckedState = getter() ? CheckState.Checked : CheckState.UnChecked;
+            }
+        }
+
+        checkBox.Accepted += AcceptedHandler;
+        viewModel.PropertyChanged += PropertyChangedHandler;
+
+        return new DisposableAction(() =>
+        {
+            checkBox.Accepted -= AcceptedHandler;
+            viewModel.PropertyChanged -= PropertyChangedHandler;
+        });
+    }
+}
+
+```
+// File: src\Typical\Binding\DisposableAction.cs`$langnamespace Typical.Binding;
+
+/// <summary>
+/// A simple disposable action that executes a delegate when disposed.
+/// Used for cleaning up event handlers and bindings.
+/// </summary>
+public class DisposableAction : IDisposable
+{
+    private readonly Action _action;
+    private bool _disposed;
+
+    public DisposableAction(Action action)
+    {
+        _action = action ?? throw new ArgumentNullException(nameof(action));
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _action();
+            _disposed = true;
+        }
+    }
+}
+
+```
+// File: src\Typical\Configuration\TypicalAppConfig.cs`$langusing Microsoft.Extensions.Configuration;
+
+namespace Typical.Configuration;
+
+public class TypicalAppConfig
+{
+    public int Port { get; set; }
+    public bool Enabled { get; set; }
+
+    [ConfigurationKeyName("api-url")]
+    public string? ApiUrl { get; set; }
+}
+
+```
+// File: src\Typical\Logging\AppLogs.cs`$langusing Microsoft.Extensions.Logging;
+using Typical;
+
+public static partial class AppLogs
+{
+    // Define a log message with ID, level, template
+    [LoggerMessage(
+        EventId = 1000,
+        Level = LogLevel.Information,
+        Message = "Application starting..."
+    )]
+    public static partial void ApplicationStarting(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 1001,
+        Level = LogLevel.Information,
+        Message = "No commands specified, starting interactive AppShell."
+    )]
+    public static partial void NoCommandsInteractive(ILogger logger);
+
+    // Example with parameters
+    [LoggerMessage(
+        EventId = 1002,
+        Level = LogLevel.Warning,
+        Message = "Failed to process user {UserId}"
+    )]
+    public static partial void FailedToProcessUser(ILogger logger, int userId);
+
+    [LoggerMessage(
+        EventId = 1003,
+        Level = LogLevel.Warning,
+        Message = "Starting direct game with Mode: {Mode}, Duration: {Duration}"
+    )]
+    public static partial void StartingGame(ILogger logger, string mode, int duration);
+
+    [LoggerMessage(
+        EventId = 1004,
+        Level = LogLevel.Information,
+        Message = ("Application shutting down.")
+    )]
+    public static partial void ApplicationStopping(ILogger logger);
+}
+
+```
+// File: src\Typical\Logging\SourceClassEnricher.cs`$langusing Serilog.Core;
+using Serilog.Events;
+
+namespace Typical.Logging;
+
+public class SourceClassEnricher : ILogEventEnricher
+{
+    public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
+    {
+        if (
+            logEvent.Properties.TryGetValue("SourceContext", out var value)
+            && value is ScalarValue sv
+            && sv.Value is string fullName
+        )
+        {
+            var shortName = fullName.Split('.').Last();
+            var property = propertyFactory.CreateProperty("SourceClass", shortName);
+            logEvent.AddOrUpdateProperty(property);
+        }
+    }
+}
+
+```
+// File: src\Typical\Navigation\ViewLocator.cs`$langusing Microsoft.Extensions.DependencyInjection;
+using Terminal.Gui.ViewBase;
+using Typical.Core.ViewModels;
+using Typical.Views;
+
+namespace Typical.Navigation;
+
+public static class ViewLocator
+{
+    public static View GetView(IServiceProvider sp, object viewModel) =>
+        viewModel switch
+        {
+            HomeViewModel => sp.GetRequiredService<HomeView>(),
+            SettingsViewModel => sp.GetRequiredService<SettingsView>(),
+            TypingViewModel => sp.GetRequiredService<TypingGameView>(),
+            _ => throw new ArgumentException($"No view registered for {viewModel.GetType()}"),
+        };
+}
+
+```
+// File: src\Typical\Services\DialogService.cs`$langusing Terminal.Gui.App;
+using Terminal.Gui.Views;
+using Typical.Core.Interfaces;
+
+namespace Typical.Services;
+
+public class DialogService : IDialogService
+{
+    private readonly IApplication _app;
+
+    public DialogService(IApplication app)
+    {
+        _app = app;
+    }
+
+    public bool Confirm(
+        string title,
+        string message,
+        string okText = "Yes",
+        string cancelText = "No"
+    )
+    {
+        int? result = MessageBox.Query(_app, title, message, okText, cancelText);
+        return result == 0;
+    }
+
+    public void ShowInfo(string title, string message)
+    {
+        MessageBox.Query(_app, title, message, "Ok");
+    }
+
+    public void ShowError(string title, string message)
+    {
+        MessageBox.ErrorQuery(_app, title, message);
+    }
+}
+
+```
+// File: src\Typical\Services\NavigationService.cs`$langusing CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.DependencyInjection;
+using Terminal.Gui.App;
+using Terminal.Gui.Views;
+using Typical.Core.Interfaces;
+using Typical.Navigation;
+
+namespace Typical.Services;
+
+public class NavigationService : ObservableObject, INavigationService
+{
+    private readonly IServiceProvider _services;
+    private readonly IApplication _app;
+
+    public NavigationService(IServiceProvider services, IApplication app)
+    {
+        _services = services;
+        _app = app;
+    }
+
+    private ObservableObject? _currentViewModel;
+
+    public ObservableObject CurrentViewModel
+    {
+        get => _currentViewModel!;
+        private set => SetProperty(ref _currentViewModel, value);
+    }
+
+    public void NavigateTo<TViewModel>()
+        where TViewModel : ObservableObject
+    {
+        if (CurrentViewModel is IBindableView currentViewModel)
+        {
+            currentViewModel.OnNavigatedFrom();
+        }
+
+        CurrentViewModel = _services.GetRequiredService<TViewModel>();
+
+        if (CurrentViewModel is IBindableView newViewModel)
+        {
+            newViewModel.OnNavigatedTo();
+        }
+    }
+
+    public TResult? ShowModal<TViewModel, TResult>(Action<TViewModel>? configure = null)
+        where TViewModel : class, IModalViewModel<TResult>
+    {
+        var vm = _services.GetRequiredService<TViewModel>();
+        configure?.Invoke(vm);
+        var view = ViewLocator.GetView(_services, vm);
+
+        if (view is IRunnable runnable)
+        {
+            EventHandler? handler = null;
+            handler = (s, e) =>
+            {
+                _app.RequestStop();
+                vm.RequestClose -= handler;
+            };
+            vm.RequestClose += handler;
+            _app.Run(runnable);
+        }
+        else
+        {
+            var host = new Dialog { Title = "Modal Host" };
+            host.Add(view);
+            _app.Run(host);
+        }
+
+        return vm.Result;
+    }
+}
+
+```
+// File: src\Typical\Services\ServiceExtensions.cs`$langusing Kuddle.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
+using Serilog.Formatting.Display;
+using Terminal.Gui.App;
+using Typical.Configuration;
+using Typical.Core.Interfaces;
+using Typical.Logging;
+using Typical.Views;
+
+namespace Typical.Services;
+
+public static class ServiceExtensions
+{
+    private const string OutputTemplate =
+        "[{Timestamp:HH:mm:ss} {Level:u3}] ({SourceClass}) {Message:lj}{NewLine}{Exception}";
+
+    /// <summary>
+    /// Creates the application logger. Call this early in Program.cs to set Log.Logger.
+    /// </summary>
+    public static Logger CreateAppLogger() =>
+        new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.File(
+                formatter: new MessageTemplateTextFormatter(OutputTemplate),
+                Path.Combine("logs", "app-.log"),
+                restrictedToMinimumLevel: LogEventLevel.Debug,
+                shared: true,
+                rollingInterval: RollingInterval.Day
+            )
+            .Enrich.FromLogContext()
+            .Enrich.With<SourceClassEnricher>()
+            .CreateLogger();
+
+    public static void AddTuiLogging(this HostApplicationBuilder builder)
+    {
+        builder.Services.AddSerilog();
+    }
+
+    public static void AddTuiInfrastructure(this HostApplicationBuilder builder)
+    {
+        builder.Configuration.Sources.Clear();
+
+        builder.Configuration.AddKdlFile("config.kdl");
+        var settings = new TypicalAppConfig();
+        builder.Configuration.GetSection("tui-app-settings").Bind(settings);
+
+        builder.Services.AddSingleton(_ => Application.Create());
+
+        builder.Services.AddSingleton<INavigationService, NavigationService>();
+        builder.Services.AddSingleton<IDialogService, DialogService>();
+        builder.Services.AddSingleton<IAppLifetime, AppLifetime>();
+    }
+
+    public static void AddTuiScreens(this HostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<MainShell>();
+        builder.Services.AddTransient<HomeView>();
+        builder.Services.AddTransient<SettingsView>();
+        builder.Services.AddTransient<TypingGameView>();
+    }
+}
+
+public interface IAppLifetime
+{
+    void Quit();
+}
+
+public class AppLifetime(IApplication app) : IAppLifetime
+{
+    private readonly IApplication _app = app;
+
+    public void Quit() => _app.RequestStop();
+}
+
+```
+// File: src\Typical\Text\QuoteRepositoryTextProvider.cs`$langusing Typical.Core.Data;
+using Typical.Core.Text;
+
+namespace Typical;
+
+public class QuoteRepositoryTextProvider : ITextProvider
+{
+    private readonly IQuoteRepository _quoteRepository;
+    private static readonly TextSample FallbackSample = new()
+    {
+        Text = "The quick brown fox jumps over the lazy dog.",
+        Source = "Pangram",
+        WordCount = 9,
+        CharCount = 43,
+    };
+
+    public QuoteRepositoryTextProvider(IQuoteRepository quoteRepository)
+    {
+        _quoteRepository = quoteRepository;
+    }
+
+    public async Task<TextSample> GetNextTextSampleAsync(int? currentSampleId)
+    {
+        if (currentSampleId is null)
+        {
+            return await GetTextAsync();
+        }
+
+        var quote = await _quoteRepository.GetNextQuoteAsync(currentSampleId.Value);
+
+        return quote is null ? FallbackSample : AdaptQuoteToTextSample(quote);
+    }
+
+    public async Task<TextSample> GetTextAsync()
+    {
+        var quote = await _quoteRepository.GetRandomQuoteAsync();
+
+        return quote is null ? FallbackSample : AdaptQuoteToTextSample(quote);
+    }
+
+    /// <summary>
+    /// Private helper to perform the mapping from the data model to the application DTO.
+    /// This is the core responsibility of the adapter pattern.
+    /// </summary>
+    private TextSample AdaptQuoteToTextSample(Quote quote)
+    {
+        return new TextSample
+        {
+            SourceId = quote.Id,
+            Text = quote.Text,
+            Source = quote.Author,
+            WordCount = quote.WordCount,
+            CharCount = quote.CharCount,
+        };
+    }
+}
+
+```
+// File: src\Typical\Views\BindableView.cs`$langusing CommunityToolkit.Mvvm.ComponentModel;
+using Terminal.Gui.App;
+using Terminal.Gui.ViewBase;
+using Typical.Binding;
+using Typical.Core.Interfaces;
+
+namespace Typical.Views;
+
+/// <summary>
+/// Base class for Views that are bound to ViewModels.
+/// Provides lifecycle management and binding context.
+/// </summary>
+public abstract class BindableView<TViewModel> : View, IBindableView
+    where TViewModel : ObservableObject
+{
+    /// <summary>
+    /// The ViewModel instance.
+    /// </summary>
+    protected readonly TViewModel ViewModel;
+
+    /// <summary>
+    /// The binding context for managing bindings.
+    /// </summary>
+    protected readonly BindingContext BindingContext;
+
+    private bool _disposed;
+
+    /// <summary>
+    /// Initializes a new instance of the ViewModelView class.
+    /// </summary>
+    protected BindableView(TViewModel viewModel)
+    {
+        ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        BindingContext = new BindingContext();
+
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+        Initialized += (s, e) => SetupBindings();
+    }
+
+    /// <summary>
+    /// Template method for setting up bindings.
+    /// Override in derived classes to configure bindings.
+    /// </summary>
+    protected abstract void SetupBindings();
+
+    /// <summary>
+    /// Called when a ViewModel property changes.
+    /// Override in derived classes for custom handling.
+    /// </summary>
+    protected virtual void OnViewModelPropertyChanged(
+        object? sender,
+        System.ComponentModel.PropertyChangedEventArgs e
+    )
+    {
+        SetNeedsDraw();
+    }
+
+    /// <summary>
+    /// Called when the view is navigated to.
+    /// </summary>
+    public virtual void OnNavigatedTo() { }
+
+    /// <summary>
+    /// Called when the view is navigated away from.
+    /// </summary>
+    public virtual void OnNavigatedFrom() { }
+
+    /// <summary>
+    /// Disposes the view and cleans up bindings.
+    /// </summary>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && !_disposed)
+        {
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            BindingContext.Dispose();
+            _disposed = true;
+        }
+        base.Dispose(disposing);
+    }
+}
+
+```
+// File: src\Typical\Views\HomeView.cs`$langusing Terminal.Gui.ViewBase;
+using Terminal.Gui.Views;
+using Typical.Binding;
+using Typical.Core.ViewModels;
+
+namespace Typical.Views;
+
+public class HomeView : BindableView<HomeViewModel>
+{
+    private readonly Label _lbl;
+
+    public HomeView(HomeViewModel vm)
+        : base(vm)
+    {
+        Width = Dim.Fill();
+        Height = Dim.Fill();
+
+        _lbl = new Label { X = Pos.Center(), Y = Pos.Center() };
+
+        var btn = new Button
+        {
+            X = Pos.Center(),
+            Y = Pos.Bottom(_lbl),
+            Text = "Go Settings",
+        };
+
+        btn.Accepting += (s, e) => ViewModel.NavigateSettingsCommand.Execute(null);
+        Add(_lbl);
+        Add(btn);
+    }
+
+    protected override void SetupBindings()
+    {
+        BindingContext.AddBinding(
+            _lbl.BindTextOneWay(
+                ViewModel,
+                () => ViewModel.WelcomeMessage,
+                nameof(ViewModel.WelcomeMessage)
+            )
+        );
+    }
+}
+
+```
+// File: src\Typical\Views\MainShell.cs`$langusing System.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using Terminal.Gui.Drawing;
+using Terminal.Gui.ViewBase;
+using Terminal.Gui.Views;
+using Typical.Binding;
+using Typical.Core.Interfaces;
+using Typical.Core.ViewModels;
+using Typical.Navigation;
+
+namespace Typical.Views;
+
+public class MainShell : Window
+{
+    private readonly MainViewModel _viewModel;
+    private readonly INavigationService _navService;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly View _contentContainer;
+    private readonly Label _statusLabel;
+    private readonly BindingContext _bindingContext;
+
+    public MainShell(MainViewModel viewModel, INavigationService navService, IServiceProvider sp)
+    {
+        _viewModel = viewModel;
+        _navService = navService;
+        _serviceProvider = sp;
+        _bindingContext = new BindingContext();
+        BorderStyle = LineStyle.RoundedDashed;
+        Title = _viewModel.AppTitle;
+
+        _statusLabel = new Label { Y = Pos.AnchorEnd(1), Width = Dim.Fill() };
+
+        _contentContainer = new FrameView
+        {
+            Title = "Content Frame",
+            X = Pos.Center(),
+            Y = Pos.Center(),
+            Width = Dim.Fill(),
+            Height = Dim.Fill() - 2,
+            CanFocus = true,
+            BorderStyle = DefaultBorderStyle,
+        };
+
+        Add(_contentContainer, _statusLabel);
+
+        _bindingContext.AddBinding(
+            _statusLabel.BindTextOneWay(
+                _viewModel,
+                () => _viewModel.StatusText,
+                nameof(_viewModel.StatusText)
+            )
+        );
+
+        _navService.PropertyChanged += OnNavServicePropertyChanged;
+
+        _viewModel.NavigateToGameViewCommand.Execute(null);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _bindingContext.Dispose();
+        }
+        base.Dispose(disposing);
+    }
+
+    private void OnNavServicePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(INavigationService.CurrentViewModel))
+        {
+            UpdateContent(_navService.CurrentViewModel);
+        }
+    }
+
+    private void UpdateContent(ObservableObject? viewModel)
+    {
+        if (viewModel == null)
+            return;
+
+        _contentContainer.RemoveAll();
+
+        var view = ViewLocator.GetView(_serviceProvider, viewModel);
+
+        view.Width = Dim.Fill();
+        view.Height = Dim.Fill();
+
+        _contentContainer.Add(view);
+
+        view.SetFocus();
+    }
+}
+
+```
+// File: src\Typical\Views\SettingsView.cs`$langusing Terminal.Gui.ViewBase;
+using Terminal.Gui.Views;
+using Typical.Binding;
+using Typical.Core.ViewModels;
+
+namespace Typical.Views;
+
+public class SettingsView : BindableView<SettingsViewModel>
+{
+    private readonly TextField _txtName;
+    private readonly CheckBox _chkLog;
+
+    public SettingsView(SettingsViewModel viewModel)
+        : base(viewModel)
+    {
+        Width = Dim.Fill();
+        Height = Dim.Fill();
+
+        var lblName = new Label { Text = "Username:" };
+        _txtName = new TextField { X = Pos.Right(lblName) + 2, Width = Dim.Fill(5) };
+
+        _chkLog = new CheckBox { Y = Pos.Bottom(lblName) + 1, Text = "Enable Background Logging" };
+
+        var btnSave = new Button
+        {
+            X = 0,
+            Y = Pos.Bottom(_chkLog) + 2,
+            Text = "Save Settings",
+        };
+
+        var btnCancel = new Button
+        {
+            X = Pos.Right(btnSave) + 2,
+            Y = Pos.Y(btnSave),
+            Text = "Cancel",
+        };
+
+        btnSave.Accepting += (s, e) => ViewModel.SaveCommand.Execute(null);
+        btnCancel.Accepting += (s, e) => ViewModel.CancelCommand.Execute(null);
+
+        Add(lblName, _txtName, _chkLog, btnSave, btnCancel);
+    }
+
+    protected override void SetupBindings()
+    {
+        BindingContext.AddBinding(
+            _txtName.BindTextTwoWay(
+                ViewModel,
+                () => ViewModel.Username,
+                value => ViewModel.Username = value,
+                nameof(ViewModel.Username)
+            )
+        );
+
+        BindingContext.AddBinding(
+            _chkLog.BindCheckedTwoWay(
+                ViewModel,
+                () => ViewModel.EnableLogging,
+                value => ViewModel.EnableLogging = value,
+                nameof(ViewModel.EnableLogging)
+            )
+        );
+    }
+}
+
+```
+// File: src\Typical\Views\TypingGameView.cs`$langusing System.ComponentModel;
+using System.Text;
+using Terminal.Gui.Drawing;
+using Terminal.Gui.Input;
+using Terminal.Gui.Text;
+using Terminal.Gui.ViewBase;
+using Terminal.Gui.Views;
+using Typical.Binding;
+using Typical.Core.Statistics;
+using Typical.Core.ViewModels;
+using Typical.Views;
+using Attribute = Terminal.Gui.Drawing.Attribute;
+
+public class TypingGameView : BindableView<TypingViewModel>
+{
+    private readonly Label _statsLabel;
+    private readonly TextFormatter _formatter = new();
+
+    public TypingGameView(TypingViewModel viewModel)
+        : base(viewModel)
+    {
+        CanFocus = true;
+        X = Pos.Center();
+        Y = Pos.Center();
+        Width = 50;
+        Height = 50;
+        BorderStyle = LineStyle.RoundedDashed;
+        Title = nameof(TypingGameView);
+        _formatter.WordWrap = true;
+
+        _statsLabel = new Label { Y = Pos.AnchorEnd(1) };
+        Add(_statsLabel);
+        Initialized += (s, e) => _ = InitializeViewAsync();
+    }
+
+    protected override bool OnDrawingContent(DrawContext? context)
+    {
+        if (context == null)
+            return true;
+
+        _formatter.Text = ViewModel.TargetText;
+        _formatter.ConstrainToWidth = Viewport.Width;
+        _formatter.ConstrainToHeight = Viewport.Height;
+
+        var lines = _formatter.GetLines();
+
+        int globalCharIndex = 0;
+        for (int y = 0; y < lines.Count; y++)
+        {
+            string lineText = lines[y];
+            Move(0, y);
+
+            for (int x = 0; x < lineText.Length; x++)
+            {
+                var status = ViewModel.GetStatus(globalCharIndex);
+
+                var back = this.GetScheme().Normal.Background;
+                Attribute color = status switch
+                {
+                    KeystrokeType.Correct => new Attribute(Color.Green, back),
+                    KeystrokeType.Incorrect => new Attribute(Color.White, Color.Red),
+                    _ => new Attribute(Color.DarkGray, back),
+                };
+
+                SetAttribute(color);
+                AddRune(new Rune(lineText[x]));
+
+                globalCharIndex++;
+            }
+        }
+
+        return true;
+    }
+
+    protected override bool OnKeyDown(Key key)
+    {
+        bool isBackspace = key == Key.Backspace;
+        Rune rune = key.AsRune;
+
+        if (rune == default && !isBackspace)
+        {
+            return base.OnKeyDown(key);
+        }
+
+        char c = isBackspace ? '\0' : (char)rune.Value;
+
+        _ = HandleInputAsync(c, isBackspace);
+
+        return true;
+    }
+
+    private async Task HandleInputAsync(char c, bool isBackspace)
+    {
+        try
+        {
+            await ViewModel.ProcessInput(c, isBackspace);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Input Error: {ex.Message}");
+        }
+    }
+
+    protected override void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        App?.Invoke(() =>
+        {
+            if (e.PropertyName == nameof(ViewModel.TargetText))
+            {
+                SetNeedsLayout();
+            }
+            SetNeedsDraw();
+        });
+    }
+
+    protected override void SetupBindings()
+    {
+        var binding = _statsLabel.BindTextOneWay(
+            ViewModel,
+            () =>
+                $"Elapsed: {ViewModel.TimeElapsed} WPM: {ViewModel.Wpm} | Acc: {ViewModel.Accuracy}",
+            nameof(ViewModel.TypedText)
+        );
+
+        BindingContext.AddBinding(binding);
+    }
+
+    private async Task InitializeViewAsync()
+    {
+        try
+        {
+            await ViewModel.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Init Error: {ex.Message}");
+        }
+    }
+}
+
+```
+// File: src\Typical\config.json`$lang{
+  "layouts": {
+    "ClassicFocus": {
+      "section": "Default",
+      "split": "rows",
+      "children": [
+        {
+          "section": "Header"
+        },
+        {
+          "section": "TypingArea",
+          "size": 3
+        },
+        {
+          "section": "Footer"
+        }
+      ]
+    },
+    "Dashboard": {
+      "section": "Default",
+      "split": "columns",
+      "children": [
+        {
+          "section": "GameInfo"
+        },
+        {
+          "section": "Center",
+          "size": 3,
+          "split": "rows",
+          "children": [
+            {
+              "section": "Header"
+            },
+            {
+              "section": "TypingArea",
+              "size": 3
+            },
+            {
+              "section": "Footer"
+            }
+          ]
+        },
+        {
+          "section": "TypingInfo"
+        }
+      ]
+    }
+  },
+  "themes": {
+    "Default": {
+      "TypingArea": {
+        "border": {
+          "color": "Yellow",
+          "style": "None"
+        },
+        "header": {
+          "text": "[yellow]Type here[/]"
+        },
+        "align": {
+          "v": "middle",
+          "h": "center"
+        }
+      },
+      "Header": {
+        "border": {
+          "color": "Blue"
+        },
+        "header": {
+          "text": "[bold blue]Typical[/]"
+        }
+      },
+      "GameInfo": {
+        "border": {
+          "color": "Blue"
+        },
+        "header": {
+          "text": "Stats"
+        },
+        "align": {
+          "v": "middle"
+        }
+      },
+      "Default": {
+        "border": {
+          "color": "Gray50"
+        }
+      }
+    }
+  }
+}
+
+```
+// File: src\Typical\Constants.cs`$langnamespace Typical;
+
+public static class AppConstants
+{
+    public static string AppName => "Typical";
+
+    // // Centralize the logic for getting the data directory
+    // public static string DataDirectory =>
+    //     Path.Combine(Xdg.Directories.BaseDirectory.DataHome, AppName.ToLower());
+}
+
+public static class AppInitializer
+{
+    public static void Initialize()
+    {
+        // if (!Directory.Exists(AppConstants.DataDirectory))
+        // {
+        //     Directory.CreateDirectory(AppConstants.DataDirectory);
+        // }
+    }
+}
+
+```
+// File: src\Typical\Program.cs`$langusing DotNetPathUtils;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+using Spectre.Console;
+using Terminal.Gui.App;
+using Typical.Core.Services;
+using Typical.Services;
+using Typical.Views;
+using Velopack;
+
+if (OperatingSystem.IsWindows())
+{
+    var appDirectory = Path.GetDirectoryName(AppContext.BaseDirectory)!;
+    var pathHelper = new PathEnvironmentHelper(new PathUtilsOptions() { PrefixWithPeriod = false });
+    VelopackApp
+        .Build()
+        .OnAfterInstallFastCallback(v => pathHelper.EnsureDirectoryIsInPath(appDirectory))
+        .OnBeforeUninstallFastCallback(v => pathHelper.RemoveDirectoryFromPath(appDirectory!))
+        .Run();
+}
+
+Log.Logger = Typical.Services.ServiceExtensions.CreateAppLogger();
+Log.Information("Application starting...");
+
+try
+{
+    var builder = Host.CreateApplicationBuilder(args);
+    builder.Services.AddCoreServices();
+    builder.AddTuiLogging();
+    builder.AddTuiInfrastructure();
+    builder.AddTuiScreens();
+
+    using IHost host = builder.Build();
+
+    using var app = host.Services.GetRequiredService<IApplication>().Init();
+    var mainShell = host.Services.GetRequiredService<MainShell>();
+
+    app.Run(mainShell);
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Host terminated unexpectedly");
+    AnsiConsole.WriteException(ex);
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
+}
+
+```
+// File: src\Typical.Core\Data\Quote.cs`$langnamespace Typical.Core.Data;
+
+public class Quote
+{
+    public int Id { get; set; }
+    public required string Text { get; set; }
+    public required string Author { get; set; }
+    public IEnumerable<string> Tags { get; set; } = [];
+    public int WordCount { get; set; }
+    public int CharCount { get; set; }
+}
+
+public interface IQuoteRepository
+{
+    Task<Quote?> GetRandomQuoteAsync();
+    Task<Quote?> GetNextQuoteAsync(int currentId);
+    Task AddQuotesAsync(IEnumerable<Quote> quotes);
+    Task<bool> HasAnyAsync();
+}
+
+```
+// File: src\Typical.Core\Events\BackspacePressedEvent.cs`$langnamespace Typical.Core.Events;
+
+internal record BackspacePressedEvent;
+
+```
+// File: src\Typical.Core\Events\GameEndedEvent.cs`$langnamespace Typical.Core.Events;
+
+public record GameEndedEvent;
+
+```
+// File: src\Typical.Core\Events\GameQuitEvent.cs`$langnamespace Typical.Core.Events;
+
+public record GameQuitEvent;
+
+```
+// File: src\Typical.Core\Events\GameStateUpdatedEvent.cs`$langusing Typical.Core.Statistics;
+
+namespace Typical.Core.Events;
+
+public record GameStateUpdatedEvent(
+    string TargetText,
+    string UserInput,
+    GameStatisticsSnapshot Statistics,
+    bool IsOver
+);
+
+```
+// File: src\Typical.Core\Events\KeyPressedEvent.cs`$langusing Typical.Core.Statistics;
+
+namespace Typical.Core.Events;
+
+internal record KeyPressedEvent(char Character, KeystrokeType Type, int Position);
+
+```
+// File: src\Typical.Core\Interfaces\IBindableView.cs`$langnamespace Typical.Core.Interfaces;
+
+/// <summary>
+/// Interface for views that support navigation lifecycle events.
+/// </summary>
+public interface IBindableView
+{
+    /// <summary>
+    /// Called when the view is navigated to.
+    /// </summary>
+    void OnNavigatedTo();
+
+    /// <summary>
+    /// Called when the view is navigated away from.
+    /// </summary>
+    void OnNavigatedFrom();
+}
+
+```
+// File: src\Typical.Core\Interfaces\IDialogService.cs`$langnamespace Typical.Core.Interfaces;
+
+public interface IDialogService
+{
+    bool Confirm(string title, string message, string okText = "Yes", string cancelText = "No");
+    void ShowInfo(string title, string message);
+    void ShowError(string title, string message);
+}
+
+```
+// File: src\Typical.Core\Interfaces\IModalViewModel.cs`$langnamespace Typical.Core.Interfaces;
+
+public interface IModalViewModel<TResult>
+{
+    // The result the modal will return (e.g., a bool, a string, or a complex object)
+    TResult? Result { get; }
+
+    // An event to tell the View: "I am done, please stop the loop"
+    event EventHandler? RequestClose;
+}
+
+```
+// File: src\Typical.Core\Interfaces\INavigationService.cs`$langusing System.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace Typical.Core.Interfaces;
+
+public interface INavigationService : INotifyPropertyChanged
+{
+    ObservableObject CurrentViewModel { get; }
+    void NavigateTo<TViewModel>()
+        where TViewModel : ObservableObject;
+    TResult? ShowModal<TViewModel, TResult>(Action<TViewModel>? configure = null)
+        where TViewModel : class, IModalViewModel<TResult>;
+}
+
+```
+// File: src\Typical.Core\Logging\CoreLogs.cs`$langusing Microsoft.Extensions.Logging;
+using Typical.Core.Statistics;
+
+namespace Typical.Core.Logging;
+
+public static partial class CoreLogs
+{
+    // --- GameEngine Logs (2000-2099) ---
+    [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "New game starting.")]
+    public static partial void GameStarting(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 2001,
+        Level = LogLevel.Information,
+        Message = "Game finished successfully."
+    )]
+    public static partial void GameFinished(ILogger logger);
+
+    [LoggerMessage(EventId = 2002, Level = LogLevel.Information, Message = "Game quit by user.")]
+    public static partial void GameQuit(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 2003,
+        Level = LogLevel.Debug,
+        Message = "Processing key: {KeyChar}, Type: {KeystrokeType}"
+    )]
+    public static partial void KeyProcessed(
+        ILogger logger,
+        char KeyChar,
+        KeystrokeType KeystrokeType
+    );
+
+    [LoggerMessage(
+        EventId = 2004,
+        Level = LogLevel.Trace,
+        Message = "Publishing game state update."
+    )]
+    public static partial void PublishingState(ILogger logger);
+
+    // --- GameStats Logs (2100-2199) ---
+    [LoggerMessage(EventId = 2100, Level = LogLevel.Debug, Message = "GameStats started.")]
+    public static partial void StatsStarted(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 2101,
+        Level = LogLevel.Debug,
+        Message = "GameStats stopped. Elapsed: {ElapsedTime}ms"
+    )]
+    public static partial void StatsStopped(ILogger logger, double ElapsedTime);
+
+    [LoggerMessage(EventId = 2102, Level = LogLevel.Debug, Message = "GameStats reset.")]
+    public static partial void StatsReset(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 2103,
+        Level = LogLevel.Debug,
+        Message = "Key logged in stats: {Character} ({Type})"
+    )]
+    public static partial void StatsKeyLogged(ILogger logger, char Character, KeystrokeType Type);
+
+    [LoggerMessage(EventId = 2104, Level = LogLevel.Debug, Message = "Backspace logged in stats.")]
+    public static partial void StatsBackspaceLogged(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 2105,
+        Level = LogLevel.Trace,
+        Message = "Recalculating all statistics."
+    )]
+    public static partial void RecalculatingStats(ILogger logger);
+}
+
+```
+// File: src\Typical.Core\Services\ServiceExtensions.cs`$langusing Microsoft.Extensions.DependencyInjection;
+using Typical.Core.Text;
+using Typical.Core.ViewModels;
+
+namespace Typical.Core.Services;
+
+public static class ServiceExtensions
+{
+    public static void AddCoreServices(this IServiceCollection services)
+    {
+        services.AddSingleton(TimeProvider.System);
+        // Singleton: The provider and factory live for the app lifetime
+        services.AddSingleton<ITextProvider, StaticTextProvider>(
+            (_) => new StaticTextProvider("The quick brown fox jumped over the lazy dog.")
+        );
+        services.AddSingleton<GameOptions>(GameOptions.Default);
+        services.AddSingleton<GameEngine>();
+        services.AddSingleton<MainViewModel>();
+
+        // Transient: A fresh ViewModel and Engine logic for every game session
+        services.AddTransient<TypingViewModel>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<HomeViewModel>();
+
+        // If you need the EventAggregator for UI-wide messages (like "New High Score")
+        // keep it, but don't use it for character-by-character logic.
+        // services.AddSingleton<IEventAggregator, EventAggregator>();
+    }
+}
+
+```
+// File: src\Typical.Core\Statistics\CharacterStats.cs`$langnamespace Typical.Core.Statistics;
+
+public record CharacterStats(int Correct, int Incorrect, int Extra, int Corrections);
+
+```
+// File: src\Typical.Core\Statistics\GameStatisticsSnapshot.cs`$langnamespace Typical.Core.Statistics;
+
+public record GameStatisticsSnapshot(
+    double WordsPerMinute,
+    double Accuracy,
+    CharacterStats Chars,
+    TimeSpan ElapsedTime,
+    bool IsRunning
+)
+{
+    public static GameStatisticsSnapshot Empty =>
+        new(0, 100, new CharacterStats(0, 0, 0, 0), TimeSpan.Zero, false);
+}
+
+```
+// File: src\Typical.Core\Statistics\GameStats.cs`$langnamespace Typical.Core.Statistics;
+
+public class GameStats
+{
+    private readonly TimeProvider _timeProvider;
+    private readonly List<KeystrokeLog> _logs = [];
+
+    // Running Totals (State)
+    private int _correctCount;
+    private int _incorrectCount;
+    private int _extraCount;
+    private int _correctionCount;
+    private long? _startTimestamp;
+    private long? _endTimestamp;
+
+    public GameStats(TimeProvider? timeProvider = null)
+    {
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
+    private void UpdateCounts(KeystrokeType type, int change)
+    {
+        switch (type)
+        {
+            case KeystrokeType.Correct:
+                _correctCount += change;
+                break;
+            case KeystrokeType.Incorrect:
+                _incorrectCount += change;
+                break;
+            case KeystrokeType.Extra:
+                _extraCount += change;
+                break;
+            case KeystrokeType.Correction:
+                _correctionCount += change;
+                break;
+        }
+    }
+
+    internal void RecordKey(char c, KeystrokeType type)
+    {
+        if (!IsRunning)
+            Start();
+
+        UpdateCounts(type, 1);
+        _logs.Add(new KeystrokeLog(c, type, _timeProvider.GetTimestamp()));
+    }
+
+    internal void RecordBackspace()
+    {
+        if (_logs.Count == 0)
+            return;
+
+        int indexToRemove = _logs.FindLastIndex(log => log.Type != KeystrokeType.Correction);
+
+        if (indexToRemove != -1)
+        {
+            _logs.RemoveAt(indexToRemove);
+        }
+        _logs.Add(new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp()));
+    }
+
+    internal void Start() => _startTimestamp = _timeProvider.GetTimestamp();
+
+    internal void Stop() => _endTimestamp = _timeProvider.GetTimestamp();
+
+    public GameStatisticsSnapshot CreateSnapshot()
+    {
+        var elapsed = ElapsedTime;
+        double wpm = elapsed.TotalMinutes > 0 ? _correctCount / 5.0 / elapsed.TotalMinutes : 0;
+
+        int totalAttempted = _correctCount + _incorrectCount;
+        double accuracy = totalAttempted > 0 ? _correctCount / (double)totalAttempted * 100 : 100;
+
+        return new GameStatisticsSnapshot(
+            WordsPerMinute: wpm,
+            Accuracy: accuracy,
+            Chars: new CharacterStats(
+                _correctCount,
+                _incorrectCount,
+                _extraCount,
+                _correctionCount
+            ),
+            ElapsedTime: elapsed,
+            IsRunning: this.IsRunning
+        );
+    }
+
+    public TimeSpan ElapsedTime =>
+        _startTimestamp.HasValue
+            ? _timeProvider.GetElapsedTime(
+                _startTimestamp.Value,
+                _endTimestamp ?? _timeProvider.GetTimestamp()
+            )
+            : TimeSpan.Zero;
+
+    public bool IsRunning => _startTimestamp.HasValue && !_endTimestamp.HasValue;
+
+    public IReadOnlyList<KeystrokeLog> GetHistory() => _logs.AsReadOnly();
+}
+
+```
+// File: src\Typical.Core\Statistics\KeystrokeLog.cs`$langnamespace Typical.Core.Statistics;
+
+public record struct KeystrokeLog(char Character, KeystrokeType Type, long Timestamp);
+
+```
+// File: src\Typical.Core\Statistics\KeystrokeType.cs`$langnamespace Typical.Core.Statistics;
+
+public enum KeystrokeType
+{
+    Untyped,
+    Correct,
+    Incorrect,
+    Extra,
+    Correction,
+}
+
+```
+// File: src\Typical.Core\Text\ITextProvider.cs`$langnamespace Typical.Core.Text;
+
+public interface ITextProvider
+{
+    Task<TextSample> GetTextAsync();
+}
+
+```
+// File: src\Typical.Core\Text\StaticTextProvider.cs`$langusing Typical.Core.Text;
+
+namespace Typical;
+
+public class StaticTextProvider(string text) : ITextProvider
+{
+    private readonly string _text = text;
+
+    public async Task<TextSample> GetTextAsync()
+    {
+        var val = new TextSample() { Text = _text, Source = "Static Text Provider" };
+        return await Task.FromResult(val);
+    }
+}
+
+```
+// File: src\Typical.Core\Text\TextSample.cs`$langnamespace Typical.Core.Text;
+
+/// <summary>
+/// Represents a piece of text to be used in a typing game,
+/// including the text itself and relevant metadata.
+/// This is a generic DTO, decoupled from any specific data source.
+/// </summary>
+public record TextSample
+{
+    /// <summary>
+    /// A unique identifier from the original data source, if available.
+    /// This is useful for features like "Play Next Quote".
+    /// </summary>
+    public int? SourceId { get; init; }
+
+    /// <summary>
+    /// The text the user will be typing.
+    /// </summary>
+    public required string Text { get; init; }
+
+    /// <summary>
+    /// The generic "source" of the text (e.g., an author's name, a book title, "Common Words")._
+    /// </summary>
+    public required string Source { get; init; }
+
+    /// <summary>
+    /// The number of words in the text.
+    /// </summary>
+    public int WordCount { get; init; }
+
+    /// <summary>
+    /// The number of characters in the text.
+    /// </summary>
+    public int CharCount { get; init; }
+}
+
+```
+// File: src\Typical.Core\ViewModels\HomeViewModel.cs`$langusing CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using Typical.Core.Interfaces;
+
+namespace Typical.Core.ViewModels;
+
+public sealed partial class HomeViewModel : ObservableObject, IBindableView
+{
+    private readonly INavigationService _navService;
+    private readonly ILogger<HomeViewModel> _logger;
+
+    public HomeViewModel(INavigationService navigationService, ILogger<HomeViewModel> logger)
+    {
+        _navService = navigationService;
+        _logger = logger;
+    }
+
+    [ObservableProperty]
+    private string _welcomeMessage = "Welcome to the Dashboard!";
+
+    [RelayCommand]
+    private void NavigateSettings() => _navService.NavigateTo<SettingsViewModel>();
+
+    public void OnNavigatedTo()
+    {
+        _logger.LogInformation($"Navigated to {nameof(HomeViewModel)}");
+    }
+
+    public void OnNavigatedFrom()
+    {
+        _logger.LogInformation($"Navigated from {nameof(HomeViewModel)}");
+    }
+}
+
+```
+// File: src\Typical.Core\ViewModels\MainViewModel.cs`$langusing CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using Typical.Core.Interfaces;
+
+namespace Typical.Core.ViewModels;
+
+public sealed partial class MainViewModel : ObservableObject
+{
+    private readonly INavigationService _navigationService;
+    private readonly IDialogService _dialogService;
+    private readonly ILogger<MainViewModel> _logger;
+
+    [ObservableProperty]
+    private string _appTitle = "Typical";
+
+    [ObservableProperty]
+    private string _statusText = "Ready";
+
+    public MainViewModel(
+        INavigationService navigationService,
+        IDialogService dialogService,
+        ILogger<MainViewModel> logger
+    )
+    {
+        _navigationService = navigationService;
+        _dialogService = dialogService;
+        _logger = logger;
+    }
+
+    [RelayCommand]
+    private void NavigateToGameView() => _navigationService.NavigateTo<TypingViewModel>();
+
+    [RelayCommand]
+    private void NavigateHome() => _navigationService.NavigateTo<HomeViewModel>();
+
+    [RelayCommand]
+    private void NavigateSettings() => _navigationService.NavigateTo<SettingsViewModel>();
+
+    [RelayCommand]
+    private void ShowAbout()
+    {
+        _dialogService.ShowError("About", "Typical: A Terminal.Gui v2 MVVM Demo");
+    }
+}
+
+```
+// File: src\Typical.Core\ViewModels\SettingsViewModel.cs`$langusing CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
+using Typical.Core.Interfaces;
+
+namespace Typical.Core.ViewModels;
+
+public sealed partial class SettingsViewModel : ObservableObject, IBindableView
+{
+    private readonly IDialogService _dialogService;
+    private readonly INavigationService _navService;
+    private readonly ILogger<SettingsViewModel> _logger;
+
+    [ObservableProperty]
+    private string _username = "Guest";
+
+    [ObservableProperty]
+    private bool _enableLogging = true;
+
+    [ObservableProperty]
+    private string _theme = "Base";
+
+    public SettingsViewModel(
+        IDialogService dialogService,
+        INavigationService navService,
+        ILogger<SettingsViewModel> logger
+    )
+    {
+        _dialogService = dialogService;
+        _navService = navService;
+        _logger = logger;
+    }
+
+    [RelayCommand]
+    private void Save()
+    {
+        if (_dialogService.Confirm("Save?", "Save settings?"))
+        {
+            _logger.LogInformation("Settings saved");
+            _navService.NavigateTo<HomeViewModel>();
+        }
+        else
+        {
+            _logger.LogInformation("Not saved");
+        }
+    }
+
+    [RelayCommand]
+    private void Cancel() => _navService.NavigateTo<HomeViewModel>();
+
+    public void OnNavigatedTo()
+    {
+        _logger.LogInformation($"Navigated to {nameof(SettingsViewModel)}");
+    }
+
+    public void OnNavigatedFrom()
+    {
+        _logger.LogInformation($"Navigated from {nameof(SettingsViewModel)}");
+    }
+}
+
+```
+// File: src\Typical.Core\ViewModels\TypingViewModel.cs`$langusing CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Logging;
+using Typical.Core.Interfaces;
+using Typical.Core.Statistics;
+
+namespace Typical.Core.ViewModels;
+
+public partial class TypingViewModel : ObservableObject, IBindableView
+{
+    private readonly GameEngine _engine;
+    private readonly ILogger<TypingViewModel> _logger;
+
+    [ObservableProperty]
+    private string _targetText = "";
+
+    [ObservableProperty]
+    private string _typedText = "";
+
+    [ObservableProperty]
+    private bool _isGameOver;
+
+    [ObservableProperty]
+    private double _wpm;
+
+    [ObservableProperty]
+    private double _accuracy;
+
+    [ObservableProperty]
+    private string _timeElapsed = "00:00";
+
+    public TypingViewModel(GameEngine engine, ILogger<TypingViewModel> logger)
+    {
+        _engine = engine;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Processes input received from the View.
+    /// Maps Key events to Core Game Logic.
+    /// </summary>
+    public async Task ProcessInput(char c, bool isBackspace)
+    {
+        if (IsGameOver)
+            return;
+        if (!_engine.IsRunning && _engine.IsInitialized)
+        {
+            _engine.StartNewGame();
+            TargetText = _engine.TargetText;
+        }
+        // Pass to engine
+        bool handled = _engine.ProcessKeyPress(c, isBackspace);
+
+        if (handled)
+        {
+            UpdateState();
+        }
+    }
+
+    /// <summary>
+    /// Synchronizes the Engine state with ViewModel properties.
+    /// This triggers PropertyChanged notifications for the View.
+    /// </summary>
+    private void UpdateState()
+    {
+        TypedText = _engine.UserInput;
+        IsGameOver = _engine.IsOver;
+
+        var snapshot = _engine.Stats.CreateSnapshot();
+        Accuracy = snapshot.Accuracy;
+        Wpm = snapshot.WordsPerMinute;
+        TimeElapsed = snapshot.ElapsedTime.ToString(@"mm\:ss");
+    }
+
+    public KeystrokeType GetStatus(int index)
+    {
+        var state = _engine.Stats.CreateSnapshot();
+        return index >= TypedText.Length ? KeystrokeType.Untyped
+            : TypedText[index] == TargetText[index] ? KeystrokeType.Correct
+            : KeystrokeType.Incorrect;
+    }
+
+    public void OnNavigatedTo()
+    {
+        _logger.LogInformation($"Navigated to {nameof(TypingViewModel)}");
+    }
+
+    public void OnNavigatedFrom()
+    {
+        _logger.LogInformation($"Navigated from {nameof(TypingViewModel)}");
+    }
+
+    public async Task InitializeAsync()
+    {
+        await _engine.InitializeAsync();
+        TargetText = _engine.TargetText;
+    }
+}
+
+```
+// File: src\Typical.Core\GameEngine.cs`$langusing System.Text;
+using Microsoft.Extensions.Logging;
+using Typical.Core.Events;
+using Typical.Core.Logging;
+using Typical.Core.Statistics;
+using Typical.Core.Text;
+
+namespace Typical.Core;
+
+public class GameEngine
+{
+    private readonly StringBuilder _userInput = new();
+    private readonly ITextProvider _textProvider;
+    private readonly GameOptions _gameOptions;
+    public GameStats Stats { get; }
+
+    // TODO: Add HeatmapCollector
+    private readonly ILogger<GameEngine> _logger;
+
+    public GameEngine(
+        ITextProvider textProvider,
+        GameOptions gameOptions,
+        ILogger<GameEngine> logger
+    )
+    {
+        _textProvider = textProvider ?? throw new ArgumentNullException(nameof(textProvider));
+        _gameOptions = gameOptions;
+        _gameOptions.ForbidIncorrectEntries = true;
+        Stats = new GameStats();
+        _logger = logger;
+    }
+
+    public string TargetText { get; private set; } = string.Empty;
+    public string UserInput => _userInput.ToString();
+    public bool IsOver { get; private set; }
+    public bool IsInitialized { get; private set; }
+
+    public bool IsRunning => !IsOver && Stats.IsRunning;
+    public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
+
+    public bool ProcessKeyPress(char c, bool isBackspace)
+    {
+        if (isBackspace)
+        {
+            if (_userInput.Length > 0)
+            {
+                _userInput.Remove(_userInput.Length - 1, 1);
+                Stats.RecordBackspace();
+            }
+            return true;
+        }
+
+        var type = DetermineKeystrokeType(c);
+        Stats.RecordKey(c, type);
+
+        bool isCorrect = type == KeystrokeType.Correct;
+        if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
+        {
+            _userInput.Append(c);
+        }
+
+        CheckEndCondition();
+        return true;
+    }
+
+    private KeystrokeType DetermineKeystrokeType(char inputChar)
+    {
+        int currentPos = _userInput.Length;
+        if (currentPos >= TargetText.Length)
+            return KeystrokeType.Extra;
+        if (inputChar == TargetText[currentPos])
+            return KeystrokeType.Correct;
+        return KeystrokeType.Incorrect;
+    }
+
+    private void CheckEndCondition()
+    {
+        if (_userInput.ToString() == TargetText)
+        {
+            IsOver = true;
+            IsInitialized = false;
+            Stats.Stop();
+            CoreLogs.GameFinished(_logger);
+        }
+    }
+
+    public void StartNewGame()
+    {
+        if (IsInitialized)
+        {
+            CoreLogs.GameStarting(_logger);
+            Stats.Start();
+            PublishStateUpdate();
+        }
+        else
+        {
+            throw new Exception();
+        }
+    }
+
+    private void PublishStateUpdate()
+    {
+        CoreLogs.PublishingState(_logger);
+        var snapShot = Stats.CreateSnapshot();
+        var stateEvent = new GameStateUpdatedEvent(TargetText, UserInput, snapShot, IsOver);
+    }
+
+    internal async Task InitializeAsync()
+    {
+        var text = await _textProvider.GetTextAsync();
+        TargetText = text.Text;
+        _userInput.Clear();
+        IsOver = false;
+        IsInitialized = true;
+    }
+}
+
+```
+// File: src\Typical.Core\GameOptions.cs`$langnamespace Typical.Core;
+
+public record GameOptions
+{
+    public static GameOptions Default { get; set; } = new();
+    public bool ForbidIncorrectEntries { get; set; } = false;
+    public int TargetFrameRate { get; set; } = 60;
+}
+
+```
+// File: src\Typical.DataAccess\LiteDb\DbContext.cs`$langusing LiteDB;
+using Typical.Core.Data;
+
+namespace Typical.DataAccess.LiteDB;
+
+public class DbContext
+{
+    private readonly string connectionString;
+
+    public DbContext(string connectionString)
+    {
+        this.connectionString = connectionString;
+    }
+
+    public IEnumerable<Quote> GetQuotes()
+    {
+        using var db = new LiteRepository(connectionString);
+
+        return db.Query<Quote>().ToList();
+    }
+
+    public void InsertQuotes(IEnumerable<Quote> quotes)
+    {
+        using var db = new LiteRepository(connectionString);
+
+        db.Insert(quotes);
+    }
+}
+
+```
+// File: src\Typical.DataAccess\LiteDb\LiteDbOptions.cs`$lang// namespace Typical.DataAccess.LiteDB;
+
+// public static class LiteDbOptions
+// {
+//     static LiteDbOptions()
+//     {
+//         var filePath = Path.Combine(BaseDirectories.DataDir, "typetype.db");
+
+//         ConnectionString = $"Filename={filePath}";
+//     }
+
+//     public static string ConnectionString { get; }
+// }
+
+```
+// File: src\Typical.DataAccess\LiteDb\LiteDbQuoteRepository.cs`$langusing LiteDB;
+using Typical.Core.Data;
+
+namespace Typical.DataAccess;
+
+public class LiteDbQuoteRepository : IQuoteRepository
+{
+    private readonly string _connectionString;
+
+    // The repository takes the connection string as its dependency.
+    public LiteDbQuoteRepository(string connectionString)
+    {
+        _connectionString = connectionString;
+    }
+
+    /// <summary>
+    /// Adds a collection of quotes to the database.
+    /// </summary>
+    public Task AddQuotesAsync(IEnumerable<Quote> quotes)
+    {
+        // LiteRepository manages the connection for us.
+        using var db = new LiteRepository(_connectionString);
+        db.Insert(quotes);
+
+        // LiteRepository methods are synchronous, so we wrap the call in a completed task.
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Fetches the next quote by ID, wrapping around if at the end.
+    /// </summary>
+    public async Task<Quote?> GetNextQuoteAsync(int currentId)
+    {
+        using var db = new LiteRepository(_connectionString);
+
+        // Find the first quote with an ID greater than the current one.
+        var nextQuote = db.Query<Quote>()
+            .OrderBy(q => q.Id)
+            .Where(q => q.Id > currentId)
+            .Limit(1)
+            .FirstOrDefault();
+
+        if (nextQuote is null)
+        {
+            // If we didn't find one, wrap around and get the very first quote.
+            nextQuote = db.Query<Quote>().OrderBy(q => q.Id).Limit(1).FirstOrDefault();
+        }
+
+        return await Task.FromResult(nextQuote);
+    }
+
+    /// <summary>
+    /// Fetches a random quote from the collection.
+    /// </summary>
+    public async Task<Quote?> GetRandomQuoteAsync()
+    {
+        using var db = new LiteRepository(_connectionString);
+
+        var collection = db.Database.GetCollection<Quote>();
+        var count = collection.Count();
+
+        if (count == 0)
+        {
+            return await Task.FromResult<Quote?>(null);
+        }
+
+        var randomIndex = Random.Shared.Next(0, count);
+        var randomQuote = db.Query<Quote>().Skip(randomIndex).Limit(1).FirstOrDefault();
+
+        return await Task.FromResult(randomQuote);
+    }
+
+    /// <summary>
+    /// Checks if there is any data in the quotes collection.
+    /// </summary>
+    public async Task<bool> HasAnyAsync()
+    {
+        using var db = new LiteRepository(_connectionString);
+        var hasAny = db.Query<Quote>().Exists();
+        return await Task.FromResult(hasAny);
+    }
+}
+
+```
+// File: src\Typical.DataAccess\LiteDb\ServiceExtensions.cs`$langusing Microsoft.Extensions.DependencyInjection;
+
+namespace Typical.DataAccess.LiteDB;
+
+public static class ServiceExtensions
+{
+    public static IServiceCollection AddTypeTypeDb(
+        this IServiceCollection services,
+        string connectionString
+    )
+    {
+        services.AddSingleton(sp => new DbContext(connectionString));
+        return services;
+    }
+}
+
+```
+// File: src\Typical.DataAccess\Constants.cs`$langnamespace Typical.DataAccess;
+
+public static class LiteDbConstants
+{
+    static LiteDbConstants()
+    {
+        string? dataDir = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
+
+        if (dataDir is null)
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                dataDir = Environment.GetEnvironmentVariable("LOCALAPPDATA")!;
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                dataDir = Path.Combine(
+                    Environment.GetEnvironmentVariable("HOME")!,
+                    ".local",
+                    "share"
+                );
+            }
+            else if (OperatingSystem.IsMacOS())
+            {
+                dataDir = Path.Combine(
+                    Environment.GetEnvironmentVariable("HOME")!,
+                    "Library",
+                    "Application Support"
+                );
+            }
+        }
+        DataDirectory = Path.Combine(dataDir!, "typical");
+    }
+
+    public static string DataDirectory { get; }
+    public static string DbFile => Path.Combine(DataDirectory, "typical.db");
+    public static string ConnectionString => $"Filename={DbFile}";
+}
+
+```
+// File: src\Typical.Tests\Core\GameStatsTests.cs`$lang// using System;
+// using Microsoft.Extensions.Logging.Abstractions;
+// using Microsoft.Extensions.Time.Testing;
+// using TUnit;
+// using Typical.Core.Events;
+// using Typical.Core.Statistics;
+
+// namespace Typical.Tests
+// {
+//     public class GameStatsTests
+//     {
+//         [Test]
+//         public async Task InitialState_ShouldBeDefaults()
+//         {
+//             var eventAggregator = new EventAggregator();
+//             var stats = new GameStats(eventAggregator, null, NullLogger<GameStats>.Instance);
+
+//             await Assert.That(stats.WordsPerMinute).IsEqualTo(0);
+//             await Assert.That(stats.Accuracy).IsEqualTo(100);
+//             await Assert.That(stats.IsRunning).IsFalse();
+//         }
+
+//         [Test]
+//         public async Task Start_ShouldSetIsRunningTrue()
+//         {
+//             var fakeTime = new FakeTimeProvider();
+//             var eventAggregator = new EventAggregator();
+//             var stats = new GameStats(eventAggregator, fakeTime, NullLogger<GameStats>.Instance);
+
+//             stats.Start();
+
+//             await Assert.That(stats.IsRunning).IsTrue();
+//         }
+
+//         [Test]
+//         public async Task Stop_ShouldSetIsRunningFalse()
+//         {
+//             var fakeTime = new FakeTimeProvider();
+//             var eventAggregator = new EventAggregator();
+//             var stats = new GameStats(eventAggregator, fakeTime, NullLogger<GameStats>.Instance);
+
+//             stats.Start();
+//             fakeTime.Advance(TimeSpan.FromSeconds(1));
+//             stats.Stop();
+
+//             await Assert.That(stats.IsRunning).IsFalse();
+//         }
+
+//         [Test]
+//         public async Task Update_ShouldCalculateAccuracy()
+//         {
+//             var fakeTime = new FakeTimeProvider();
+//             var eventAggregator = new EventAggregator();
+//             var stats = new GameStats(eventAggregator, fakeTime, NullLogger<GameStats>.Instance);
+
+//             stats.Start();
+//             fakeTime.Advance(TimeSpan.FromSeconds(1));
+//             string target = "hello";
+//             string input = "hxllo"; // 1 incorrect out of 5
+
+//             foreach (var (c, i) in target.Zip(input))
+//             {
+//                 var type = c == i ? KeystrokeType.Correct : KeystrokeType.Incorrect;
+//                 eventAggregator.Publish(new KeyPressedEvent(i, type, 0));
+//             }
+//             await Assert.That(stats.Accuracy).IsEqualTo(80);
+//         }
+
+//         [Test]
+//         public async Task Update_ShouldCalculateWordsPerMinute()
+//         {
+//             var fakeTime = new FakeTimeProvider();
+//             var eventAggregator = new EventAggregator();
+//             var stats = new GameStats(eventAggregator, fakeTime, NullLogger<GameStats>.Instance);
+
+//             stats.Start();
+//             fakeTime.Advance(TimeSpan.FromSeconds(1));
+//             string target = "hello world";
+//             string input = "hello";
+
+//             foreach (var (c, i) in target.Zip(input))
+//             {
+//                 var type = c == i ? KeystrokeType.Correct : KeystrokeType.Incorrect;
+//                 eventAggregator.Publish(new KeyPressedEvent(i, type, 0));
+//             }
+
+//             await Assert.That(stats.WordsPerMinute).IsEqualTo(60);
+//         }
+//     }
+// }
+
+```
+// File: src\Typical.Tests\GameEngineTests.cs`$lang// using Microsoft.Extensions.Logging;
+// using Microsoft.Extensions.Logging.Abstractions;
+// using Typical.Core;
+// using Typical.Core.Events;
+// using Typical.Core.Statistics;
+
+// namespace Typical.Tests;
+
+// public class TypicalGameTests
+// {
+//     private readonly MockTextProvider _mockTextProvider;
+//     private readonly GameOptions _defaultOptions;
+//     private readonly GameOptions _strictOptions;
+//     private readonly ILogger<GameEngine> _logger;
+//     private readonly IEventAggregator _eventAggregator;
+//     private readonly GameStats _stats;
+
+//     public TypicalGameTests()
+//     {
+//         // This runs before each test, ensuring a clean state.
+//         _mockTextProvider = new MockTextProvider();
+//         _defaultOptions = new GameOptions();
+//         _strictOptions = new GameOptions { ForbidIncorrectEntries = true };
+//         _logger = NullLogger<GameEngine>.Instance;
+//         _eventAggregator = new EventAggregator();
+//         _stats = new GameStats(_eventAggregator, null, NullLogger<GameStats>.Instance);
+//     }
+
+//     // --- StartNewGame Tests ---
+
+//     [Test]
+//     public async Task StartNewGame_Always_LoadsTextFromProvider()
+//     {
+//         // Arrange
+//         var expectedText = "This is a test.";
+//         _mockTextProvider.SetText(expectedText);
+//         var game = new GameEngine(
+//             _mockTextProvider,
+//             _eventAggregator,
+//             _defaultOptions,
+//             _stats,
+//             _logger
+//         );
+
+//         // Act
+//         await game.StartNewGame();
+
+//         // Assert
+//         await Assert.That(game.TargetText).IsEqualTo(expectedText);
+//     }
+
+//     [Test]
+//     public async Task StartNewGame_WhenGameWasAlreadyInProgress_ResetsState()
+//     {
+//         // Arrange
+//         _mockTextProvider.SetText("some text");
+//         var game = new GameEngine(
+//             _mockTextProvider,
+//             _eventAggregator,
+//             _defaultOptions,
+//             _stats,
+//             _logger
+//         );
+//         await game.StartNewGame();
+
+//         // Simulate playing the game
+//         game.ProcessKeyPress(new ConsoleKeyInfo('a', ConsoleKey.A, false, false, false));
+//         game.ProcessKeyPress(
+//             new ConsoleKeyInfo((char)ConsoleKey.Escape, ConsoleKey.Escape, false, false, false)
+//         );
+//         await Assert.That(game.IsOver).IsTrue();
+//         await Assert.That(game.UserInput).IsNotEmpty();
+
+//         // Act
+//         _mockTextProvider.SetText("new text");
+//         await game.StartNewGame();
+
+//         // Assert
+//         await Assert.That(game.IsOver).IsFalse();
+//         await Assert.That(game.UserInput).IsEmpty();
+//         await Assert.That(game.TargetText).IsEqualTo("new text");
+//     }
+
+//     // --- ProcessKeyPress Tests ---
+
+//     [Test]
+//     public async Task ProcessKeyPress_EscapeKey_EndsGameAndReturnsFalse()
+//     {
+//         // Arrange
+//         var game = new GameEngine(
+//             _mockTextProvider,
+//             _eventAggregator,
+//             _defaultOptions,
+//             _stats,
+//             _logger
+//         );
+
+//         // Act
+//         var result = game.ProcessKeyPress(
+//             new ConsoleKeyInfo((char)ConsoleKey.Escape, ConsoleKey.Escape, false, false, false)
+//         );
+
+//         // Assert
+//         await Assert.That(result).IsFalse();
+//         await Assert.That(game.IsOver).IsTrue();
+//     }
+
+//     [Test]
+//     public async Task ProcessKeyPress_BackspaceKey_RemovesLastCharacter()
+//     {
+//         // Arrange
+//         var game = new GameEngine(
+//             _mockTextProvider,
+//             _eventAggregator,
+//             _defaultOptions,
+//             _stats,
+//             _logger
+//         );
+//         game.ProcessKeyPress(new ConsoleKeyInfo('a', ConsoleKey.A, false, false, false));
+//         game.ProcessKeyPress(new ConsoleKeyInfo('b', ConsoleKey.B, false, false, false));
+//         await Assert.That(game.UserInput).IsEqualTo("ab");
+
+//         // Act
+//         game.ProcessKeyPress(
+//             new ConsoleKeyInfo(
+//                 (char)ConsoleKey.Backspace,
+//                 ConsoleKey.Backspace,
+//                 false,
+//                 false,
+//                 false
+//             )
+//         );
+
+//         // Assert
+//         await Assert.That(game.UserInput).IsEqualTo("a");
+//     }
+
+//     [Test]
+//     public async Task ProcessKeyPress_BackspaceOnEmptyInput_DoesNothing()
+//     {
+//         // Arrange
+//         var game = new GameEngine(
+//             _mockTextProvider,
+//             _eventAggregator,
+//             _defaultOptions,
+//             _stats,
+//             _logger
+//         );
+//         await Assert.That(game.UserInput).IsEmpty();
+
+//         // Act
+//         game.ProcessKeyPress(
+//             new ConsoleKeyInfo(
+//                 (char)ConsoleKey.Backspace,
+//                 ConsoleKey.Backspace,
+//                 false,
+//                 false,
+//                 false
+//             )
+//         );
+
+//         // Assert
+//         await Assert.That(game.UserInput).IsEmpty();
+//     }
+
+//     [Test]
+//     public async Task ProcessKeyPress_WhenGameIsCompleted_SetsIsOverToTrue()
+//     {
+//         // Arrange
+//         _mockTextProvider.SetText("hi");
+//         var game = new GameEngine(
+//             _mockTextProvider,
+//             _eventAggregator,
+//             _defaultOptions,
+//             _stats,
+//             _logger
+//         );
+//         await game.StartNewGame();
+
+//         // Act
+//         game.ProcessKeyPress(new ConsoleKeyInfo('h', ConsoleKey.H, false, false, false));
+//         game.ProcessKeyPress(new ConsoleKeyInfo('i', ConsoleKey.I, false, false, false));
+
+//         // Assert
+//         await Assert.That(game.UserInput).IsEqualTo("hi");
+//         await Assert.That(game.IsOver).IsTrue();
+//     }
+
+//     // --- GameOptions: ForbidIncorrectEntries Tests ---
+
+//     [Test]
+//     public async Task ProcessKeyPress_InStrictModeAndCorrectKey_AppendsCharacter()
+//     {
+//         // Arrange
+//         _mockTextProvider.SetText("abc");
+//         var game = new GameEngine(
+//             _mockTextProvider,
+//             _eventAggregator,
+//             _strictOptions,
+//             _stats,
+//             _logger
+//         );
+//         await game.StartNewGame();
+
+//         // Act
+//         game.ProcessKeyPress(new ConsoleKeyInfo('a', ConsoleKey.A, false, false, false));
+
+//         // Assert
+//         await Assert.That(game.UserInput).IsEqualTo("a");
+//     }
+
+//     [Test]
+//     public async Task ProcessKeyPress_InStrictModeAndIncorrectKey_DoesNotAppendCharacter()
+//     {
+//         // Arrange
+//         _mockTextProvider.SetText("abc");
+//         var game = new GameEngine(
+//             _mockTextProvider,
+//             _eventAggregator,
+//             _strictOptions,
+//             _stats,
+//             _logger
+//         );
+//         await game.StartNewGame();
+//         await Assert.That(game.UserInput).IsEmpty();
+
+//         // Act
+//         game.ProcessKeyPress(new ConsoleKeyInfo('x', ConsoleKey.X, false, false, false));
+
+//         // Assert
+//         await Assert.That(game.UserInput).IsEmpty();
+//     }
+
+//     [Test]
+//     public async Task ProcessKeyPress_InDefaultModeAndIncorrectKey_AppendsCharacter()
+//     {
+//         // Arrange
+//         _mockTextProvider.SetText("abc");
+//         var game = new GameEngine(
+//             _mockTextProvider,
+//             _eventAggregator,
+//             _defaultOptions,
+//             _stats,
+//             _logger
+//         );
+//         await game.StartNewGame();
+//         await Assert.That(game.UserInput).IsEmpty();
+
+//         // Act
+//         game.ProcessKeyPress(new ConsoleKeyInfo('x', ConsoleKey.X, false, false, false));
+
+//         // Assert
+//         await Assert.That(game.UserInput).IsEqualTo("x");
+//     }
+// }
+
+```
+// File: src\Typical.Tests\MockTextProvider.cs`$langusing Typical.Core.Text;
+
+namespace Typical.Tests;
+
+public class MockTextProvider : ITextProvider
+{
+    private string _textToReturn = string.Empty;
+
+    public void SetText(string text)
+    {
+        _textToReturn = text;
+    }
+
+    public Task<TextSample> GetTextAsync()
+    {
+        // Task.FromResult is the perfect way to simulate an
+        // async operation that completes immediately.
+        return Task.FromResult(new TextSample() { Source = "Tests", Text = _textToReturn });
+    }
+}
+
+```

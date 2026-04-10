@@ -14,7 +14,6 @@ public class QuoteRepositoryTextProvider : ITextProvider
         CharCount = 43,
     };
 
-    // It depends on the INTERFACE, not the concrete LiteDB implementation.
     public QuoteRepositoryTextProvider(IQuoteRepository quoteRepository)
     {
         _quoteRepository = quoteRepository;

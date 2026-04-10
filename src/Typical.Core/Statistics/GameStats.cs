@@ -1,137 +1,116 @@
-using Microsoft.Extensions.Logging;
-using Typical.Core.Events;
-using Typical.Core.Logging;
+using System.Diagnostics;
 
 namespace Typical.Core.Statistics;
 
 public class GameStats
 {
-    private readonly IEventAggregator _eventAggregator;
     private readonly TimeProvider _timeProvider;
-    private readonly ILogger<GameStats> _logger;
-    private readonly KeystrokeHistory _keystrokeHistory = [];
+    private readonly List<KeystrokeLog> _logs = [];
+
+    // Running Totals (State)
+    private int _correctCount;
+    private int _incorrectCount;
+    private int _extraCount;
+    private int _correctionCount;
     private long? _startTimestamp;
     private long? _endTimestamp;
-    private bool _statsAreDirty = true;
-    private double _cachedWpm;
-    private double _cachedAccuracy;
-    private CharacterStats _cachedChars = new(0, 0, 0, 0);
 
-    public GameStats(
-        IEventAggregator eventAggregator,
-        TimeProvider? timeProvider,
-        ILogger<GameStats> logger
-    )
+    public GameStats(TimeProvider? timeProvider = null)
     {
-        _eventAggregator = eventAggregator;
         _timeProvider = timeProvider ?? TimeProvider.System;
-        _logger = logger;
-        _eventAggregator.Subscribe<KeyPressedEvent>(OnKeyPressed);
-        _eventAggregator.Subscribe<BackspacePressedEvent>(OnBackspacePressed);
     }
 
-    private void OnBackspacePressed(BackspacePressedEvent @event)
+    private void UpdateCounts(KeystrokeType type, int change)
     {
-        if (!IsRunning)
-            return;
-
-        CoreLogs.StatsBackspaceLogged(_logger);
-        _keystrokeHistory.RemoveLastCharacterLog();
-        _keystrokeHistory.Add(
-            new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp())
-        );
-        _statsAreDirty = true;
+        switch (type)
+        {
+            case KeystrokeType.Correct:
+                _correctCount += change;
+                break;
+            case KeystrokeType.Incorrect:
+                _incorrectCount += change;
+                break;
+            case KeystrokeType.Extra:
+                _extraCount += change;
+                break;
+            case KeystrokeType.Correction:
+                _correctionCount += change;
+                break;
+        }
     }
 
-    private void OnKeyPressed(KeyPressedEvent @event)
+    internal void RecordKey(char c, KeystrokeType type)
     {
         if (!IsRunning)
             Start();
 
-        CoreLogs.StatsKeyLogged(_logger, @event.Character, @event.Type);
-        _keystrokeHistory.Add(
-            new KeystrokeLog(@event.Character, @event.Type, _timeProvider.GetTimestamp())
+        UpdateCounts(type, 1);
+        _logs.AddAndDebug(new KeystrokeLog(c, type, _timeProvider.GetTimestamp()));
+    }
+
+    internal void RecordBackspace()
+    {
+        if (_logs.Count == 0)
+            return;
+
+        int indexToRemove = _logs.FindLastIndex(log => log.Type != KeystrokeType.Correction);
+
+        if (indexToRemove != -1)
+        {
+            _logs.RemoveAt(indexToRemove);
+        }
+        _logs.AddAndDebug(
+            new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp())
         );
-        _statsAreDirty = true;
     }
 
-    public double WordsPerMinute
-    {
-        get
-        {
-            if (_statsAreDirty)
-                RecalculateAllStats();
-            return _cachedWpm;
-        }
-    }
-    public double Accuracy
-    {
-        get
-        {
-            if (_statsAreDirty)
-                RecalculateAllStats();
-            return _cachedAccuracy;
-        }
-    }
-    public CharacterStats Chars
-    {
-        get
-        {
-            if (_statsAreDirty)
-                RecalculateAllStats();
-            return _cachedChars;
-        }
-    }
-    public bool IsRunning => _startTimestamp.HasValue && !_endTimestamp.HasValue;
-    public TimeSpan ElapsedTime =>
-        _timeProvider.GetElapsedTime(_startTimestamp ?? 0, _timeProvider.GetTimestamp());
+    internal void Start() => _startTimestamp = _timeProvider.GetTimestamp();
 
-    public void Start()
-    {
-        Reset();
-        _startTimestamp = _timeProvider.GetTimestamp();
-        CoreLogs.StatsStarted(_logger);
-    }
-
-    public void Reset()
-    {
-        _startTimestamp = null;
-        _endTimestamp = null;
-        _keystrokeHistory.Clear();
-        _cachedWpm = 0;
-        _cachedAccuracy = 100;
-        _cachedChars = new CharacterStats(0, 0, 0, 0);
-        CoreLogs.StatsReset(_logger);
-    }
-
-    public void Stop()
-    {
-        if (IsRunning)
-        {
-            _endTimestamp = _timeProvider.GetTimestamp();
-            CoreLogs.StatsStopped(_logger, ElapsedTime.TotalMilliseconds);
-        }
-    }
+    internal void Stop() => _endTimestamp = _timeProvider.GetTimestamp();
 
     public GameStatisticsSnapshot CreateSnapshot()
     {
-        if (_statsAreDirty)
-            RecalculateAllStats();
+        var elapsed = ElapsedTime;
+        double wpm = elapsed.TotalMinutes > 0 ? _correctCount / 5.0 / elapsed.TotalMinutes : 0;
+
+        int totalAttempted = _correctCount + _incorrectCount;
+        double accuracy = totalAttempted > 0 ? _correctCount / (double)totalAttempted * 100 : 100;
+
         return new GameStatisticsSnapshot(
-            WordsPerMinute: _cachedWpm,
-            Accuracy: _cachedAccuracy,
-            Chars: _cachedChars,
-            ElapsedTime: this.ElapsedTime,
+            WordsPerMinute: wpm,
+            Accuracy: accuracy,
+            Chars: new CharacterStats(
+                _correctCount,
+                _incorrectCount,
+                _extraCount,
+                _correctionCount
+            ),
+            ElapsedTime: elapsed,
             IsRunning: this.IsRunning
         );
     }
 
-    private void RecalculateAllStats()
+    public TimeSpan ElapsedTime =>
+        _startTimestamp.HasValue
+            ? _timeProvider.GetElapsedTime(
+                _startTimestamp.Value,
+                _endTimestamp ?? _timeProvider.GetTimestamp()
+            )
+            : TimeSpan.Zero;
+
+    public bool IsRunning => _startTimestamp.HasValue && !_endTimestamp.HasValue;
+
+    public IReadOnlyList<KeystrokeLog> GetHistory() => _logs.AsReadOnly();
+}
+
+public static class ListExtensions
+{
+    extension(List<KeystrokeLog> logs)
     {
-        CoreLogs.RecalculatingStats(_logger);
-        _cachedWpm = _keystrokeHistory.CalculateWpm(ElapsedTime);
-        _cachedAccuracy = _keystrokeHistory.CalculateAccuracy();
-        _cachedChars = _keystrokeHistory.GetCharacterStats();
-        _statsAreDirty = false;
+        public void AddAndDebug(KeystrokeLog log)
+        {
+            logs.Add(log);
+            Debug.WriteLine(log);
+        }
     }
 }

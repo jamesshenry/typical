@@ -1,0 +1,24 @@
+{
+  "$schema": "./loom.schema.json",
+  "workspace": {
+    "solution": "Typical.slnx",
+    "artifactsPath": ".artifacts",
+    "cleanDirectories": [],
+    "enableNugetUpload": false,
+    "enableGithubRelease": false,
+    "enableVelopackRelease": false
+  },
+  "artifacts": {
+    "Typical": {
+      "project": "src\\Typical\\Typical.csproj",
+      "type": "Executable"
+    }
+  },
+  "global": {
+    "target": "Build"
+  },
+  "nuget": {
+    "apiKey": ""
+  },
+  "githubAccessToken": ""
+}

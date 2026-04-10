@@ -1,0 +1,1 @@
+tui-app-settings port=8090 enabled=#true api-url="https://jsonplaceholder.typicode.com/"
