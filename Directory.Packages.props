@@ -4,8 +4,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.4.2" />
-    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageVersion Include="DotNetPathUtils" Version="0.3.1" />
     <PackageVersion Include="Kuddle.Net" Version="0.8.0" />
     <PackageVersion Include="Kuddle.Net.Extensions.Configuration" Version="0.8.0" />
