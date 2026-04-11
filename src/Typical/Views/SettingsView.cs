@@ -53,7 +53,6 @@ public class SettingsView : BindableView<SettingsViewModel>
 
         BindingContext.AddBinding(
             ViewModel.BindChecked(
-                nameof(ViewModel.EnableLogging),
                 _chkLog,
                 () => ViewModel.EnableLogging,
                 value => ViewModel.EnableLogging = value

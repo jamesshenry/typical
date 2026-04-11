@@ -50,7 +50,6 @@ public class MainShell : Window, IRecipient<NavigationChangedMessage>
 
         _bindingContext.AddBinding(
             _viewModel.Bind(
-                nameof(_viewModel.CurrentPage),
                 () => _viewModel.CurrentPage,
                 _ => UpdateContent(_viewModel.CurrentPage)
             )

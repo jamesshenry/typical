@@ -22,7 +22,6 @@ public class StatsView : BindableView<StatsViewModel>
     protected override void SetupBindings()
     {
         Bind(
-            nameof(ViewModel.Stats),
             () => ViewModel.Stats,
             stats =>
             {

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Terminal.Gui.ViewBase;
 using Typical.Binding;
@@ -77,8 +78,12 @@ public abstract class BindableView<TViewModel> : View, IBindableView
         base.Dispose(disposing);
     }
 
-    protected void Bind<T>(string propertyName, Func<T> getter, Action<T> updateUi)
+    protected void Bind<T>(
+        Func<T> getter,
+        Action<T> updateUi,
+        [CallerArgumentExpression(nameof(getter))] string? expression = null
+    )
     {
-        BindingContext.AddBinding(ViewModel.Bind(propertyName, getter, updateUi));
+        BindingContext.AddBinding(ViewModel.Bind(getter, updateUi, expression));
     }
 }
