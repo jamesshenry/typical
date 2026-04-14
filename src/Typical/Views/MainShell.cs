@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,8 @@ public class MainShell : Window
     private readonly FrameView _headerFrame;
     private readonly View _contentFrame;
     private readonly FrameView _footerFrame;
+    private readonly View _leftSpacer;
+    private readonly View _rightSpacer;
 
     // private readonly Label _statusLabel;
     private readonly BindingContext _bindingContext;
@@ -27,45 +30,58 @@ public class MainShell : Window
         _viewModel = viewModel;
         _serviceProvider = sp;
         _bindingContext = new BindingContext();
-        BorderStyle = LineStyle.RoundedDashed;
+        BorderStyle = LineStyle.None;
         Title = _viewModel.AppTitle;
 
-        // _statusLabel = new Label { Y = Pos.AnchorEnd(1), Width = Dim.Fill() };
-        var statsView = _serviceProvider.GetRequiredService<StatsView>();
-        statsView.Y = Pos.AnchorEnd(3);
-        statsView.X = Pos.Left(this);
-        statsView.Width = Dim.Fill();
-        statsView.Height = Dim.Fill();
+        _leftSpacer = new View
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Percent(15),
+            Height = Dim.Fill(),
+            CanFocus = false,
+        };
+
+        _rightSpacer = new View
+        {
+            X = Pos.AnchorEnd(),
+            Y = 0,
+            Width = Dim.Percent(15),
+            Height = Dim.Fill(),
+            CanFocus = false,
+        };
+
         _headerFrame = new FrameView
         {
             Title = "Typical Header",
-            X = 0,
+            X = Pos.Right(_leftSpacer),
             Y = 0,
-            Width = Dim.Fill(),
+            Width = Dim.Fill() - Dim.Width(_rightSpacer),
             Height = Dim.Auto(DimAutoStyle.Text, minimumContentDim: 1),
             BorderStyle = LineStyle.Rounded,
-        };
-        _contentFrame = new FrameView
-        {
-            Title = "Content Frame",
-            X = Pos.Center(),
-            Y = Pos.Bottom(_headerFrame),
-            Width = Dim.Fill(),
-            Height = Dim.Fill() - Dim.Height(_footerFrame),
-            CanFocus = true,
-            BorderStyle = DefaultBorderStyle,
         };
         _footerFrame = new FrameView
         {
             Title = "Typical Footer",
-            X = 0,
+            X = Pos.Right(_leftSpacer),
             Y = Pos.AnchorEnd(3),
-            Width = Dim.Fill(),
+            Width = Dim.Fill() - Dim.Width(_rightSpacer),
             Height = 3,
             BorderStyle = LineStyle.HeavyDotted,
         };
+        _contentFrame = new View
+        {
+            X = Pos.Right(_leftSpacer),
+            Y = Pos.Bottom(_headerFrame),
+            Width = Dim.Fill() - Dim.Width(_rightSpacer),
+            Height = Dim.Fill() - Dim.Height(_footerFrame),
+            CanFocus = true,
+        };
+        var statsView = _serviceProvider.GetRequiredService<StatsView>();
+        statsView.Width = Dim.Fill();
+        statsView.Height = Dim.Fill();
         _footerFrame.Add(statsView);
-        Add(_headerFrame, _contentFrame, _footerFrame);
+        Add(_leftSpacer, _rightSpacer, _headerFrame, _contentFrame, _footerFrame);
 
         _bindingContext.AddBinding(
             _viewModel.Bind(

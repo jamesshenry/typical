@@ -45,7 +45,7 @@ public static class ServiceExtensions
     {
         builder.Configuration.Sources.Clear();
 
-        builder.Configuration.AddKdlFile("config.kdl");
+        builder.Configuration.AddKdlFile("config.kdl", optional: true);
         var settings = new AppConfig();
         builder.Configuration.GetSection("tui-app-settings").Bind(settings);
 

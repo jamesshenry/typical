@@ -4,39 +4,25 @@ using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.Text;
 using Terminal.Gui.ViewBase;
-using Terminal.Gui.Views;
-using Typical.Binding;
 using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
 using Attribute = Terminal.Gui.Drawing.Attribute;
 
 namespace Typical.Views;
 
-public class TypingView : BindableView<TypingViewModel>
+public class TypingArea : View
 {
-    private readonly TextFormatter _formatter = new();
-    private List<string> _cachedLines = [];
     private readonly Attribute _correctAttr;
     private readonly Attribute _incorrectAttr;
     private readonly Attribute _untypedAttr;
+    private readonly TextFormatter _formatter = new();
+    private List<string> _cachedLines = [];
+    private readonly TypingViewModel _viewModel;
 
-    public TypingView(TypingViewModel viewModel)
-        : base(viewModel)
+    public TypingArea(TypingViewModel viewModel)
     {
-        CanFocus = true;
-        X = Pos.Center();
-        Y = Pos.Center();
-        Width = Dim.Percent(80);
-        Height = Dim.Percent(50);
-        Title = nameof(TypingView);
+        _viewModel = viewModel;
         _formatter.WordWrap = true;
-
-        Initialized += (s, e) => _ = InitializeViewAsync();
-        this.Activating += (s, e) =>
-        {
-            this.SetFocus();
-            e.Handled = true; // Prevents the click from reaching MainShell
-        };
 
         var scheme = this.GetScheme();
         var normalBack = scheme.Normal.Background;
@@ -46,35 +32,45 @@ public class TypingView : BindableView<TypingViewModel>
         _untypedAttr = new Attribute(Color.DarkGray, normalBack);
     }
 
-    protected override void OnSubViewsLaidOut(LayoutEventArgs args)
+    public void RefreshText()
     {
-        base.OnSubViewsLaidOut(args);
-        RefreshTextCache();
-    }
+        if (Viewport.Width <= 0)
+            return;
 
-    private void RefreshTextCache()
-    {
-        _formatter.Text = ViewModel.TargetText;
+        _formatter.Text = _viewModel.TargetText;
         _formatter.ConstrainToWidth = Viewport.Width;
-        _formatter.ConstrainToHeight = Viewport.Height;
         _formatter.PreserveTrailingSpaces = true;
         _cachedLines = _formatter.GetLines();
+
+        if (Height != _cachedLines.Count)
+        {
+            Height = _cachedLines.Count;
+            SuperView?.SetNeedsLayout();
+        }
+        SetNeedsDraw();
     }
 
     protected override bool OnDrawingContent(DrawContext? context)
     {
-        if (_cachedLines.Count == 0)
+        if (_cachedLines.Count == 0 || Viewport.Width == 0)
             return true;
 
+        int yOffset = Math.Max(0, (Viewport.Height - _cachedLines.Count) / 2);
         int globalIdx = 0;
         for (int y = 0; y < _cachedLines.Count; y++)
         {
-            for (int x = 0; x < _cachedLines[y].Length; x++)
+            string line = _cachedLines[y];
+            int xOffset = Math.Max(0, (Viewport.Width - line.Length) / 2);
+
+            for (int x = 0; x < line.Length; x++)
             {
-                var state = ViewModel.DisplayStates[globalIdx];
+                if (globalIdx >= _viewModel.DisplayStates.Length)
+                    break;
+
+                var state = _viewModel.DisplayStates[globalIdx];
 
                 SetAttribute(GetAttributeForState(state));
-                AddRune(x, y, (Rune)_cachedLines[y][x]);
+                AddRune(x + xOffset, y + yOffset, (Rune)line[x]);
 
                 globalIdx++;
             }
@@ -89,6 +85,44 @@ public class TypingView : BindableView<TypingViewModel>
             KeystrokeType.Incorrect => _incorrectAttr,
             _ => _untypedAttr,
         };
+}
+
+public class TypingView : BindableView<TypingViewModel>
+{
+    private readonly TypingArea _typingArea;
+
+    public TypingView(TypingViewModel viewModel)
+        : base(viewModel)
+    {
+        CanFocus = true;
+        X = Pos.Center();
+        Y = Pos.Center();
+        Width = Dim.Fill();
+        Height = Dim.Fill();
+
+        _typingArea = new TypingArea(viewModel)
+        {
+            X = Pos.Center(),
+            Y = Pos.Center(),
+            Width = Dim.Fill(),
+            Height = Dim.Fill(),
+        };
+        Add(_typingArea);
+
+        Initialized += (s, e) => _ = InitializeViewAsync();
+        this.Activating += (s, e) =>
+        {
+            this.SetFocus();
+            e.Handled = true; // Prevents the click from reaching MainShell
+        };
+    }
+
+    protected override void OnSubViewsLaidOut(LayoutEventArgs args)
+    {
+        base.OnSubViewsLaidOut(args);
+        _typingArea.RefreshText();
+        _typingArea.SetNeedsDraw();
+    }
 
     protected override bool OnKeyDown(Key key)
     {
@@ -129,10 +163,10 @@ public class TypingView : BindableView<TypingViewModel>
         {
             if (e.PropertyName == nameof(ViewModel.TargetText))
             {
-                RefreshTextCache();
+                _typingArea.RefreshText();
                 SetNeedsLayout();
             }
-            SetNeedsDraw();
+            _typingArea.SetNeedsDraw();
         });
     }
 
@@ -143,7 +177,7 @@ public class TypingView : BindableView<TypingViewModel>
         try
         {
             await ViewModel.InitializeAsync();
-            RefreshTextCache();
+            _typingArea.RefreshText();
             SetNeedsDraw();
         }
         catch (Exception ex)

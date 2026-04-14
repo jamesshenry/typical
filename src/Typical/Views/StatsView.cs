@@ -1,3 +1,4 @@
+using Terminal.Gui.Drawing;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Typical.Core.ViewModels;
@@ -12,7 +13,7 @@ public class StatsView : BindableView<StatsViewModel>
         : base(viewModel)
     {
         Title = nameof(StatsView);
-        BorderStyle = Terminal.Gui.Drawing.LineStyle.Dashed;
+        BorderStyle = LineStyle.None;
         Height = 3;
         Width = Dim.Fill();
         _statsLabel = new Label { X = Pos.Center(), Y = Pos.Center() };
