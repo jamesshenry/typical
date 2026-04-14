@@ -28,7 +28,6 @@ public class TypingView : BindableView<TypingViewModel>
         Y = Pos.Center();
         Width = Dim.Percent(80);
         Height = Dim.Percent(50);
-        BorderStyle = LineStyle.RoundedDashed;
         Title = nameof(TypingView);
         _formatter.WordWrap = true;
 

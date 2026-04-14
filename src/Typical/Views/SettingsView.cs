@@ -44,7 +44,6 @@ public class SettingsView : BindableView<SettingsViewModel>
     {
         BindingContext.AddBinding(
             ViewModel.BindText(
-                nameof(ViewModel.Username),
                 _txtName,
                 () => ViewModel.Username,
                 value => ViewModel.Username = value

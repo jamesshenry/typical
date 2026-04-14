@@ -31,6 +31,8 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<Navigat
         _navigationService = navigationService;
         _dialogService = dialogService;
         _logger = logger;
+
+        WeakReferenceMessenger.Default.RegisterAll(this);
     }
 
     [RelayCommand]

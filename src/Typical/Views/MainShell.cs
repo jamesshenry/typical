@@ -6,17 +6,18 @@ using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Typical.Binding;
-using Typical.Core.Events;
 using Typical.Core.ViewModels;
 using Typical.Navigation;
 
 namespace Typical.Views;
 
-public class MainShell : Window, IRecipient<NavigationChangedMessage>
+public class MainShell : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly IServiceProvider _serviceProvider;
-    private readonly View _contentContainer;
+    private readonly FrameView _headerFrame;
+    private readonly View _contentFrame;
+    private readonly FrameView _footerFrame;
 
     // private readonly Label _statusLabel;
     private readonly BindingContext _bindingContext;
@@ -34,19 +35,37 @@ public class MainShell : Window, IRecipient<NavigationChangedMessage>
         statsView.Y = Pos.AnchorEnd(3);
         statsView.X = Pos.Left(this);
         statsView.Width = Dim.Fill();
-        statsView.Height = 3;
-        _contentContainer = new FrameView
+        statsView.Height = Dim.Fill();
+        _headerFrame = new FrameView
+        {
+            Title = "Typical Header",
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Auto(DimAutoStyle.Text, minimumContentDim: 1),
+            BorderStyle = LineStyle.Rounded,
+        };
+        _contentFrame = new FrameView
         {
             Title = "Content Frame",
             X = Pos.Center(),
-            Y = Pos.Center(),
+            Y = Pos.Bottom(_headerFrame),
             Width = Dim.Fill(),
-            Height = Dim.Fill() - 6,
+            Height = Dim.Fill() - Dim.Height(_footerFrame),
             CanFocus = true,
             BorderStyle = DefaultBorderStyle,
         };
-
-        Add(_contentContainer, statsView);
+        _footerFrame = new FrameView
+        {
+            Title = "Typical Footer",
+            X = 0,
+            Y = Pos.AnchorEnd(3),
+            Width = Dim.Fill(),
+            Height = 3,
+            BorderStyle = LineStyle.HeavyDotted,
+        };
+        _footerFrame.Add(statsView);
+        Add(_headerFrame, _contentFrame, _footerFrame);
 
         _bindingContext.AddBinding(
             _viewModel.Bind(
@@ -54,8 +73,6 @@ public class MainShell : Window, IRecipient<NavigationChangedMessage>
                 _ => UpdateContent(_viewModel.CurrentPage)
             )
         );
-
-        WeakReferenceMessenger.Default.Register(this);
 
         _viewModel.NavigateToGameViewCommand.Execute(null);
 
@@ -78,14 +95,8 @@ public class MainShell : Window, IRecipient<NavigationChangedMessage>
         if (disposing)
         {
             _bindingContext.Dispose();
-            WeakReferenceMessenger.Default.UnregisterAll(this);
         }
         base.Dispose(disposing);
-    }
-
-    public void Receive(NavigationChangedMessage message)
-    {
-        UpdateContent(message.Value);
     }
 
     private void UpdateContent(ObservableObject? viewModel)
@@ -93,14 +104,15 @@ public class MainShell : Window, IRecipient<NavigationChangedMessage>
         if (viewModel == null)
             return;
 
-        _contentContainer.RemoveAll();
+        _contentFrame.RemoveAll();
 
         var view = ViewLocator.GetView(_serviceProvider, viewModel);
 
         view.X = Pos.Center();
         view.Y = Pos.Center();
-
-        _contentContainer.Add(view);
+        view.Width = Dim.Fill();
+        view.Height = Dim.Fill();
+        _contentFrame.Add(view);
 
         view.SetFocus();
     }

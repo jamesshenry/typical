@@ -30,7 +30,7 @@ public partial class BindingTests
         var uiValue = "";
 
         // Act
-        using var binding = vm.Bind(nameof(vm.Name), () => vm.Name, val => uiValue = val);
+        using var binding = vm.Bind(() => vm.Name, val => uiValue = val);
 
         // Assert - Initial Value (Bind fires immediately)
         await Assert.That(uiValue).IsEqualTo("Initial");
@@ -48,7 +48,7 @@ public partial class BindingTests
         // Arrange
         var vm = new FakeViewModel { Name = "Initial" };
         var uiValue = "";
-        var binding = vm.Bind(nameof(vm.Name), () => vm.Name, val => uiValue = val);
+        var binding = vm.Bind(() => vm.Name, val => uiValue = val);
 
         // Act
         binding.Dispose();
@@ -66,12 +66,7 @@ public partial class BindingTests
         var label = new Label { Text = "UI" };
 
         // Act
-        using var binding = vm.BindText(
-            nameof(vm.Name),
-            label,
-            () => vm.Name,
-            val => vm.Name = val
-        );
+        using var binding = vm.BindText(label, () => vm.Name, val => vm.Name = val);
 
         // Simulate UI change
         label.Text = "ChangedInUI";
@@ -106,8 +101,8 @@ public partial class BindingTests
         var uiValue1 = "";
         var uiValue2 = "";
 
-        ctx.AddBinding(vm.Bind(nameof(vm.Name), () => vm.Name, val => uiValue1 = val));
-        ctx.AddBinding(vm.Bind(nameof(vm.Name), () => vm.Name, val => uiValue2 = val));
+        ctx.AddBinding(vm.Bind(() => vm.Name, val => uiValue1 = val));
+        ctx.AddBinding(vm.Bind(() => vm.Name, val => uiValue2 = val));
 
         // Act
         ctx.Dispose();
