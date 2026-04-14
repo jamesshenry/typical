@@ -15,11 +15,11 @@
       Include="Microsoft.Extensions.DependencyInjection.Abstractions"
       Version="10.0.5"
     />
-    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.3.0" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.3" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.5.2" />
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.4.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.6.2" />
     <PackageVersion Include="MinVer" Version="7.0.0" />
     <PackageVersion Include="ModularPipelines" Version="3.1.90" />
     <PackageVersion Include="Moq" Version="4.20.72" />
@@ -37,6 +37,6 @@
     <PackageVersion Include="Velopack" Version="0.0.1298" />
     <PackageVersion Include="Xdg.Directories" Version="0.1.2" />
     <PackageVersion Include="Imposter" Version="0.1.9" />
-    <PackageVersion Include="TUnit" Version="1.18.21" />
+    <PackageVersion Include="TUnit" Version="1.33.0" />
   </ItemGroup>
 </Project>
