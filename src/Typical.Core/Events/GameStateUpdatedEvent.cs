@@ -11,23 +11,11 @@ public record GameStateUpdatedMessage(
 
 public record GameResetMessage(ModeSettings Settings);
 
-public record TypingSettings
-{
-    public bool? Punctuation { get; set; }
-    public bool? Numbers { get; set; }
-    public GameMode Mode { get; set; } = GameMode.Quote;
-    public string Language { get; set; } = "english";
-}
-
-public enum GameMode
-{
-    Quote,
-}
-
+public record WordsMode(int Count, bool Punctuation, bool Numbers);
+public record TimeMode(TimeSpan Duration, bool Punctuation, bool Numbers);
+public record QuoteMode(QuoteLength Length);
+public record ZenMode; // Empty marker record
 
 public enum QuoteLength { All, Short, Medium, Long }
-public record GrammarSettings(bool Punctuation = true, bool Numbers = false);
-public union Words(int Count, GrammarSettings Grammar);
-public union Time(TimeSpan Duration, GrammarSettings Grammar);
-public union Quote(QuoteLength a = QuoteLength.All);
-public union ModeSettings(Words words, Time time, Quote quote);
+
+public union ModeSettings(WordsMode, TimeMode, QuoteMode, ZenMode);

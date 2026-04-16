@@ -2,6 +2,7 @@ using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
+using Terminal.Gui.Configuration;
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
@@ -33,6 +34,10 @@ public class MainShell : Window
         BorderStyle = LineStyle.None;
         Title = _viewModel.AppTitle;
 
+        ThemeScope currentTheme = ThemeManager.GetCurrentTheme();
+        var schemes = SchemeManager.GetSchemesForCurrentTheme();
+        var scheme = SchemeManager.GetScheme(Schemes.Base);
+        SchemeManager.
         _leftSpacer = new View
         {
             X = 0,
@@ -55,11 +60,13 @@ public class MainShell : Window
         {
             Title = "Typical Header",
             X = Pos.Right(_leftSpacer),
-            Y = 0,
+            Y = 2,
             Width = Dim.Fill() - Dim.Width(_rightSpacer),
             Height = Dim.Auto(DimAutoStyle.Text, minimumContentDim: 1),
-            BorderStyle = LineStyle.Rounded,
+            BorderStyle = LineStyle.None,
         };
+        var settingsView = _serviceProvider.GetRequiredService<SettingsView>();
+        _headerFrame.Add(settingsView);
         _footerFrame = new FrameView
         {
             Title = "Typical Footer",

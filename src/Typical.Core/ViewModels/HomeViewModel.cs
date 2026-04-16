@@ -5,7 +5,7 @@ using Typical.Core.Interfaces;
 
 namespace Typical.Core.ViewModels;
 
-public sealed partial class HomeViewModel : ObservableObject, IBindableView
+public sealed partial class HomeViewModel : ObservableObject, INavigatableView
 {
     private readonly INavigationService _navService;
     private readonly ILogger<HomeViewModel> _logger;

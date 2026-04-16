@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text;
+using Terminal.Gui.Configuration;
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.Text;
@@ -24,12 +25,12 @@ public class TypingArea : View
         _viewModel = viewModel;
         _formatter.WordWrap = true;
 
-        var scheme = this.GetScheme();
-        var normalBack = scheme.Normal.Background;
-
-        _correctAttr = new Attribute(Color.Green, Color.DarkGray);
-        _incorrectAttr = new Attribute(Color.White, Color.Red);
-        _untypedAttr = new Attribute(Color.DarkGray, normalBack);
+        var schemes = SchemeManager.GetSchemesForCurrentTheme();
+        var errorScheme = schemes["Error"];
+        var normalScheme = schemes["Base"];
+        _correctAttr = normalScheme!.HotNormal;
+        _incorrectAttr = errorScheme!.Active;
+        _untypedAttr = normalScheme!.Normal;
     }
 
     public void RefreshText()

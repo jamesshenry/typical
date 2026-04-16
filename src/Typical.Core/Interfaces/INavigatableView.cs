@@ -3,7 +3,7 @@ namespace Typical.Core.Interfaces;
 /// <summary>
 /// Interface for views that support navigation lifecycle events.
 /// </summary>
-public interface IBindableView
+public interface INavigatableView
 {
     /// <summary>
     /// Called when the view is navigated to.

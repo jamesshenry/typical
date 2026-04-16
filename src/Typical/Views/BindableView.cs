@@ -10,7 +10,7 @@ namespace Typical.Views;
 /// Base class for Views that are bound to ViewModels.
 /// Provides lifecycle management and binding context.
 /// </summary>
-public abstract class BindableView<TViewModel> : View, IBindableView
+public abstract class BindableView<TViewModel> : View, INavigatableView
     where TViewModel : ObservableObject
 {
     /// <summary>

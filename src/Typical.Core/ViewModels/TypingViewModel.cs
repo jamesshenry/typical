@@ -8,7 +8,10 @@ using Typical.Core.Text;
 
 namespace Typical.Core.ViewModels;
 
-public partial class TypingViewModel : ObservableObject, IBindableView, IRecipient<GameResetMessage>
+public partial class TypingViewModel
+    : ObservableObject,
+        INavigatableView,
+        IRecipient<GameResetMessage>
 {
     private readonly GameEngine _engine;
     private readonly ITextProvider _textProvider;
@@ -35,6 +38,8 @@ public partial class TypingViewModel : ObservableObject, IBindableView, IRecipie
         _textProvider = textProvider;
         _navigationService = navigationService;
         _logger = logger;
+
+        WeakReferenceMessenger.Default.Register(this);
     }
 
     public bool IsGameOver => _engine.IsOver;
@@ -98,9 +103,9 @@ public partial class TypingViewModel : ObservableObject, IBindableView, IRecipie
         _logger.LogInformation($"Navigated from {nameof(TypingViewModel)}");
     }
 
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(TextSample? textSample = null)
     {
-        var result = await _textProvider.GetTextAsync();
+        var result = textSample ?? await _textProvider.GetTextAsync();
         _engine.LoadText(result);
         TargetText = _engine.TargetText;
 
@@ -109,8 +114,14 @@ public partial class TypingViewModel : ObservableObject, IBindableView, IRecipie
         UpdateState();
     }
 
-    public void Receive(GameResetMessage message)
+    public async void Receive(GameResetMessage message)
     {
-        throw new NotImplementedException();
+        TextSample textSample = message.Settings switch
+        {
+            QuoteMode q => (await _textProvider.GetQuoteAsync(q.Length)),
+            _ => throw new Exception(),
+        };
+
+        await InitializeAsync(textSample);
     }
 }
