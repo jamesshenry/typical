@@ -8,7 +8,7 @@ using Typical.Core.Text;
 
 namespace Typical.Core.ViewModels;
 
-public partial class TypingViewModel : ObservableObject, IBindableView
+public partial class TypingViewModel : ObservableObject, IBindableView, IRecipient<GameResetMessage>
 {
     private readonly GameEngine _engine;
     private readonly ITextProvider _textProvider;
@@ -77,7 +77,7 @@ public partial class TypingViewModel : ObservableObject, IBindableView
         var snapshot = _engine.Stats.CreateSnapshot();
 
         WeakReferenceMessenger.Default.Send(
-            new GameStateUpdatedEvent(TargetText, _engine.UserInput, snapshot, _engine.IsOver)
+            new GameStateUpdatedMessage(TargetText, _engine.UserInput, snapshot, _engine.IsOver)
         );
     }
 
@@ -107,5 +107,10 @@ public partial class TypingViewModel : ObservableObject, IBindableView
         DisplayStates = new KeystrokeType[TargetText.Length];
         Array.Fill(DisplayStates, KeystrokeType.Untyped);
         UpdateState();
+    }
+
+    public void Receive(GameResetMessage message)
+    {
+        throw new NotImplementedException();
     }
 }

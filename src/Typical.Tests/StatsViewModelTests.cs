@@ -22,7 +22,7 @@ public class StatsViewModelTests
             IsRunning: true
         );
 
-        var gameEvent = new GameStateUpdatedEvent(
+        var gameEvent = new GameStateUpdatedMessage(
             TargetText: "Test",
             UserInput: "Test",
             Statistics: fakeStats,
