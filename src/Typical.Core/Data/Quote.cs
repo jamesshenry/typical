@@ -10,10 +10,10 @@ public class Quote
     public int CharCount { get; set; }
 }
 
-public interface IQuoteRepository
+public interface ITextRepository
 {
     Task<Quote?> GetRandomQuoteAsync();
-    Task<Quote?> GetNextQuoteAsync(int currentId);
+    Task<Quote?> GetQuoteAsync(int currentId);
     Task AddQuotesAsync(IEnumerable<Quote> quotes);
     Task<bool> HasAnyAsync();
 }

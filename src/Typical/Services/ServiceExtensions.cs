@@ -43,8 +43,6 @@ public static class ServiceExtensions
 
     public static void AddTuiInfrastructure(this HostApplicationBuilder builder)
     {
-        builder.Configuration.Sources.Clear();
-
         builder.Configuration.AddKdlFile("config.kdl", optional: true);
         var settings = new AppConfig();
         builder.Configuration.GetSection("tui-app-settings").Bind(settings);

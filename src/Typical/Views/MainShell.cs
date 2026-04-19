@@ -37,7 +37,6 @@ public class MainShell : Window
         ThemeScope currentTheme = ThemeManager.GetCurrentTheme();
         var schemes = SchemeManager.GetSchemesForCurrentTheme();
         var scheme = SchemeManager.GetScheme(Schemes.Base);
-        SchemeManager.
         _leftSpacer = new View
         {
             X = 0,

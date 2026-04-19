@@ -12,3 +12,7 @@
     - **mode_options**: `[all, short, medium, long, thick]` on right
 - all buttons reset the typing view state to fresh with new quote
 - `change` brings up an options menu
+
+---
+
+- add `Emit()` to IScript returning the

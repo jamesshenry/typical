@@ -3,7 +3,7 @@ using Typical.Core.Data;
 
 namespace Typical.DataAccess;
 
-public class LiteDbQuoteRepository : IQuoteRepository
+public class LiteDbQuoteRepository : ITextRepository
 {
     private readonly string _connectionString;
 
@@ -29,7 +29,7 @@ public class LiteDbQuoteRepository : IQuoteRepository
     /// <summary>
     /// Fetches the next quote by ID, wrapping around if at the end.
     /// </summary>
-    public async Task<Quote?> GetNextQuoteAsync(int currentId)
+    public async Task<Quote?> GetQuoteAsync(int currentId)
     {
         using var db = new LiteRepository(_connectionString);
 

@@ -43,4 +43,10 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Typical.Tests" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
