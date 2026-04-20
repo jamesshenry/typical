@@ -105,7 +105,7 @@ public partial class TypingViewModel
 
     public async Task InitializeAsync(TextSample? textSample = null)
     {
-        var result = textSample ?? await _textProvider.GetTextAsync();
+        var result = textSample ?? await _textProvider.GetWordsAsync();
         _engine.LoadText(result);
         TargetText = _engine.TargetText;
 

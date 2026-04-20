@@ -2,13 +2,13 @@ using System.Runtime.InteropServices;
 
 namespace Typical.DataAccess;
 
-public static class TypicalDbOptions
+public class TypicalDbOptions
 {
     public const string SectionName = "TypicalDb";
 
-    public static string DatabaseFileName { get; set; } = "typical.db";
+    public string DatabaseFileName { get; set; } = "typical.db";
 
-    public static string GetDatabasePath()
+    public string GetDatabasePath()
     {
         string? dataDir = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
 
@@ -46,5 +46,5 @@ public static class TypicalDbOptions
         return Path.Combine(finalDir, DatabaseFileName);
     }
 
-    public static string ConnectionString => $"Data Source={GetDatabasePath()}";
+    public string GetConnectionString() => $"Data Source={GetDatabasePath()}";
 }

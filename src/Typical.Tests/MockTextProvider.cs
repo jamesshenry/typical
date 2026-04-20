@@ -12,7 +12,7 @@ public class MockTextProvider : ITextProvider
         _textToReturn = text;
     }
 
-    public async Task<TextSample> GetTextAsync()
+    public async Task<TextSample> GetWordsAsync()
     {
         // Task.FromResult is the perfect way to simulate an
         // async operation that completes immediately.

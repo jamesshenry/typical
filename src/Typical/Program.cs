@@ -1,10 +1,9 @@
-﻿using System.Runtime.InteropServices;
-using DotNetPathUtils;
+﻿using DotNetPathUtils;
+using Kuddle.Extensions.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Spectre.Console;
 using Terminal.Gui.App;
 using Typical.Core.Services;
 using Typical.DataAccess;
@@ -30,26 +29,23 @@ Log.Information("Application starting...");
 try
 {
     var builder = Host.CreateApplicationBuilder(args);
-    var config = new ConfigurationBuilder()
-        .AddInMemoryCollection(
-            new Dictionary<string, string?>()
-            {
-                { "ConnectionStrings:Default", TypicalDbOptions.ConnectionString },
-            }
-        )
-        .Build();
-    builder.Services.AddTypicalDb(config.GetConnectionString("Default")!);
-    builder.Configuration.AddConfiguration(config);
+
+    builder.Configuration.Sources.Clear();
+
+    builder.AddTuiLogging(Log.Logger);
     builder.Services.AddCoreServices();
-    builder.AddTuiLogging();
     builder.AddTuiInfrastructure();
-    builder.AddTuiScreens();
+
+    builder.Services.AddTypicalDb(builder.Configuration);
+
     using IHost host = builder.Build();
 
     var migrator = host.Services.GetRequiredService<IDatabaseMigrator>();
 
     await migrator.EnsureDatabaseUpdated();
-    using var app = host.Services.GetRequiredService<IApplication>().Init();
+
+    using var app = host.Services.GetRequiredService<IApplication>();
+    app.Init();
     var mainShell = host.Services.GetRequiredService<MainShell>();
 
     app.Run(mainShell);
@@ -57,7 +53,6 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "Host terminated unexpectedly");
-    AnsiConsole.WriteException(ex);
 }
 finally
 {

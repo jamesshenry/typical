@@ -1,45 +1,77 @@
 using System.Data;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using DbUp;
 using DbUp.Engine;
 
 namespace Typical.DataAccess.Sqlite;
+
+[JsonSerializable(typeof(List<QuoteSeed>))]
+internal partial class SeedContext : JsonSerializerContext;
+
+internal record QuoteSeed(string Text, string Author, List<string>? Tags);
 
 [DbUpScript(ScriptType = DbUpScriptType.RunOnce, RunGroupOrder = 0)]
 public class Script_00200_SeedInitialQuotes : IScript
 {
     public string ProvideScript(Func<IDbCommand> dbCommandFactory)
     {
-        using (var command = dbCommandFactory())
+        using var cmd = dbCommandFactory();
+
+        cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM Quotes LIMIT 1)";
+        if ((long)(cmd.ExecuteScalar() ?? 0) == 1)
+            return "";
+
+        var assembly = typeof(Script_00200_SeedInitialQuotes).Assembly;
+        var path = Path.GetDirectoryName(assembly.Location)!;
+        using var stream = File.OpenRead(Path.Combine(path, "Migrations", "quotes.json"));
+        if (stream is null)
+            throw new FileNotFoundException("Could not find embedded quotes.json");
+
+        var seeds = JsonSerializer.Deserialize(stream, SeedContext.Default.ListQuoteSeed);
+        if (seeds is null || seeds.Count == 0)
+            return "No seeds found in JSON.";
+
+        cmd.CommandText = "BEGIN TRANSACTION";
+        cmd.ExecuteNonQuery();
+
+        try
         {
-            // We check if it's empty first to ensure idempotency
-            command.CommandText = "SELECT COUNT(*) FROM Quotes";
-            var count = Convert.ToInt32(command.ExecuteScalar());
-            var s = new SqlScriptOptions() { RunGroupOrder = 0 };
-            if (count == 0)
+            cmd.CommandText =
+                "INSERT INTO Quotes (Text, Author, Tags) VALUES (@text, @author, @tags)";
+
+            var pText = cmd.CreateParameter();
+            pText.ParameterName = "@text";
+            cmd.Parameters.Add(pText);
+            var pAuthor = cmd.CreateParameter();
+            pAuthor.ParameterName = "@author";
+            cmd.Parameters.Add(pAuthor);
+            var pTags = cmd.CreateParameter();
+            pTags.ParameterName = "@tags";
+            cmd.Parameters.Add(pTags);
+
+            foreach (var quote in seeds)
             {
-                command.CommandText = "INSERT INTO Quotes (Text, Author) VALUES (@text, @author)";
+                pText.Value = quote.Text;
+                pAuthor.Value = quote.Author ?? (object)DBNull.Value;
 
-                var pText = command.CreateParameter();
-                pText.ParameterName = "@text";
-                command.Parameters.Add(pText);
+                // Serialize tags to JSON string for the DB
+                pTags.Value =
+                    quote.Tags != null
+                        ? JsonSerializer.Serialize(quote.Tags, SeedContext.Default.ListString)
+                        : DBNull.Value;
 
-                var pAuthor = command.CreateParameter();
-                pAuthor.ParameterName = "@author";
-                command.Parameters.Add(pAuthor);
-
-                var seeds = new[]
-                {
-                    ("To be, or not to be.", "Shakespeare"),
-                    ("Stay hungry, stay foolish.", "Steve Jobs"),
-                };
-
-                foreach (var (text, author) in seeds)
-                {
-                    pText.Value = text;
-                    pAuthor.Value = author;
-                    command.ExecuteNonQuery();
-                }
+                cmd.ExecuteNonQuery();
             }
+
+            cmd.CommandText = "COMMIT";
+            cmd.ExecuteNonQuery();
+        }
+        catch
+        {
+            cmd.CommandText = "ROLLBACK";
+            cmd.ExecuteNonQuery();
         }
         return "";
     }

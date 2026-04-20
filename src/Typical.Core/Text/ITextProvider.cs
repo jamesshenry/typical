@@ -5,5 +5,5 @@ namespace Typical.Core.Text;
 public interface ITextProvider
 {
     Task<TextSample> GetQuoteAsync(QuoteLength length);
-    Task<TextSample> GetTextAsync();
+    Task<TextSample> GetWordsAsync();
 }

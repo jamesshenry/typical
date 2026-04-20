@@ -200,6 +200,14 @@ csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = true
 
 #### Naming styles ####
+
+# IL3050: Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+dotnet_diagnostic.IL3050.severity = suggestion
+
+
+# IL2026: Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+dotnet_diagnostic.IL2026.severity = suggestion
+
 [*.{cs,vb}]
 
 # Naming rules

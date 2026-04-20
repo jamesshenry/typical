@@ -12,8 +12,8 @@ public class Quote
 
 public interface ITextRepository
 {
-    Task<Quote?> GetRandomQuoteAsync();
-    Task<Quote?> GetQuoteAsync(int currentId);
+    Task<Quote> GetRandomQuoteAsync();
+    Task<Quote> GetQuoteAsync(int currentId);
     Task AddQuotesAsync(IEnumerable<Quote> quotes);
     Task<bool> HasAnyAsync();
 }

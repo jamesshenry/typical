@@ -1,16 +1,16 @@
 using DbUp;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Typical.DataAccess.Sqlite;
 
-public class DatabaseMigrator(IConfiguration configuration, ILogger<DatabaseMigrator> logger)
+public class DatabaseMigrator(IOptions<TypicalDbOptions> options, ILogger<DatabaseMigrator> logger)
     : IDatabaseMigrator
 {
     public Task EnsureDatabaseUpdated()
     {
         logger.LogInformation("Opening Db");
-        var connectionString = configuration.GetConnectionString("Default");
+        var connectionString = options.Value.GetConnectionString();
 
         logger.LogInformation("ConnectionString: {ConnectionString}", connectionString);
 
@@ -18,13 +18,19 @@ public class DatabaseMigrator(IConfiguration configuration, ILogger<DatabaseMigr
             .To.SqliteDatabase(connectionString)
             .WithGeneratedScripts()
             .LogTo(logger)
-            .LogToConsole()
+            .LogScriptOutput()
             .Build();
 
         logger.LogInformation("Upgrader built");
         logger.LogInformation("Performing upgrade");
 
-        var results = upgrader.PerformUpgrade();
+        var result = upgrader.PerformUpgrade();
+
+        if (!result.Successful)
+        {
+            logger.LogError(result.Error, "Database upgrade failed");
+            throw result.Error;
+        }
 
         logger.LogInformation("Done");
         return Task.CompletedTask;
