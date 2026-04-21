@@ -12,7 +12,12 @@ namespace Typical.DataAccess.Sqlite;
 
 public class TextRepository(IOptions<TypicalDbOptions> options) : ITextRepository
 {
-    private SqliteConnection CreateConnection() => new(options.Value.GetConnectionString());
+    private async Task<SqliteConnection> GetOpenConnectionAsync()
+    {
+        var connection = new SqliteConnection(options.Value.GetConnectionString());
+        await connection.OpenAsync();
+        return connection;
+    }
 
     public Task AddQuotesAsync(IEnumerable<Quote> quotes)
     {
@@ -21,9 +26,7 @@ public class TextRepository(IOptions<TypicalDbOptions> options) : ITextRepositor
 
     public async Task<Quote> GetQuoteAsync(int id)
     {
-        await using var connection = CreateConnection();
-        await connection.OpenAsync();
-
+        await using var connection = await GetOpenConnectionAsync();
         await using var command = connection.CreateCommand();
 
         command.CommandText =
@@ -59,7 +62,7 @@ public class TextRepository(IOptions<TypicalDbOptions> options) : ITextRepositor
 
     public async Task<Quote> GetRandomQuoteAsync()
     {
-        await using var connection = CreateConnection();
+        await using var connection = await GetOpenConnectionAsync();
         await connection.OpenAsync();
 
         await using var command = connection.CreateCommand();

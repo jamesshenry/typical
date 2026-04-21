@@ -14,5 +14,3 @@
 - `change` brings up an options menu
 
 ---
-
-- add `Emit()` to IScript returning the

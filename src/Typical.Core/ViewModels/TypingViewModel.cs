@@ -119,7 +119,9 @@ public partial class TypingViewModel
         TextSample textSample = message.Settings switch
         {
             QuoteMode q => (await _textProvider.GetQuoteAsync(q.Length)),
-            _ => throw new Exception(),
+            _ => throw new InvalidOperationException(
+                $"Unsupported mode settings type: {message.Settings.Value?.GetType().Name ?? message.Settings.GetType().Name}"
+            ),
         };
 
         await InitializeAsync(textSample);
