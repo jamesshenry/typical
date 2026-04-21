@@ -9,30 +9,41 @@ public class DatabaseMigrator(IOptions<TypicalDbOptions> options, ILogger<Databa
 {
     public Task EnsureDatabaseUpdated()
     {
-        logger.LogInformation("Opening Db");
-        var connectionString = options.Value.GetConnectionString();
-
-        logger.LogInformation("ConnectionString: {ConnectionString}", connectionString);
-
-        var upgrader = DeployChanges
-            .To.SqliteDatabase(connectionString)
-            .WithGeneratedScripts()
-            .LogTo(logger)
-            .LogScriptOutput()
-            .Build();
-
-        logger.LogInformation("Upgrader built");
-        logger.LogInformation("Performing upgrade");
-
-        var result = upgrader.PerformUpgrade();
-
-        if (!result.Successful)
+        try
         {
-            logger.LogError(result.Error, "Database upgrade failed");
-            throw result.Error;
-        }
+            logger.LogInformation("Opening Db");
+            var connectionString = options.Value.GetConnectionString();
 
-        logger.LogInformation("Done");
-        return Task.CompletedTask;
+            logger.LogInformation("ConnectionString: {ConnectionString}", connectionString);
+
+            var upgrader = DeployChanges
+                .To.SqliteDatabase(connectionString)
+                .WithGeneratedScripts()
+                .LogTo(logger)
+                .LogScriptOutput()
+                .Build();
+
+            logger.LogInformation("Upgrader built");
+            logger.LogInformation("Performing upgrade");
+
+            var result = upgrader.PerformUpgrade();
+
+            if (!result.Successful)
+            {
+                logger.LogError(result.Error, "Database upgrade failed");
+                throw result.Error;
+            }
+
+            logger.LogInformation("Done");
+            return Task.CompletedTask;
+        }
+        catch
+        {
+            logger.LogCritical(
+                "Error when migrating db at {dbPath}",
+                options.Value.GetDatabasePath()
+            );
+            throw;
+        }
     }
 }

@@ -32,6 +32,7 @@ public static class ServiceExtensions
                 shared: true,
                 rollingInterval: RollingInterval.Day
             )
+            .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Fatal)
             .Enrich.FromLogContext()
             .Enrich.With<SourceClassEnricher>()
             .CreateLogger();
