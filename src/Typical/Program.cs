@@ -5,12 +5,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Terminal.Gui.App;
+using Terminal.Gui.Configuration;
 using Typical.Core.Services;
 using Typical.DataAccess;
 using Typical.DataAccess.Sqlite;
 using Typical.Services;
 using Typical.Views;
 using Velopack;
+using ConfigurationManager = Terminal.Gui.Configuration.ConfigurationManager;
 
 if (OperatingSystem.IsWindows())
 {
@@ -45,10 +47,12 @@ try
     await migrator.EnsureDatabaseUpdated();
 
     using var app = host.Services.GetRequiredService<IApplication>();
+#pragma warning disable IL2026, IL3050
+    ConfigurationManager.Enable(ConfigLocations.All);
     app.Init();
     var mainShell = host.Services.GetRequiredService<MainShell>();
-
     app.Run(mainShell);
+#pragma warning restore IL2026, IL3050
 }
 catch (Exception ex)
 {

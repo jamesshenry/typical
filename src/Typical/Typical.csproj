@@ -3,9 +3,12 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>typical</AssemblyName>
     <PublishAot>true</PublishAot>
+    <PublishSingleFile>true</PublishSingleFile>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    <!-- <NoWarn>$(NoWarn);IL2026;IL3050;IL3053</NoWarn> -->
   </PropertyGroup>
   <ItemGroup>
+    <TrimmerRootAssembly Include="Terminal.Gui" />
     <PackageReference Include="CommunityToolkit.Diagnostics" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="DotNetPathUtils" />
@@ -45,7 +48,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Typical.Tests" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="appsettings*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

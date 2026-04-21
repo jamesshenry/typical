@@ -46,7 +46,7 @@
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Spectre.Console" Version="0.55.2" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
-    <PackageVersion Include="Terminal.Gui" Version="2.0.0-develop.5285" />
+    <PackageVersion Include="Terminal.Gui" Version="2.0.0-rc.3" />
     <PackageVersion Include="Velopack" Version="0.0.1298" />
     <PackageVersion Include="Xdg.Directories" Version="0.1.2" />
     <PackageVersion Include="Imposter" Version="0.1.9" />
