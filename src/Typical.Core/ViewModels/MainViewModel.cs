@@ -1,21 +1,26 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using Typical.Core.Events;
 using Typical.Core.Interfaces;
 
 namespace Typical.Core.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject
+public sealed partial class MainViewModel : ObservableObject, IRecipient<NavigationChangedMessage>
 {
     private readonly INavigationService _navigationService;
     private readonly IDialogService _dialogService;
     private readonly ILogger<MainViewModel> _logger;
 
     [ObservableProperty]
-    private string _appTitle = "Typical";
+    public partial string AppTitle { get; set; } = "Typical";
 
     [ObservableProperty]
-    private string _statusText = "Ready";
+    public partial string StatusText { get; set; } = "Ready";
+
+    [ObservableProperty]
+    public partial ObservableObject? CurrentPage { get; set; }
 
     public MainViewModel(
         INavigationService navigationService,
@@ -26,6 +31,8 @@ public sealed partial class MainViewModel : ObservableObject
         _navigationService = navigationService;
         _dialogService = dialogService;
         _logger = logger;
+
+        WeakReferenceMessenger.Default.RegisterAll(this);
     }
 
     [RelayCommand]
@@ -41,5 +48,10 @@ public sealed partial class MainViewModel : ObservableObject
     private void ShowAbout()
     {
         _dialogService.ShowError("About", "Typical: A Terminal.Gui v2 MVVM Demo");
+    }
+
+    public void Receive(NavigationChangedMessage message)
+    {
+        CurrentPage = message.Value;
     }
 }

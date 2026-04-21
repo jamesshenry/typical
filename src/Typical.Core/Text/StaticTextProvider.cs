@@ -1,14 +1,32 @@
-using Typical.Core.Text;
+using Bogus;
+using Typical.Core.Data;
+using Typical.Core.Events;
 
-namespace Typical;
+namespace Typical.Core.Text;
 
-public class StaticTextProvider(string text) : ITextProvider
+public class StaticTextProvider(ITextRepository textRepository) : ITextProvider
 {
-    private readonly string _text = text;
+    private readonly Faker _faker = new Faker("en_GB");
 
-    public async Task<TextSample> GetTextAsync()
+    public async Task<TextSample> GetQuoteAsync(QuoteLength length)
     {
-        var val = new TextSample() { Text = _text, Source = "Static Text Provider" };
+        var result = await textRepository.GetRandomQuoteAsync();
+        return new TextSample()
+        {
+            Source = result.Author,
+            Text = result.Text,
+            CharCount = result.CharCount,
+            WordCount = result.WordCount,
+        };
+    }
+
+    public async Task<TextSample> GetWordsAsync()
+    {
+        var val = new TextSample()
+        {
+            Text = _faker.Random.Words(_faker.Random.Int(10, 30)),
+            Source = nameof(Bogus),
+        };
         return await Task.FromResult(val);
     }
 }

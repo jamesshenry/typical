@@ -36,32 +36,27 @@ public static class ServiceExtensions
             .Enrich.With<SourceClassEnricher>()
             .CreateLogger();
 
-    public static void AddTuiLogging(this HostApplicationBuilder builder)
+    public static void AddTuiLogging(this HostApplicationBuilder builder, ILogger? logger)
     {
-        builder.Services.AddSerilog();
+        builder.Services.AddSerilog(logger);
     }
 
     public static void AddTuiInfrastructure(this HostApplicationBuilder builder)
     {
-        builder.Configuration.Sources.Clear();
-
-        builder.Configuration.AddKdlFile("config.kdl");
         var settings = new AppConfig();
         builder.Configuration.GetSection("tui-app-settings").Bind(settings);
-
+        builder.Services.Configure<AppConfig>(builder.Configuration.GetSection("tui-app-settings"));
         builder.Services.AddSingleton(_ => Application.Create());
 
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<IAppLifetime, AppLifetime>();
-    }
 
-    public static void AddTuiScreens(this HostApplicationBuilder builder)
-    {
         builder.Services.AddSingleton<MainShell>();
         builder.Services.AddTransient<HomeView>();
         builder.Services.AddTransient<SettingsView>();
         builder.Services.AddTransient<TypingView>();
+        builder.Services.AddTransient<StatsView>();
     }
 }
 

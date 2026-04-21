@@ -37,11 +37,11 @@ public class NavigationService : ObservableObject, INavigationService
     public void NavigateTo<TViewModel>()
         where TViewModel : ObservableObject
     {
-        (CurrentViewModel as IBindableView)?.OnNavigatedFrom();
+        (CurrentViewModel as INavigatableView)?.OnNavigatedFrom();
 
         CurrentViewModel = _services.GetRequiredService<TViewModel>();
 
-        (CurrentViewModel as IBindableView)?.OnNavigatedTo();
+        (CurrentViewModel as INavigatableView)?.OnNavigatedTo();
 
         _messenger.Send(new NavigationChangedMessage(CurrentViewModel));
     }

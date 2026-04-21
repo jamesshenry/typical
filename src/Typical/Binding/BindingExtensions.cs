@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Terminal.Gui.ViewBase;
@@ -14,23 +16,27 @@ public static class BindingExtensions
     /// </summary>
     public static IDisposable Bind<T>(
         this ObservableObject viewModel,
-        string propertyName,
-        Func<T> getter,
-        Action<T> updateUi
+        Func<T> propertyExpression,
+        Action<T> updateUi,
+        [CallerArgumentExpression(nameof(propertyExpression))] string? expression = null
     )
     {
+        string propertyName =
+            expression?.Split('.').Last()
+            ?? throw new ArgumentException("Could not determine property name from expression.");
+
+        viewModel.PropertyChanged += Handler;
+        updateUi(propertyExpression());
+
+        return new DisposableAction(() => viewModel.PropertyChanged -= Handler);
+
         void Handler(object? sender, PropertyChangedEventArgs e)
         {
             if (string.Equals(e.PropertyName, propertyName, StringComparison.Ordinal))
             {
-                updateUi(getter());
+                updateUi(propertyExpression());
             }
         }
-
-        viewModel.PropertyChanged += Handler;
-        updateUi(getter());
-
-        return new DisposableAction(() => viewModel.PropertyChanged -= Handler);
     }
 
     /// <summary>
@@ -38,14 +44,12 @@ public static class BindingExtensions
     /// </summary>
     public static IDisposable BindText(
         this ObservableObject viewModel,
-        string propertyName,
         View target,
         Func<string> getter,
         Action<string>? setter = null
     )
     {
         var vmToUi = viewModel.Bind(
-            propertyName,
             getter,
             val =>
             {
@@ -77,14 +81,12 @@ public static class BindingExtensions
     /// </summary>
     public static IDisposable BindChecked(
         this ObservableObject viewModel,
-        string propertyName,
         CheckBox checkBox,
         Func<bool> getter,
         Action<bool> setter
     )
     {
         var vmToUi = viewModel.Bind(
-            propertyName,
             getter,
             val =>
             {

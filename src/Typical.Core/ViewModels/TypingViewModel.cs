@@ -1,13 +1,17 @@
-using System.Security.AccessControl;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
 
 namespace Typical.Core.ViewModels;
 
-public partial class TypingViewModel : ObservableObject, IBindableView
+public partial class TypingViewModel
+    : ObservableObject,
+        INavigatableView,
+        IRecipient<GameResetMessage>
 {
     private readonly GameEngine _engine;
     private readonly ITextProvider _textProvider;
@@ -21,16 +25,7 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     // private bool _isGameOver;
 
     [ObservableProperty]
-    private double _wpm;
-
-    [ObservableProperty]
-    private double _accuracy;
-
-    [ObservableProperty]
-    private string _timeElapsed = "00:00";
-
-    [ObservableProperty]
-    private KeystrokeType[] _displayStates = [];
+    public partial KeystrokeType[] DisplayStates { get; set; } = [];
 
     public TypingViewModel(
         GameEngine engine,
@@ -43,6 +38,8 @@ public partial class TypingViewModel : ObservableObject, IBindableView
         _textProvider = textProvider;
         _navigationService = navigationService;
         _logger = logger;
+
+        WeakReferenceMessenger.Default.Register(this);
     }
 
     public bool IsGameOver => _engine.IsOver;
@@ -84,9 +81,9 @@ public partial class TypingViewModel : ObservableObject, IBindableView
     {
         var snapshot = _engine.Stats.CreateSnapshot();
 
-        Accuracy = snapshot.Accuracy;
-        Wpm = snapshot.WordsPerMinute;
-        TimeElapsed = snapshot.ElapsedTime.ToString(@"mm\:ss");
+        WeakReferenceMessenger.Default.Send(
+            new GameStateUpdatedMessage(TargetText, _engine.UserInput, snapshot, _engine.IsOver)
+        );
     }
 
     public KeystrokeType GetStatus(int index)
@@ -106,14 +103,27 @@ public partial class TypingViewModel : ObservableObject, IBindableView
         _logger.LogInformation($"Navigated from {nameof(TypingViewModel)}");
     }
 
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(TextSample? textSample = null)
     {
-        var result = await _textProvider.GetTextAsync();
+        var result = textSample ?? await _textProvider.GetWordsAsync();
         _engine.LoadText(result);
         TargetText = _engine.TargetText;
 
         DisplayStates = new KeystrokeType[TargetText.Length];
         Array.Fill(DisplayStates, KeystrokeType.Untyped);
         UpdateState();
+    }
+
+    public async void Receive(GameResetMessage message)
+    {
+        TextSample textSample = message.Settings switch
+        {
+            QuoteMode q => (await _textProvider.GetQuoteAsync(q.Length)),
+            _ => throw new InvalidOperationException(
+                $"Unsupported mode settings type: {message.Settings.Value?.GetType().Name ?? message.Settings.GetType().Name}"
+            ),
+        };
+
+        await InitializeAsync(textSample);
     }
 }

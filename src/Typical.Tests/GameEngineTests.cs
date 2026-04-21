@@ -36,7 +36,7 @@ public class TypicalGameTests
         var game = new GameEngine(_defaultOptions, _logger);
 
         // Act
-        game.LoadText(await _mockTextProvider.GetTextAsync());
+        game.LoadText(await _mockTextProvider.GetWordsAsync());
 
         // Assert
         await Assert.That(game.TargetText).IsEqualTo(expectedText);

@@ -2,6 +2,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>typical</AssemblyName>
+    <PublishAot>true</PublishAot>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Diagnostics" />
@@ -42,5 +44,11 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Typical.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

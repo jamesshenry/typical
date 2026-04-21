@@ -1,5 +1,5 @@
+using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Terminal.Gui.App;
 using Terminal.Gui.ViewBase;
 using Typical.Binding;
 using Typical.Core.Interfaces;
@@ -10,7 +10,7 @@ namespace Typical.Views;
 /// Base class for Views that are bound to ViewModels.
 /// Provides lifecycle management and binding context.
 /// </summary>
-public abstract class BindableView<TViewModel> : View, IBindableView
+public abstract class BindableView<TViewModel> : View, INavigatableView
     where TViewModel : ObservableObject
 {
     /// <summary>
@@ -32,8 +32,6 @@ public abstract class BindableView<TViewModel> : View, IBindableView
     {
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         BindingContext = new BindingContext();
-
-        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         Initialized += (s, e) => SetupBindings();
     }
@@ -78,5 +76,14 @@ public abstract class BindableView<TViewModel> : View, IBindableView
             _disposed = true;
         }
         base.Dispose(disposing);
+    }
+
+    protected void Bind<T>(
+        Func<T> getter,
+        Action<T> updateUi,
+        [CallerArgumentExpression(nameof(getter))] string? expression = null
+    )
+    {
+        BindingContext.AddBinding(ViewModel.Bind(getter, updateUi, expression));
     }
 }
