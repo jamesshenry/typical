@@ -3,7 +3,7 @@ namespace Typical.Configuration;
 public static class AppPaths
 {
     // Use a fixed string to avoid accidental name changes if the class is renamed
-    public const string AppName = "CAFConsole";
+    public const string AppName = nameof(Typical);
     public static string AppNameLower => AppName.ToLower();
 
     public static string DataHome =>

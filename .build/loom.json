@@ -6,12 +6,12 @@
     "cleanDirectories": [],
     "enableNugetUpload": false,
     "enableGithubRelease": false,
-    "enableVelopackRelease": false
+    "enableVelopackRelease": true
   },
   "artifacts": {
     "Typical": {
       "project": "src\\Typical\\Typical.csproj",
-      "type": "Executable"
+      "type": "Velopack"
     }
   },
   "global": {

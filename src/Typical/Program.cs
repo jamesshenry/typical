@@ -1,11 +1,10 @@
-﻿using DotNetPathUtils;
-using Kuddle.Extensions.Configuration;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MinCh.Infrastructure;
 using Serilog;
 using Terminal.Gui.App;
 using Terminal.Gui.Configuration;
+using Typical.Configuration;
 using Typical.Core.Services;
 using Typical.DataAccess;
 using Typical.DataAccess.Sqlite;
@@ -14,19 +13,12 @@ using Typical.Views;
 using Velopack;
 using ConfigurationManager = Terminal.Gui.Configuration.ConfigurationManager;
 
-if (OperatingSystem.IsWindows())
-{
-    var appDirectory = Path.GetDirectoryName(AppContext.BaseDirectory)!;
-    var pathHelper = new PathEnvironmentHelper(new PathUtilsOptions() { PrefixWithPeriod = false });
-    VelopackApp
-        .Build()
-        .OnAfterInstallFastCallback(v => pathHelper.EnsureDirectoryIsInPath(appDirectory))
-        .OnBeforeUninstallFastCallback(v => pathHelper.RemoveDirectoryFromPath(appDirectory!))
-        .Run();
-}
+VelopackApp.Build().Run();
 
 Log.Logger = Typical.Services.ServiceExtensions.CreateAppLogger();
 Log.Information("Application starting...");
+
+await StartupTasks.InitializeAsync();
 
 try
 {
@@ -39,6 +31,9 @@ try
     builder.AddTuiInfrastructure();
 
     builder.Services.AddTypicalDb(builder.Configuration);
+    builder.Services.PostConfigure<TypicalDbOptions>(opts =>
+        opts.DataDirectory = AppPaths.DataHome
+    );
 
     using IHost host = builder.Build();
 
