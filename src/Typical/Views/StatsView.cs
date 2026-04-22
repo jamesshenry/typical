@@ -29,7 +29,7 @@ public class StatsView : BindableView<StatsViewModel>
                 if (stats is null)
                     return;
                 _statsLabel.Text =
-                    $"Elapsed: {stats.ElapsedTime:mm\\:ss} WPM: {Math.Round(stats.WordsPerMinute)} | Acc: {stats.Accuracy}";
+                    $"Elapsed: {stats.ElapsedTime:mm\\:ss} WPM: {Math.Round(stats.WordsPerMinute)} | Acc: {stats.Accuracy.ToString()}";
                 SetNeedsDraw();
             }
         );
