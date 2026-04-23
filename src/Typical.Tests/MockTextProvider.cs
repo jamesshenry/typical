@@ -19,7 +19,7 @@ public class MockTextProvider : ITextProvider
         return await Task.FromResult(new TextSample() { Source = "Tests", Text = _textToReturn });
     }
 
-    public async Task<TextSample> GetQuoteAsync(QuoteLength length)
+    public async Task<TextSample> GetQuoteAsync(QuoteLength? length)
     {
         return await Task.FromResult(new TextSample() { Source = "Tests", Text = _textToReturn });
     }

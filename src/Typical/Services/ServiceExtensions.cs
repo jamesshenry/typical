@@ -1,4 +1,3 @@
-using Kuddle.Extensions.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,11 +26,12 @@ public static class ServiceExtensions
             .MinimumLevel.Information()
             .WriteTo.File(
                 formatter: new MessageTemplateTextFormatter(OutputTemplate),
-                Path.Combine("logs", "app-.log"),
+                Path.Combine(AppPaths.LogDirectory, "app-.log"),
                 restrictedToMinimumLevel: LogEventLevel.Debug,
                 shared: true,
                 rollingInterval: RollingInterval.Day
             )
+            .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Fatal)
             .Enrich.FromLogContext()
             .Enrich.With<SourceClassEnricher>()
             .CreateLogger();

@@ -9,13 +9,6 @@
       ],
       "rollForward": false
     },
-    "vpk": {
-      "version": "0.0.1298",
-      "commands": [
-        "vpk"
-      ],
-      "rollForward": false
-    },
     "minver-cli": {
       "version": "7.0.0",
       "commands": [
@@ -24,9 +17,16 @@
       "rollForward": false
     },
     "loom.build": {
-      "version": "0.4.2",
+      "version": "0.5.0",
       "commands": [
         "loom"
+      ],
+      "rollForward": false
+    },
+    "vpk": {
+      "version": "0.0.1589-ga2c5a97",
+      "commands": [
+        "vpk"
       ],
       "rollForward": false
     }

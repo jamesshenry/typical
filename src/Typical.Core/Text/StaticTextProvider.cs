@@ -8,7 +8,7 @@ public class StaticTextProvider(ITextRepository textRepository) : ITextProvider
 {
     private readonly Faker _faker = new Faker("en_GB");
 
-    public async Task<TextSample> GetQuoteAsync(QuoteLength length)
+    public async Task<TextSample> GetQuoteAsync(QuoteLength? length = null)
     {
         var result = await textRepository.GetRandomQuoteAsync();
         return new TextSample()

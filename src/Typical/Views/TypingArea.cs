@@ -21,13 +21,14 @@ public class TypingArea : View
     {
         _viewModel = viewModel;
         _formatter.WordWrap = true;
-
-        var schemes = SchemeManager.GetSchemesForCurrentTheme();
-        var errorScheme = schemes["Error"];
-        var normalScheme = schemes["Base"];
+        var errorScheme = SchemeManager.GetScheme(Terminal.Gui.Drawing.Schemes.Error);
+        var normalScheme = SchemeManager.GetScheme(Terminal.Gui.Drawing.Schemes.Base);
         _correctAttr = normalScheme!.HotNormal;
         _incorrectAttr = errorScheme!.Active;
         _untypedAttr = normalScheme!.Normal;
+        // _correctAttr = new Attribute(Terminal.Gui.Drawing.ColorName16.Blue);
+        // _incorrectAttr = new Attribute(Terminal.Gui.Drawing.ColorName16.Red);
+        // _untypedAttr = new Attribute(Terminal.Gui.Drawing.ColorName16.Gray);
     }
 
     public void RefreshText()

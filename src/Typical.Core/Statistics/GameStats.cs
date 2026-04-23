@@ -74,11 +74,13 @@ public class GameStats
         double wpm = elapsed.TotalMinutes > 0 ? _correctCount / 5.0 / elapsed.TotalMinutes : 0;
 
         int totalAttempted = _correctCount + _incorrectCount;
-        double accuracy = totalAttempted > 0 ? _correctCount / (double)totalAttempted * 100 : 100;
+        Accuracy accuracy = Accuracy.From(
+            totalAttempted > 0 ? _correctCount / (double)totalAttempted * 100 : 100
+        );
 
         return new GameStatisticsSnapshot(
             WordsPerMinute: wpm,
-            Accuracy: accuracy,
+            Accuracy: (Accuracy)accuracy,
             Chars: new CharacterStats(
                 _correctCount,
                 _incorrectCount,

@@ -39,7 +39,10 @@ public partial class TypingViewModel
         _navigationService = navigationService;
         _logger = logger;
 
-        WeakReferenceMessenger.Default.Register(this);
+        WeakReferenceMessenger.Default.Register<TypingViewModel, GameResetMessage>(
+            this,
+            (r, m) => r.Receive(m)
+        );
     }
 
     public bool IsGameOver => _engine.IsOver;
@@ -48,11 +51,11 @@ public partial class TypingViewModel
     /// Processes input received from the View.
     /// Maps Key events to Core Game Logic.
     /// </summary>
-    public void ProcessInput(char c, bool isBackspace)
+    public async void ProcessInput(char c, bool isBackspace)
     {
         if (_engine.IsOver)
         {
-            _navigationService.NavigateTo<SettingsViewModel>();
+            await InitializeAsync();
             return;
         }
 
@@ -105,7 +108,7 @@ public partial class TypingViewModel
 
     public async Task InitializeAsync(TextSample? textSample = null)
     {
-        var result = textSample ?? await _textProvider.GetWordsAsync();
+        var result = textSample ?? await _textProvider.GetQuoteAsync();
         _engine.LoadText(result);
         TargetText = _engine.TargetText;
 

@@ -12,7 +12,10 @@ public partial class StatsViewModel : ObservableObject, IRecipient<GameStateUpda
 
     public StatsViewModel()
     {
-        WeakReferenceMessenger.Default.Register(this);
+        WeakReferenceMessenger.Default.Register<StatsViewModel, GameStateUpdatedMessage>(
+            this,
+            (r, m) => r.Receive(m)
+        );
     }
 
     public void Receive(GameStateUpdatedMessage message)

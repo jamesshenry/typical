@@ -88,11 +88,11 @@ public class GameEngine
     {
         if (_userInput.Length == TargetText.Length)
         {
-            if (_userInput.ToString().Equals(TargetText))
+            if (_userInput.ToString().Equals(TargetText) || !_gameOptions.Require100Accuracy)
             {
                 IsOver = true;
                 Stats.Stop();
-                CoreLogs.GameFinished(_logger);
+                CoreLogs.GameFinished(_logger, Stats.CreateSnapshot());
             }
         }
     }

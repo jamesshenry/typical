@@ -12,9 +12,9 @@ public static partial class CoreLogs
     [LoggerMessage(
         EventId = 2001,
         Level = LogLevel.Information,
-        Message = "Game finished successfully."
+        Message = "Game finished successfully. {Stats}"
     )]
-    public static partial void GameFinished(ILogger logger);
+    public static partial void GameFinished(ILogger logger, GameStatisticsSnapshot stats);
 
     [LoggerMessage(EventId = 2002, Level = LogLevel.Information, Message = "Game quit by user.")]
     public static partial void GameQuit(ILogger logger);

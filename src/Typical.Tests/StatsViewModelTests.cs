@@ -16,7 +16,7 @@ public class StatsViewModelTests
 
         var fakeStats = new GameStatisticsSnapshot(
             WordsPerMinute: 65.8,
-            Accuracy: 98.5,
+            Accuracy: (Accuracy)98.5,
             Chars: new CharacterStats(0, 0, 0, 0),
             ElapsedTime: TimeSpan.FromSeconds(30),
             IsRunning: true
@@ -33,6 +33,6 @@ public class StatsViewModelTests
 
         await Assert.That(sut.Stats).IsNotNull();
         await Assert.That(sut.Stats!.WordsPerMinute).IsEqualTo(65.8);
-        await Assert.That(sut.Stats!.Accuracy).IsEqualTo(98.5);
+        await Assert.That(sut.Stats!.Accuracy).IsEqualTo((Accuracy)98.5);
     }
 }
