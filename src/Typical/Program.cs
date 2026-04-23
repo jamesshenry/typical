@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MinCh.Infrastructure;
 using Serilog;
 using Terminal.Gui.App;
-using Terminal.Gui.Configuration;
 using Typical.Configuration;
 using Typical.Core.Services;
 using Typical.DataAccess;
@@ -11,7 +11,6 @@ using Typical.DataAccess.Sqlite;
 using Typical.Services;
 using Typical.Views;
 using Velopack;
-using ConfigurationManager = Terminal.Gui.Configuration.ConfigurationManager;
 
 VelopackApp.Build().Run();
 
@@ -36,17 +35,8 @@ try
     );
 
     using IHost host = builder.Build();
-
-    var migrator = host.Services.GetRequiredService<IDatabaseMigrator>();
-
-    await migrator.EnsureDatabaseUpdated();
-
-    using var app = host.Services.GetRequiredService<IApplication>();
 #pragma warning disable IL2026, IL3050
-    ConfigurationManager.Enable(ConfigLocations.All);
-    app.Init();
-    var mainShell = host.Services.GetRequiredService<MainShell>();
-    app.Run(mainShell);
+    await Run(host);
 #pragma warning restore IL2026, IL3050
 }
 catch (Exception ex)
@@ -56,4 +46,20 @@ catch (Exception ex)
 finally
 {
     await Log.CloseAndFlushAsync();
+}
+
+[RequiresUnreferencedCode("Calls Terminal.Gui.Application.Init(IDriver, String)")]
+[RequiresDynamicCode("Calls Terminal.Gui.Application.Init(IDriver, String)")]
+static async Task Run(IHost host)
+{
+    var migrator = host.Services.GetRequiredService<IDatabaseMigrator>();
+    await migrator.EnsureDatabaseUpdated();
+
+    using var app = host.Services.GetRequiredService<IApplication>();
+    app.Init();
+
+    var mainShell = host.Services.GetRequiredService<MainShell>();
+    app.Run(mainShell);
+
+    app.Dispose();
 }

@@ -18,8 +18,14 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.6" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.6" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.6" />
-    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.6" />
+    <PackageVersion
+      Include="Microsoft.Extensions.DependencyInjection.Abstractions"
+      Version="10.0.6"
+    />
+    <PackageVersion
+      Include="Microsoft.Extensions.Options.ConfigurationExtensions"
+      Version="10.0.6"
+    />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.6" />
@@ -40,7 +46,7 @@
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Spectre.Console" Version="0.55.2" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
-    <PackageVersion Include="Terminal.Gui" Version="2.0.0-rc.3" />
+    <PackageVersion Include="Terminal.Gui" Version="2.0.0-rc.4" />
     <PackageVersion Include="Velopack" Version="0.0.1298" />
     <PackageVersion Include="Vogen" Version="8.0.5" />
     <PackageVersion Include="Xdg.Directories" Version="0.1.2" />
