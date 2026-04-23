@@ -5,7 +5,7 @@
     "artifactsPath": ".artifacts",
     "cleanDirectories": [],
     "enableNugetUpload": false,
-    "enableGithubRelease": false,
+    "enableGithubRelease": true,
     "enableVelopackRelease": true
   },
   "artifacts": {
