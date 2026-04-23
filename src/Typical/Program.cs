@@ -1,10 +1,10 @@
-﻿using DotNetPathUtils;
-using Kuddle.Extensions.Configuration;
-using Microsoft.Extensions.Configuration;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MinCh.Infrastructure;
 using Serilog;
 using Terminal.Gui.App;
+using Typical.Configuration;
 using Typical.Core.Services;
 using Typical.DataAccess;
 using Typical.DataAccess.Sqlite;
@@ -12,19 +12,12 @@ using Typical.Services;
 using Typical.Views;
 using Velopack;
 
-if (OperatingSystem.IsWindows())
-{
-    var appDirectory = Path.GetDirectoryName(AppContext.BaseDirectory)!;
-    var pathHelper = new PathEnvironmentHelper(new PathUtilsOptions() { PrefixWithPeriod = false });
-    VelopackApp
-        .Build()
-        .OnAfterInstallFastCallback(v => pathHelper.EnsureDirectoryIsInPath(appDirectory))
-        .OnBeforeUninstallFastCallback(v => pathHelper.RemoveDirectoryFromPath(appDirectory!))
-        .Run();
-}
+VelopackApp.Build().Run();
 
 Log.Logger = Typical.Services.ServiceExtensions.CreateAppLogger();
 Log.Information("Application starting...");
+
+await StartupTasks.InitializeAsync();
 
 try
 {
@@ -37,18 +30,14 @@ try
     builder.AddTuiInfrastructure();
 
     builder.Services.AddTypicalDb(builder.Configuration);
+    builder.Services.PostConfigure<TypicalDbOptions>(opts =>
+        opts.DataDirectory = AppPaths.DataHome
+    );
 
     using IHost host = builder.Build();
-
-    var migrator = host.Services.GetRequiredService<IDatabaseMigrator>();
-
-    await migrator.EnsureDatabaseUpdated();
-
-    using var app = host.Services.GetRequiredService<IApplication>();
-    app.Init();
-    var mainShell = host.Services.GetRequiredService<MainShell>();
-
-    app.Run(mainShell);
+#pragma warning disable IL2026, IL3050
+    await Run(host);
+#pragma warning restore IL2026, IL3050
 }
 catch (Exception ex)
 {
@@ -57,4 +46,20 @@ catch (Exception ex)
 finally
 {
     await Log.CloseAndFlushAsync();
+}
+
+[RequiresUnreferencedCode("Calls Terminal.Gui.Application.Init(IDriver, String)")]
+[RequiresDynamicCode("Calls Terminal.Gui.Application.Init(IDriver, String)")]
+static async Task Run(IHost host)
+{
+    var migrator = host.Services.GetRequiredService<IDatabaseMigrator>();
+    await migrator.EnsureDatabaseUpdated();
+
+    using var app = host.Services.GetRequiredService<IApplication>();
+    app.Init();
+
+    var mainShell = host.Services.GetRequiredService<MainShell>();
+    app.Run(mainShell);
+
+    app.Dispose();
 }

@@ -32,7 +32,10 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<Navigat
         _dialogService = dialogService;
         _logger = logger;
 
-        WeakReferenceMessenger.Default.RegisterAll(this);
+        WeakReferenceMessenger.Default.Register<MainViewModel, NavigationChangedMessage>(
+            this,
+            (r, m) => r.Receive(m)
+        );
     }
 
     [RelayCommand]

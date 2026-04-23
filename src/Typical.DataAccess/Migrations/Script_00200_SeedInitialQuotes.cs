@@ -24,7 +24,7 @@ public class Script_00200_SeedInitialQuotes : IScript
             return "";
 
         var assembly = typeof(Script_00200_SeedInitialQuotes).Assembly;
-        var path = Path.GetDirectoryName(assembly.Location)!;
+        var path = AppContext.BaseDirectory;
         using var stream = File.OpenRead(Path.Combine(path, "Migrations", "quotes.json"));
         if (stream is null)
             throw new FileNotFoundException("Could not find embedded quotes.json");

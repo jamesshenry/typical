@@ -1,8 +1,5 @@
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
-using Terminal.Gui.Configuration;
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
@@ -34,9 +31,6 @@ public class MainShell : Window
         BorderStyle = LineStyle.None;
         Title = _viewModel.AppTitle;
 
-        ThemeScope currentTheme = ThemeManager.GetCurrentTheme();
-        var schemes = SchemeManager.GetSchemesForCurrentTheme();
-        var scheme = SchemeManager.GetScheme(Schemes.Base);
         _leftSpacer = new View
         {
             X = 0,
