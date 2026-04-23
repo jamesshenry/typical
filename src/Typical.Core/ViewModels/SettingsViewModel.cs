@@ -32,15 +32,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         var message = new GameResetMessage(new QuoteMode(QuoteLength.Medium));
         WeakReferenceMessenger.Default.Send(message);
-        // if (_dialogService.Confirm("Save?", "Save settings?"))
-        // {
-        //     _logger.LogInformation("Settings saved");
-        //     _navService.NavigateTo<HomeViewModel>();
-        // }
-        // else
-        // {
-        //     _logger.LogInformation("Not saved");
-        // }
     }
 
     [RelayCommand]
