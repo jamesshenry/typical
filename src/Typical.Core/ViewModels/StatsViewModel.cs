@@ -8,7 +8,7 @@ namespace Typical.Core.ViewModels;
 public partial class StatsViewModel : ObservableObject, IRecipient<GameStateUpdatedMessage>
 {
     [ObservableProperty]
-    public partial GameStatisticsSnapshot? Stats { get; set; }
+    public partial GameSnapshot Stats { get; set; }
 
     public StatsViewModel()
     {
@@ -20,6 +20,6 @@ public partial class StatsViewModel : ObservableObject, IRecipient<GameStateUpda
 
     public void Receive(GameStateUpdatedMessage message)
     {
-        Stats = message.Statistics;
+        Stats = message.State;
     }
 }
