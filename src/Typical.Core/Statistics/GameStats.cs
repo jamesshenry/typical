@@ -59,6 +59,7 @@ public class GameStats
         {
             _logs.RemoveAt(indexToRemove);
         }
+        UpdateCounts(KeystrokeType.Correction, 1);
         _logs.AddAndDebug(
             new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp())
         );
