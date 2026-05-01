@@ -1,6 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+
 using Microsoft.Extensions.Logging;
+
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
@@ -19,7 +23,7 @@ public partial class TypingViewModel
     private readonly ILogger<TypingViewModel> _logger;
 
     [ObservableProperty]
-    private string _targetText = "";
+    public required partial TextSample Target { get; set; } = TextSample.Empty;
 
     // [ObservableProperty]
     // private bool _isGameOver;
@@ -27,6 +31,7 @@ public partial class TypingViewModel
     [ObservableProperty]
     public partial KeystrokeType[] DisplayStates { get; set; } = [];
 
+    [SetsRequiredMembers]
     public TypingViewModel(
         GameEngine engine,
         ITextProvider textProvider,
@@ -76,17 +81,17 @@ public partial class TypingViewModel
         UpdateState();
     }
 
+    public void RefreshState() => UpdateState();
+
     /// <summary>
     /// Synchronizes the Engine state with ViewModel properties.
     /// This triggers PropertyChanged notifications for the View.
     /// </summary>
     private void UpdateState()
     {
-        var snapshot = _engine.Stats.CreateSnapshot();
+        var snapshot = _engine.CreateSnapshot();
 
-        WeakReferenceMessenger.Default.Send(
-            new GameStateUpdatedMessage(TargetText, _engine.UserInput, snapshot, _engine.IsOver)
-        );
+        WeakReferenceMessenger.Default.Send(new GameStateUpdatedMessage(snapshot));
     }
 
     public KeystrokeType GetStatus(int index)
@@ -108,11 +113,9 @@ public partial class TypingViewModel
 
     public async Task InitializeAsync(TextSample? textSample = null)
     {
-        var result = textSample ?? await _textProvider.GetQuoteAsync();
-        _engine.LoadText(result);
-        TargetText = _engine.TargetText;
-
-        DisplayStates = new KeystrokeType[TargetText.Length];
+        Target = textSample ?? await _textProvider.GetQuoteAsync();
+        _engine.LoadText(Target);
+        DisplayStates = new KeystrokeType[Target.Text.Length];
         Array.Fill(DisplayStates, KeystrokeType.Untyped);
         UpdateState();
     }

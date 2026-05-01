@@ -3,10 +3,7 @@ using Typical.Core.Statistics;
 namespace Typical.Core.Events;
 
 public record GameStateUpdatedMessage(
-    string TargetText,
-    string UserInput,
-    GameStatisticsSnapshot Statistics,
-    bool IsOver
+    GameSnapshot State
 );
 
 public record GameResetMessage(ModeSettings Settings);

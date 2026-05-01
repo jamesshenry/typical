@@ -31,12 +31,12 @@ public class TypingArea : View
         // _untypedAttr = new Attribute(Terminal.Gui.Drawing.ColorName16.Gray);
     }
 
-    public void RefreshText()
+    public void Refresh()
     {
         if (Viewport.Width <= 0)
             return;
 
-        _formatter.Text = _viewModel.TargetText;
+        _formatter.Text = _viewModel.Target.Text;
         _formatter.ConstrainToWidth = Viewport.Width;
         _formatter.PreserveTrailingSpaces = true;
         _cachedLines = _formatter.GetLines();

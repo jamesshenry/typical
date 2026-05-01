@@ -40,7 +40,7 @@ public abstract class BindableView<TViewModel> : View, INavigatableView
     /// Template method for setting up bindings.
     /// Override in derived classes to configure bindings.
     /// </summary>
-    protected abstract void SetupBindings();
+    protected virtual void SetupBindings() { }
 
     /// <summary>
     /// Called when a ViewModel property changes.
@@ -81,7 +81,7 @@ public abstract class BindableView<TViewModel> : View, INavigatableView
     protected void Bind<T>(
         Func<T> getter,
         Action<T> updateUi,
-        [CallerArgumentExpression(nameof(getter))] string? expression = null
+        [CallerArgumentExpression(nameof(getter))] string expression = default!
     )
     {
         BindingContext.AddBinding(ViewModel.Bind(getter, updateUi, expression));

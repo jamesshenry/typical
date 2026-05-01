@@ -69,19 +69,18 @@ public class GameStats
 
     internal void Stop() => _endTimestamp = _timeProvider.GetTimestamp();
 
-    public GameStatisticsSnapshot CreateSnapshot()
+    public GameSnapshot CreateSnapshot(string targetText, string userInput, bool isOver)
     {
         var elapsed = ElapsedTime;
         double wpm = elapsed.TotalMinutes > 0 ? _correctCount / 5.0 / elapsed.TotalMinutes : 0;
-
         int totalAttempted = _correctCount + _incorrectCount;
         Accuracy accuracy = Accuracy.From(
             totalAttempted > 0 ? _correctCount / (double)totalAttempted * 100 : 100
         );
 
-        return new GameStatisticsSnapshot(
+        return new GameSnapshot(
             WordsPerMinute: wpm,
-            Accuracy: (Accuracy)accuracy,
+            Accuracy: accuracy,
             Chars: new CharacterStats(
                 _correctCount,
                 _incorrectCount,
@@ -89,7 +88,10 @@ public class GameStats
                 _correctionCount
             ),
             ElapsedTime: elapsed,
-            IsRunning: this.IsRunning
+            IsRunning: IsRunning,
+            TargetText: targetText,
+            UserInput: userInput,
+            IsOver: isOver
         );
     }
 
