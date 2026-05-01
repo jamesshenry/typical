@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging;
+
 using Typical.Core.Events;
 using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
@@ -29,8 +30,7 @@ public class StatsViewModelTests
 
         messenger.Send(gameEvent);
 
-        await Assert.That(sut.Stats).IsNotNull();
-        await Assert.That(sut.Stats?.WordsPerMinute).IsEqualTo(65.8);
-        await Assert.That(sut.Stats?.Accuracy).IsEqualTo((Accuracy)98.5);
+        await Assert.That(sut.Stats.WordsPerMinute).IsEqualTo(65.8);
+        await Assert.That(sut.Stats.Accuracy).IsEqualTo((Accuracy)98.5);
     }
 }
