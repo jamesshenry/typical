@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using System.Text;
+using System.Timers;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
+using Terminal.Gui.Views;
 using Typical.Core.ViewModels;
 
 namespace Typical.Views;
@@ -9,6 +11,8 @@ namespace Typical.Views;
 public class TypingView : BindableView<TypingViewModel>
 {
     private readonly TypingArea _typingArea;
+    private readonly Label _sourceLabel;
+    private readonly System.Timers.Timer _refreshTimer = new(100);
 
     public TypingView(TypingViewModel viewModel)
         : base(viewModel)
@@ -26,9 +30,17 @@ public class TypingView : BindableView<TypingViewModel>
             Width = Dim.Fill(),
             Height = Dim.Fill(),
         };
+        _sourceLabel = new Label();
         Add(_typingArea);
 
-        Initialized += (s, e) => _ = InitializeViewAsync();
+        _refreshTimer.AutoReset = true;
+        _refreshTimer.Elapsed += OnRefreshTimerElapsed;
+
+        Initialized += (s, e) =>
+        {
+            _ = InitializeViewAsync();
+            _refreshTimer.Start();
+        };
         this.Activating += (s, e) =>
         {
             this.SetFocus();
@@ -36,10 +48,20 @@ public class TypingView : BindableView<TypingViewModel>
         };
     }
 
+    private void OnRefreshTimerElapsed(object? sender, ElapsedEventArgs e)
+    {
+        if (ViewModel.IsGameOver)
+        {
+            return;
+        }
+
+        App?.Invoke(() => ViewModel.RefreshState());
+    }
+
     protected override void OnSubViewsLaidOut(LayoutEventArgs args)
     {
         base.OnSubViewsLaidOut(args);
-        _typingArea.RefreshText();
+        _typingArea.Refresh();
         _typingArea.SetNeedsDraw();
     }
 
@@ -56,48 +78,50 @@ public class TypingView : BindableView<TypingViewModel>
         if (rune != default || isBackspace)
         {
             char c = isBackspace ? '\0' : (char)rune.Value;
-            HandleInput(c, isBackspace);
+            try
+            {
+                ViewModel.ProcessInput(c, isBackspace);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Input Error: {ex.Message}");
+            }
 
             return true;
         }
 
-        return base.OnKeyDown(key);
-    }
-
-    private void HandleInput(char c, bool isBackspace)
-    {
-        try
-        {
-            ViewModel.ProcessInput(c, isBackspace);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Input Error: {ex.Message}");
-        }
+        return false;
     }
 
     protected override void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         App?.Invoke(() =>
         {
-            if (e.PropertyName == nameof(ViewModel.TargetText))
+            if (e.PropertyName == nameof(ViewModel.Target))
             {
-                _typingArea.RefreshText();
-                SetNeedsLayout();
+                _typingArea.Refresh();
+                _sourceLabel.Text = ViewModel.Target.Source;
             }
-            _typingArea.SetNeedsDraw();
         });
     }
 
-    protected override void SetupBindings() { }
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _refreshTimer.Stop();
+            _refreshTimer.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
 
     private async Task InitializeViewAsync()
     {
         try
         {
             await ViewModel.InitializeAsync();
-            _typingArea.RefreshText();
-            SetNeedsDraw();
+            _typingArea.Refresh();
         }
         catch (Exception ex)
         {

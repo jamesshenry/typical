@@ -34,6 +34,8 @@ public class GameEngine
     public bool IsRunning => !IsOver && Stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
+    public GameSnapshot CreateSnapshot() => Stats.CreateSnapshot(TargetText, UserInput, IsOver);
+
     public bool ProcessKeyPress(char c, bool isBackspace)
     {
         if (!IsRunning && !IsOver && TargetText.Length > 0 && !isBackspace)
@@ -92,7 +94,6 @@ public class GameEngine
             {
                 IsOver = true;
                 Stats.Stop();
-                CoreLogs.GameFinished(_logger, Stats.CreateSnapshot());
             }
         }
     }

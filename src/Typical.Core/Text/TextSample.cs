@@ -7,6 +7,16 @@ namespace Typical.Core.Text;
 /// </summary>
 public record TextSample
 {
+    public static TextSample Empty =>
+        new TextSample()
+        {
+            CharCount = 0,
+            Source = "None",
+            Text = "",
+            SourceId = null,
+            WordCount = 0,
+        };
+
     /// <summary>
     /// A unique identifier from the original data source, if available.
     /// This is useful for features like "Play Next Quote".
