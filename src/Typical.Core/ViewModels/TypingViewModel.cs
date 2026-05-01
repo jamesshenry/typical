@@ -1,6 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+
 using Microsoft.Extensions.Logging;
+
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
@@ -27,6 +31,7 @@ public partial class TypingViewModel
     [ObservableProperty]
     public partial KeystrokeType[] DisplayStates { get; set; } = [];
 
+    [SetsRequiredMembers]
     public TypingViewModel(
         GameEngine engine,
         ITextProvider textProvider,
