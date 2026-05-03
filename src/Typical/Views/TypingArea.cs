@@ -1,9 +1,12 @@
 using System.Text;
+
 using Terminal.Gui.Configuration;
 using Terminal.Gui.Text;
 using Terminal.Gui.ViewBase;
+
 using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
+
 using Attribute = Terminal.Gui.Drawing.Attribute;
 
 namespace Typical.Views;
@@ -26,9 +29,6 @@ public class TypingArea : View
         _correctAttr = normalScheme!.HotNormal;
         _incorrectAttr = errorScheme!.Active;
         _untypedAttr = normalScheme!.Normal;
-        // _correctAttr = new Attribute(Terminal.Gui.Drawing.ColorName16.Blue);
-        // _incorrectAttr = new Attribute(Terminal.Gui.Drawing.ColorName16.Red);
-        // _untypedAttr = new Attribute(Terminal.Gui.Drawing.ColorName16.Gray);
     }
 
     public void Refresh()
