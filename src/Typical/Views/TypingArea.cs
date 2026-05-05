@@ -1,12 +1,9 @@
 using System.Text;
-
 using Terminal.Gui.Configuration;
 using Terminal.Gui.Text;
 using Terminal.Gui.ViewBase;
-
 using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
-
 using Attribute = Terminal.Gui.Drawing.Attribute;
 
 namespace Typical.Views;

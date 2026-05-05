@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.Messaging;
-
 using Typical.Core.Events;
 using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
