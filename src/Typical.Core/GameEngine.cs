@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Typical.Core.Events;
@@ -10,14 +11,14 @@ namespace Typical.Core;
 
 public class GameEngine
 {
-    private readonly StringBuilder _userInput = new();
+    private string[] _targetGraphemes = [];
+    private readonly List<string> _userInputGraphemes = [];
     private readonly GameOptions _gameOptions;
 
     // TODO: Add HeatmapCollector
     private readonly ILogger<GameEngine> _logger;
-
     private KeystrokeType[] _charStates = [];
-    public IReadOnlyList<KeystrokeType> CharacterStates => _charStates;
+    private readonly StringBuilder _userInputBuffer = new StringBuilder();
 
     public GameEngine(GameOptions gameOptions, ILogger<GameEngine> logger)
     {
@@ -26,71 +27,68 @@ public class GameEngine
         _logger = logger;
     }
 
+    public IReadOnlyList<KeystrokeType> CharacterStates => _charStates;
     public GameStats Stats { get; private set; }
     public string TargetText { get; private set; } = string.Empty;
 
-    public string UserInput => _userInput.ToString();
+    public string UserInput => _userInputBuffer.ToString();
     public bool IsOver { get; private set; }
     public bool IsRunning => !IsOver && Stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
     public GameSnapshot CreateSnapshot() => Stats.CreateSnapshot(TargetText, UserInput, IsOver);
 
-    public bool ProcessKeyPress(char c, bool isBackspace)
+    public bool ProcessKeyPress(string input, bool isBackspace)
     {
-        if (!IsRunning && !IsOver && TargetText.Length > 0 && !isBackspace)
+        if (!IsRunning && !IsOver && !isBackspace)
         {
             Stats.Start();
             CoreLogs.GameStarting(_logger);
         }
 
-        int currentPos = _userInput.Length;
+        int currentPos = _userInputGraphemes.Count;
 
         if (isBackspace)
         {
             if (currentPos > 0)
             {
-                _userInput.Remove(currentPos - 1, 1);
+                string lastGrapheme = _userInputGraphemes[^1];
+                _userInputGraphemes.RemoveAt(currentPos - 1);
+                _userInputBuffer.Remove(
+                    _userInputBuffer.Length - lastGrapheme.Length,
+                    lastGrapheme.Length
+                );
                 _charStates[currentPos - 1] = KeystrokeType.Untyped;
                 Stats.RecordBackspace();
             }
             return true;
         }
 
-        if (currentPos >= TargetText.Length)
+        if (currentPos >= _targetGraphemes.Length)
             return false;
 
-        var type = DetermineKeystrokeType(c);
-        Stats.RecordKey(c, type);
+        // var type = DetermineKeystrokeType(c);
+        string normalizedInput = input.Normalize(NormalizationForm.FormC);
+        bool isCorrect = normalizedInput == _targetGraphemes[currentPos];
+        Stats.RecordKey(normalizedInput, _charStates[currentPos]);
 
-        bool isCorrect = type == KeystrokeType.Correct;
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
-            _userInput.Append(c);
-            _charStates[currentPos] = type;
-        }
-        else
-        {
-            return false;
+            _userInputGraphemes.Add(normalizedInput);
+            _userInputBuffer.Append(normalizedInput);
+            _charStates[currentPos] = isCorrect ? KeystrokeType.Correct : KeystrokeType.Incorrect;
         }
 
         CheckEndCondition();
         return true;
     }
 
-    private KeystrokeType DetermineKeystrokeType(char inputChar)
-    {
-        int currentPos = _userInput.Length;
-        return currentPos >= TargetText.Length ? KeystrokeType.Extra
-            : inputChar == TargetText[currentPos] ? KeystrokeType.Correct
-            : KeystrokeType.Incorrect;
-    }
-
     private void CheckEndCondition()
     {
-        if (_userInput.Length == TargetText.Length)
+        if (_userInputGraphemes.Count == _targetGraphemes.Length)
         {
-            if (_userInput.ToString().Equals(TargetText) || !_gameOptions.Require100Accuracy)
+            bool hasErrors = _charStates.Any(s => s == KeystrokeType.Incorrect);
+            if (!hasErrors || !_gameOptions.Require100Accuracy)
             {
                 IsOver = true;
                 Stats.Stop();
@@ -100,10 +98,22 @@ public class GameEngine
 
     public void LoadText(TextSample sample)
     {
-        var text = sample.Text;
-        TargetText = text;
-        _userInput.Clear();
-        _charStates = new KeystrokeType[text.Length];
+        TargetText = sample.Text.Normalize(NormalizationForm.FormC);
+
+        List<string> list = [];
+        var enumerator = StringInfo.GetTextElementEnumerator(TargetText);
+        enumerator.Reset();
+        while (enumerator.MoveNext())
+        {
+            list.Add(enumerator.GetTextElement());
+        }
+
+        _targetGraphemes = list.ToArray();
+
+        _userInputGraphemes.Clear();
+        _userInputBuffer.Clear();
+
+        _charStates = new KeystrokeType[_targetGraphemes.Length];
         Array.Fill(_charStates, KeystrokeType.Untyped);
 
         IsOver = false;

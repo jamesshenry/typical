@@ -53,7 +53,7 @@ public partial class TypingViewModel
     /// Processes input received from the View.
     /// Maps Key events to Core Game Logic.
     /// </summary>
-    public async void ProcessInput(char c, bool isBackspace)
+    public async void ProcessInput(string c, bool isBackspace)
     {
         if (_engine.IsOver)
         {
@@ -63,18 +63,7 @@ public partial class TypingViewModel
 
         bool accepted = _engine.ProcessKeyPress(c, isBackspace);
 
-        var states = _engine.CharacterStates.ToArray();
-
-        if (!accepted && !isBackspace && c != '\0')
-        {
-            int pos = _engine.UserInput.Length;
-            if (pos < states.Length)
-            {
-                states[pos] = KeystrokeType.Incorrect;
-            }
-        }
-
-        DisplayStates = states;
+        DisplayStates = _engine.CharacterStates.ToArray();
         UpdateState();
     }
 
@@ -89,13 +78,6 @@ public partial class TypingViewModel
         var snapshot = _engine.CreateSnapshot();
 
         WeakReferenceMessenger.Default.Send(new GameStateUpdatedMessage(snapshot));
-    }
-
-    public KeystrokeType GetStatus(int index)
-    {
-        return index < 0 || index >= _engine.CharacterStates.Count
-            ? KeystrokeType.Untyped
-            : _engine.CharacterStates[index];
     }
 
     public void OnNavigatedTo()

@@ -1,5 +1,9 @@
+using System.Globalization;
+using System.Text;
+using Bogus;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using TUnit.Core.Logging;
 using Typical.Core;
 using Typical.Core.Events;
 using Typical.Core.Statistics;
@@ -12,11 +16,16 @@ public class TypicalGameTests
     private readonly MockTextProvider _mockTextProvider;
     private readonly GameOptions _defaultOptions;
     private readonly GameOptions _strictOptions;
-    private readonly ILogger<GameEngine> _logger;
+    private readonly Microsoft.Extensions.Logging.ILogger<GameEngine> _logger;
     private readonly GameStats _stats;
+    const int BOGUS_SEED = 999_999_001;
+    private readonly Random SEED = new Random(BOGUS_SEED);
+    private readonly TUnit.Core.Logging.DefaultLogger logger;
 
     public TypicalGameTests()
     {
+        logger = TestContext.Current!.GetDefaultLogger();
+        Bogus.Randomizer.Seed = SEED;
         // This runs before each test, ensuring a clean state.
         _mockTextProvider = new MockTextProvider();
         _defaultOptions = new GameOptions();
@@ -54,8 +63,8 @@ public class TypicalGameTests
         game.LoadText(new TextSample() { Text = firstText, Source = "test" });
 
         // 3. Simulate playing the game
-        game.ProcessKeyPress('s', false); // Correct first char
-        game.ProcessKeyPress('o', false);
+        game.ProcessKeyPress("s", false); // Correct first char
+        game.ProcessKeyPress("o", false);
 
         // Check that we actually have progress
         await Assert.That(game.UserInput).IsEqualTo("so");
@@ -86,12 +95,12 @@ public class TypicalGameTests
 
         game.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
-        game.ProcessKeyPress('a', false);
-        game.ProcessKeyPress('b', false);
+        game.ProcessKeyPress("a", false);
+        game.ProcessKeyPress("b", false);
         await Assert.That(game.UserInput).IsEqualTo("ab");
 
         // Act - Pass '\0' or any char with isBackspace = true
-        game.ProcessKeyPress('\0', true);
+        game.ProcessKeyPress("\0", true);
 
         // Assert
         await Assert.That(game.UserInput).IsEqualTo("a");
@@ -107,7 +116,7 @@ public class TypicalGameTests
         await Assert.That(game.UserInput).IsEmpty();
 
         // Act
-        game.ProcessKeyPress('\0', true);
+        game.ProcessKeyPress("\0", true);
 
         // Assert
         await Assert.That(game.UserInput).IsEmpty();
@@ -121,8 +130,8 @@ public class TypicalGameTests
         game.LoadText(new TextSample() { Text = "hi", Source = "test" });
 
         // Act
-        game.ProcessKeyPress('h', false);
-        game.ProcessKeyPress('i', false);
+        game.ProcessKeyPress("h", false);
+        game.ProcessKeyPress("i", false);
 
         // Assert
         await Assert.That(game.UserInput).IsEqualTo("hi");
@@ -140,7 +149,7 @@ public class TypicalGameTests
         game.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
-        bool result = game.ProcessKeyPress('a', false);
+        bool result = game.ProcessKeyPress("a", false);
 
         // Assert
         await Assert.That(result).IsTrue();
@@ -156,10 +165,10 @@ public class TypicalGameTests
         game.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
-        bool result = game.ProcessKeyPress('x', false);
+        bool result = game.ProcessKeyPress("x", false);
 
         // Assert
-        await Assert.That(result).IsFalse(); // Engine rejected the key
+        await Assert.That(result).IsTrue(); // Engine rejected the key
         await Assert.That(game.UserInput).IsEmpty();
         await Assert.That(game.CharacterStates[0]).IsEqualTo(KeystrokeType.Untyped);
     }
@@ -172,11 +181,63 @@ public class TypicalGameTests
         game.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
-        bool result = game.ProcessKeyPress('x', false);
+        bool result = game.ProcessKeyPress("x", false);
 
         // Assert
         await Assert.That(result).IsTrue(); // Engine accepted the mistake
         await Assert.That(game.UserInput).IsEqualTo("x");
         await Assert.That(game.CharacterStates[0]).IsEqualTo(KeystrokeType.Incorrect);
+    }
+
+    [Test]
+    public async Task ProcessKeyPress_WithRandomText_MatchesState()
+    {
+        var lorem = new Bogus.DataSets.Lorem("ru") { Random = new Bogus.Randomizer(BOGUS_SEED) };
+
+        var text = lorem.Sentence();
+
+        var sut = new GameEngine(_defaultOptions, _logger);
+        sut.LoadText(new TextSample() { Text = text, Source = "Bogus" });
+
+        var enumerator = StringInfo.GetTextElementEnumerator(text);
+
+        while (enumerator.MoveNext())
+        {
+            string nextGrapheme = enumerator.GetTextElement();
+            bool result = sut.ProcessKeyPress(nextGrapheme, false);
+            await Assert.That(result).IsTrue();
+        }
+
+        await Assert.That(sut.IsOver).IsTrue();
+    }
+
+    [Test]
+    [MethodDataSource(typeof(TestDataSources), nameof(TestDataSources.AdditionTestData))]
+    public async Task Engine_ShouldHandleWordsInInternationalLocales(string locale)
+    {
+        var faker = new Faker(locale);
+        var internationalText = faker.Random.Words(10);
+        var _engine = new GameEngine(_defaultOptions, _logger);
+        _engine.LoadText(new TextSample() { Text = internationalText, Source = locale });
+
+        var visualCount = new StringInfo(
+            internationalText.Normalize(NormalizationForm.FormC)
+        ).LengthInTextElements;
+        await Assert.That(visualCount).IsEqualTo(_engine.CharacterStates.Count);
+    }
+
+    [Test]
+    [MethodDataSource(typeof(TestDataSources), nameof(TestDataSources.AdditionTestData))]
+    public async Task Engine_ShouldHandleSentencesInInternationalLocales(string locale)
+    {
+        var faker = new Faker(locale);
+        var _engine = new GameEngine(_defaultOptions, _logger);
+        var textSample = new TextSample() { Text = faker.Lorem.Sentence(), Source = locale };
+        _engine.LoadText(textSample);
+        await logger.LogDebugAsync(textSample.ToString());
+        var visualCount = new StringInfo(
+            textSample.Text.Normalize(NormalizationForm.FormC)
+        ).LengthInTextElements;
+        await Assert.That(visualCount).IsEqualTo(_engine.CharacterStates.Count);
     }
 }

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Terminal.Gui.Configuration;
 using Terminal.Gui.Text;
@@ -51,28 +52,51 @@ public class TypingArea : View
         if (_cachedLines.Count == 0 || Viewport.Width == 0)
             return true;
 
-        int yOffset = Math.Max(0, (Viewport.Height - _cachedLines.Count) / 2);
         int globalIdx = 0;
-        for (int y = 0; y < _cachedLines.Count; y++)
+        int yPos = Math.Max(0, (Viewport.Height - _cachedLines.Count) / 2);
+        foreach (var line in _cachedLines)
         {
-            string line = _cachedLines[y];
-            int xOffset = Math.Max(0, (Viewport.Width - line.Length) / 2);
+            int xPos = CalculateXOffset(line);
 
-            for (int x = 0; x < line.Length; x++)
+            var enumerator = StringInfo.GetTextElementEnumerator(line);
+            while (enumerator.MoveNext())
             {
+                string grapheme = enumerator.GetTextElement();
                 if (globalIdx >= _viewModel.DisplayStates.Length)
                     break;
 
                 var state = _viewModel.DisplayStates[globalIdx];
+                Rune r = grapheme.EnumerateRunes().First();
+                AddRune(xPos, yPos, r);
 
-                SetAttribute(GetAttributeForState(state));
-                AddRune(x + xOffset, y + yOffset, (Rune)line[x]);
-
+                xPos += r.GetColumns();
                 globalIdx++;
             }
+            yPos++;
         }
+        // int yOffset = Math.Max(0, (Viewport.Height - _cachedLines.Count) / 2);
+        // for (int y = 0; y < _cachedLines.Count; y++)
+        // {
+        //     string line = _cachedLines[y];
+        //     int xOffset = Math.Max(0, (Viewport.Width - line.Length) / 2);
+
+        //     for (int x = 0; x < line.Length; x++)
+        //     {
+        //         if (globalIdx >= _viewModel.DisplayStates.Length)
+        //             break;
+
+        //         var state = _viewModel.DisplayStates[globalIdx];
+
+        //         SetAttribute(GetAttributeForState(state));
+        //         AddRune(x + xOffset, y + yOffset, (Rune)line[x]);
+
+        //         globalIdx++;
+        //     }
+        // }
         return true;
     }
+
+    private int CalculateXOffset(string line) => Math.Max(0, (Viewport.Width - line.Length) / 2);
 
     private Attribute GetAttributeForState(KeystrokeType state) =>
         state switch

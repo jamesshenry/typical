@@ -39,13 +39,13 @@ public class GameStats
         }
     }
 
-    internal void RecordKey(char c, KeystrokeType type)
+    internal void RecordKey(string grapheme, KeystrokeType type)
     {
         if (!IsRunning)
             Start();
 
         UpdateCounts(type, 1);
-        _logs.AddAndDebug(new KeystrokeLog(c, type, _timeProvider.GetTimestamp()));
+        _logs.AddAndDebug(new KeystrokeLog(grapheme, type, _timeProvider.GetTimestamp()));
     }
 
     internal void RecordBackspace()
@@ -61,7 +61,7 @@ public class GameStats
         }
         UpdateCounts(KeystrokeType.Correction, 1);
         _logs.AddAndDebug(
-            new KeystrokeLog('\b', KeystrokeType.Correction, _timeProvider.GetTimestamp())
+            new KeystrokeLog("\b", KeystrokeType.Correction, _timeProvider.GetTimestamp())
         );
     }
 

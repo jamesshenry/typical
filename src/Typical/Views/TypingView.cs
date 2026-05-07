@@ -75,12 +75,15 @@ public class TypingView : BindableView<TypingViewModel>
         bool isBackspace = key == Key.Backspace;
         Rune rune = key.AsRune;
 
+        if (rune == default)
+            return base.OnKeyDown(key);
+
         if (rune != default || isBackspace)
         {
             char c = isBackspace ? '\0' : (char)rune.Value;
             try
             {
-                ViewModel.ProcessInput(c, isBackspace);
+                ViewModel.ProcessInput(key.AsGrapheme, isBackspace);
             }
             catch (Exception ex)
             {
