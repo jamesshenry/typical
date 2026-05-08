@@ -70,7 +70,6 @@ public class GameEngine
         // var type = DetermineKeystrokeType(c);
         string normalizedInput = input.Normalize(NormalizationForm.FormC);
         bool isCorrect = normalizedInput == _targetGraphemes[currentPos];
-        Stats.RecordKey(normalizedInput, _charStates[currentPos]);
 
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
@@ -79,6 +78,7 @@ public class GameEngine
             _charStates[currentPos] = isCorrect ? KeystrokeType.Correct : KeystrokeType.Incorrect;
         }
 
+        Stats.RecordKey(normalizedInput, _charStates[currentPos]);
         CheckEndCondition();
         return true;
     }

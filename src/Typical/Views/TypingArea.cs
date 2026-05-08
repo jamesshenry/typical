@@ -54,6 +54,7 @@ public class TypingArea : View
 
         int globalIdx = 0;
         int yPos = Math.Max(0, (Viewport.Height - _cachedLines.Count) / 2);
+
         foreach (var line in _cachedLines)
         {
             int xPos = CalculateXOffset(line);
@@ -62,11 +63,16 @@ public class TypingArea : View
             while (enumerator.MoveNext())
             {
                 string grapheme = enumerator.GetTextElement();
+
                 if (globalIdx >= _viewModel.DisplayStates.Length)
                     break;
 
                 var state = _viewModel.DisplayStates[globalIdx];
+
+                SetAttribute(GetAttributeForState(state));
+
                 Rune r = grapheme.EnumerateRunes().First();
+
                 AddRune(xPos, yPos, r);
 
                 xPos += r.GetColumns();
@@ -74,29 +80,18 @@ public class TypingArea : View
             }
             yPos++;
         }
-        // int yOffset = Math.Max(0, (Viewport.Height - _cachedLines.Count) / 2);
-        // for (int y = 0; y < _cachedLines.Count; y++)
-        // {
-        //     string line = _cachedLines[y];
-        //     int xOffset = Math.Max(0, (Viewport.Width - line.Length) / 2);
-
-        //     for (int x = 0; x < line.Length; x++)
-        //     {
-        //         if (globalIdx >= _viewModel.DisplayStates.Length)
-        //             break;
-
-        //         var state = _viewModel.DisplayStates[globalIdx];
-
-        //         SetAttribute(GetAttributeForState(state));
-        //         AddRune(x + xOffset, y + yOffset, (Rune)line[x]);
-
-        //         globalIdx++;
-        //     }
-        // }
         return true;
     }
 
-    private int CalculateXOffset(string line) => Math.Max(0, (Viewport.Width - line.Length) / 2);
+    private int CalculateXOffset(string line)
+    {
+        int visualWidth = 0;
+        foreach (var rune in line.EnumerateRunes())
+        {
+            visualWidth += rune.GetColumns();
+        }
+        return Math.Max(0, (Viewport.Width - visualWidth) / 2);
+    }
 
     private Attribute GetAttributeForState(KeystrokeType state) =>
         state switch

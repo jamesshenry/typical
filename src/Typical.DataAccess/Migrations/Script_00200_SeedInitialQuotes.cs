@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using DbUp;
 using DbUp.Engine;
+#pragma warning disable RCS1060 // Declare each type in separate file
 
 namespace Typical.DataAccess.Sqlite;
 
