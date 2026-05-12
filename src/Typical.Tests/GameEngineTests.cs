@@ -18,14 +18,14 @@ public class TypicalGameTests
     private readonly GameOptions _strictOptions;
     private readonly Microsoft.Extensions.Logging.ILogger<GameEngine> _logger;
     private readonly GameStats _stats;
-    const int BOGUS_SEED = 999_999_001;
-    private readonly Random SEED = new Random(BOGUS_SEED);
-    private readonly TUnit.Core.Logging.DefaultLogger logger;
+    private const int BOGUS_SEED = 999_999_001;
+    private readonly Random _seed = new Random(BOGUS_SEED);
+    private readonly DefaultLogger _testLogger;
 
     public TypicalGameTests()
     {
-        logger = TestContext.Current!.GetDefaultLogger();
-        Bogus.Randomizer.Seed = SEED;
+        _testLogger = TestContext.Current!.GetDefaultLogger();
+        Bogus.Randomizer.Seed = _seed;
         // This runs before each test, ensuring a clean state.
         _mockTextProvider = new MockTextProvider();
         _defaultOptions = new GameOptions();
@@ -234,7 +234,7 @@ public class TypicalGameTests
         var _engine = new GameEngine(_defaultOptions, _logger);
         var textSample = new TextSample() { Text = faker.Lorem.Sentence(), Source = locale };
         _engine.LoadText(textSample);
-        await logger.LogDebugAsync(textSample.ToString());
+        await _testLogger.LogDebugAsync(textSample.ToString());
         var visualCount = new StringInfo(
             textSample.Text.Normalize(NormalizationForm.FormC)
         ).LengthInTextElements;
