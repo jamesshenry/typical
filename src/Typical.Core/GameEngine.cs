@@ -28,7 +28,7 @@ public class GameEngine
     }
 
     public IReadOnlyList<KeystrokeType> CharacterStates => _charStates;
-    public GameStats Stats { get; private set; }
+    internal GameStats Stats { get; private set; }
     public string TargetText { get; private set; } = string.Empty;
 
     public string UserInput => _userInputBuffer.ToString();
@@ -36,7 +36,7 @@ public class GameEngine
     public bool IsRunning => !IsOver && Stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
-    public GameSnapshot CreateSnapshot() => Stats.CreateSnapshot(TargetText, UserInput, IsOver);
+    public GameSnapshot CreateSnapshot() => Stats.CreateSnapshot(TargetText, UserInput);
 
     public bool ProcessKeyPress(string input, bool isBackspace)
     {
@@ -67,7 +67,6 @@ public class GameEngine
         if (currentPos >= _targetGraphemes.Length)
             return false;
 
-        // var type = DetermineKeystrokeType(c);
         string normalizedInput = input.Normalize(NormalizationForm.FormC);
         bool isCorrect = normalizedInput == _targetGraphemes[currentPos];
 

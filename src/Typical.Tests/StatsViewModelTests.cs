@@ -15,21 +15,19 @@ public class StatsViewModelTests
         var sut = new StatsViewModel();
 
         var fakeState = new GameSnapshot(
-            WordsPerMinute: 65.8,
+            WPM: (WPM)65.8,
             Accuracy: (Accuracy)98.5,
-            Chars: new CharacterStats(0, 0, 0, 0),
+            Chars: new CharacterStats(0, 0, 0),
             ElapsedTime: TimeSpan.FromSeconds(30),
-            IsRunning: true,
             TargetText: "Test",
-            UserInput: "Test",
-            IsOver: true
+            UserInput: "Test"
         );
 
         var gameEvent = new GameStateUpdatedMessage(State: fakeState);
 
         messenger.Send(gameEvent);
 
-        await Assert.That(sut.Stats.WordsPerMinute).IsEqualTo(65.8);
+        await Assert.That(sut.Stats.WPM).IsEqualTo(65.8);
         await Assert.That(sut.Stats.Accuracy).IsEqualTo((Accuracy)98.5);
     }
 }
