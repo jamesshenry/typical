@@ -50,15 +50,6 @@ public class GameStats
 
     internal void RecordBackspace()
     {
-        if (_logs.Count == 0)
-            return;
-
-        int indexToRemove = _logs.FindLastIndex(log => log.Type != KeystrokeType.Correction);
-
-        if (indexToRemove != -1)
-        {
-            _logs.RemoveAt(indexToRemove);
-        }
         UpdateCounts(KeystrokeType.Correction, 1);
         _logs.AddAndDebug(
             new KeystrokeLog("\b", KeystrokeType.Correction, _timeProvider.GetTimestamp())
