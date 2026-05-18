@@ -27,7 +27,7 @@ public class StatsView : BindableView<StatsViewModel>
             stats =>
             {
                 _statsLabel.Text =
-                    $"Elapsed: {stats.ElapsedTime:mm\\:ss} | WPM: {Math.Round(stats.WPM)} | Acc: {stats.Accuracy.ToString()}";
+                    $"Elapsed: {stats.ElapsedTime:mm\\:ss} | WPM: {Math.Round(stats.WPM.Value)} | Acc: {stats.Accuracy.ToString()}";
                 SetNeedsDraw();
             }
         );

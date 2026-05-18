@@ -1,19 +1,10 @@
-using System.Diagnostics;
-
 namespace Typical.Core.Statistics;
 
 public class GameStats
 {
     private readonly TimeProvider _timeProvider;
-    private readonly List<KeystrokeLog> _keystrokes = [];
+    private readonly KeystrokeCollection _keystrokes = new();
     private readonly List<GameSnapshot> _snapshots = [];
-    public IReadOnlyList<KeystrokeLog> Keystrokes => _keystrokes.AsReadOnly();
-    public IReadOnlyList<GameSnapshot> Snapshots => _snapshots.AsReadOnly();
-
-    // Running Totals (State)
-    private int _correctCount;
-    private int _incorrectCount;
-    private int _correctionCount;
     private long? _startTimestamp;
     private long? _endTimestamp;
 
@@ -22,37 +13,29 @@ public class GameStats
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
-    private void UpdateCounts(KeystrokeType type, int change)
-    {
-        switch (type)
-        {
-            case KeystrokeType.Correct:
-                _correctCount += change;
-                break;
-            case KeystrokeType.Incorrect:
-                _incorrectCount += change;
-                break;
-            case KeystrokeType.Correction:
-                _correctionCount += change;
-                break;
-        }
-    }
+    public IReadOnlyList<KeystrokeLog> Keystrokes => _keystrokes.GetLog();
+
+    public IReadOnlyList<GameSnapshot> Snapshots => _snapshots.AsReadOnly();
+    public TimeSpan ElapsedTime =>
+        _startTimestamp.HasValue
+            ? _timeProvider.GetElapsedTime(
+                _startTimestamp.Value,
+                _endTimestamp ?? _timeProvider.GetTimestamp()
+            )
+            : TimeSpan.Zero;
+    public bool IsRunning => _startTimestamp.HasValue && !_endTimestamp.HasValue;
 
     internal void RecordKey(string grapheme, KeystrokeType type)
     {
         if (!IsRunning)
             Start();
 
-        UpdateCounts(type, 1);
-        _keystrokes.AddAndDebug(new KeystrokeLog(grapheme, type, _timeProvider.GetTimestamp()));
+        _keystrokes.Add(grapheme, type, _timeProvider.GetTimestamp());
     }
 
     internal void RecordBackspace()
     {
-        UpdateCounts(KeystrokeType.Correction, 1);
-        _keystrokes.AddAndDebug(
-            new KeystrokeLog("\b", KeystrokeType.Correction, _timeProvider.GetTimestamp())
-        );
+        _keystrokes.Add("\b", KeystrokeType.Correction, _timeProvider.GetTimestamp());
     }
 
     internal void Start()
@@ -63,54 +46,25 @@ public class GameStats
 
     private void Reset()
     {
+        _startTimestamp = null;
         _endTimestamp = null;
         _keystrokes.Clear();
         _snapshots.Clear();
-        _correctCount = 0;
-        _correctionCount = 0;
-        _incorrectCount = 0;
-        _correctCount = 0;
     }
 
     internal void Stop() => _endTimestamp = _timeProvider.GetTimestamp();
 
-    public GameSnapshot CreateSnapshot(string targetText, string userInput)
+    public GameSnapshot CreateSnapshot()
     {
-        var elapsed = ElapsedTime;
-
         var snapshot = GameSnapshot.Create(
-            _correctCount,
-            _correctCount + _incorrectCount + _correctionCount,
-            _incorrectCount,
-            elapsed,
-            targetText,
-            userInput
+            _keystrokes.CorrectCount,
+            _keystrokes.TotalPhysicalKeystrokes,
+            _keystrokes.ErrorCount,
+            ElapsedTime
         );
 
         _snapshots.Add(snapshot);
 
         return snapshot;
-    }
-
-    public TimeSpan ElapsedTime =>
-        _startTimestamp.HasValue
-            ? _timeProvider.GetElapsedTime(
-                _startTimestamp.Value,
-                _endTimestamp ?? _timeProvider.GetTimestamp()
-            )
-            : TimeSpan.Zero;
-
-    public bool IsRunning => _startTimestamp.HasValue && !_endTimestamp.HasValue;
-}
-
-public static class ListExtensions
-{
-    extension(List<KeystrokeLog> logs)
-    {
-        public void AddAndDebug(KeystrokeLog log)
-        {
-            logs.Add(log);
-            Debug.WriteLine(log);
-        }
     }
 }

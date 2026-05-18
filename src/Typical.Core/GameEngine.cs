@@ -36,7 +36,7 @@ public class GameEngine
     public bool IsRunning => !IsOver && Stats.IsRunning;
     public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
-    public GameSnapshot CreateSnapshot() => Stats.CreateSnapshot(TargetText, UserInput);
+    public GameSnapshot CreateSnapshot() => Stats.CreateSnapshot();
 
     public bool ProcessKeyPress(string input, bool isBackspace)
     {
@@ -70,6 +70,9 @@ public class GameEngine
         string normalizedInput = input.Normalize(NormalizationForm.FormC);
         bool isCorrect = normalizedInput == _targetGraphemes[currentPos];
 
+        Debug.WriteLine(
+            $"Correct: {isCorrect}, input: {normalizedInput}, expected: {_targetGraphemes[currentPos]}"
+        );
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
             _userInputGraphemes.Add(normalizedInput);
