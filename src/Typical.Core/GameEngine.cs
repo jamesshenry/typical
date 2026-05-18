@@ -11,14 +11,13 @@ namespace Typical.Core;
 
 public class GameEngine
 {
+    private readonly TypingBuffer _userInput = new();
     private string[] _targetGraphemes = [];
-    private readonly List<string> _userInputGraphemes = [];
     private readonly GameOptions _gameOptions;
 
     // TODO: Add HeatmapCollector
     private readonly ILogger<GameEngine> _logger;
     private KeystrokeType[] _charStates = [];
-    private readonly StringBuilder _userInputBuffer = new StringBuilder();
 
     public GameEngine(GameOptions gameOptions, ILogger<GameEngine> logger)
     {
@@ -31,10 +30,9 @@ public class GameEngine
     internal GameStats Stats { get; private set; }
     public string TargetText { get; private set; } = string.Empty;
 
-    public string UserInput => _userInputBuffer.ToString();
+    public string UserInput => _userInput.ToString();
     public bool IsOver { get; private set; }
     public bool IsRunning => !IsOver && Stats.IsRunning;
-    public int TargetFrameDelayMilliseconds => 1000 / _gameOptions.TargetFrameRate;
 
     public GameSnapshot CreateSnapshot() => Stats.CreateSnapshot();
 
@@ -46,48 +44,42 @@ public class GameEngine
             CoreLogs.GameStarting(_logger);
         }
 
-        int currentPos = _userInputGraphemes.Count;
-
         if (isBackspace)
         {
-            if (currentPos > 0)
+            if (_userInput.GraphemeCount > 0)
             {
-                string lastGrapheme = _userInputGraphemes[^1];
-                _userInputGraphemes.RemoveAt(currentPos - 1);
-                _userInputBuffer.Remove(
-                    _userInputBuffer.Length - lastGrapheme.Length,
-                    lastGrapheme.Length
-                );
-                _charStates[currentPos - 1] = KeystrokeType.Untyped;
+                int indexToReset = _userInput.GraphemeCount - 1;
+                _userInput.Pop();
+
+                _charStates[indexToReset] = KeystrokeType.Untyped;
                 Stats.RecordBackspace();
             }
             return true;
         }
 
+        int currentPos = _userInput.GraphemeCount;
         if (currentPos >= _targetGraphemes.Length)
             return false;
 
         string normalizedInput = input.Normalize(NormalizationForm.FormC);
         bool isCorrect = normalizedInput == _targetGraphemes[currentPos];
+        var type = isCorrect ? KeystrokeType.Correct : KeystrokeType.Incorrect;
 
-        Debug.WriteLine(
-            $"Correct: {isCorrect}, input: {normalizedInput}, expected: {_targetGraphemes[currentPos]}"
-        );
+        Stats.RecordKey(normalizedInput, type);
+
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
-            _userInputGraphemes.Add(normalizedInput);
-            _userInputBuffer.Append(normalizedInput);
-            _charStates[currentPos] = isCorrect ? KeystrokeType.Correct : KeystrokeType.Incorrect;
+            _userInput.Push(normalizedInput);
+            _charStates[currentPos] = type;
+            CheckEndCondition();
         }
 
-        Stats.RecordKey(normalizedInput, _charStates[currentPos]);
-        CheckEndCondition();
         return true;
     }
 
     private void CheckEndCondition()
     {
-        if (_userInputGraphemes.Count == _targetGraphemes.Length)
+        if (_userInput.GraphemeCount == _targetGraphemes.Length)
         {
             bool hasErrors = _charStates.Any(s => s == KeystrokeType.Incorrect);
             if (!hasErrors || !_gameOptions.Require100Accuracy)
@@ -111,9 +103,7 @@ public class GameEngine
         }
 
         _targetGraphemes = list.ToArray();
-
-        _userInputGraphemes.Clear();
-        _userInputBuffer.Clear();
+        _userInput.Clear();
 
         _charStates = new KeystrokeType[_targetGraphemes.Length];
         Array.Fill(_charStates, KeystrokeType.Untyped);
