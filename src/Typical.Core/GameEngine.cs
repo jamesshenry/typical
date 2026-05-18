@@ -17,7 +17,8 @@ public class GameEngine
 
     // TODO: Add HeatmapCollector
     private readonly ILogger<GameEngine> _logger;
-    private KeystrokeType[] _charStates = [];
+
+    // private KeystrokeType[] _charStates = [];
 
     public GameEngine(GameOptions gameOptions, ILogger<GameEngine> logger)
     {
@@ -26,7 +27,7 @@ public class GameEngine
         _logger = logger;
     }
 
-    public IReadOnlyList<KeystrokeType> CharacterStates => _charStates;
+    // public IReadOnlyList<KeystrokeType> CharacterStates => _userInput.GetCharacterStates();
     internal GameStats Stats { get; private set; }
     public string TargetText { get; private set; } = string.Empty;
 
@@ -48,10 +49,10 @@ public class GameEngine
         {
             if (_userInput.GraphemeCount > 0)
             {
-                int indexToReset = _userInput.GraphemeCount - 1;
+                // int indexToReset = _userInput.GraphemeCount - 1;
                 _userInput.Pop();
 
-                _charStates[indexToReset] = KeystrokeType.Untyped;
+                // _charStates[indexToReset] = KeystrokeType.Untyped;
                 Stats.RecordBackspace();
             }
             return true;
@@ -70,7 +71,7 @@ public class GameEngine
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
             _userInput.Push(normalizedInput);
-            _charStates[currentPos] = type;
+            // _charStates[currentPos] = type;
             CheckEndCondition();
         }
 
@@ -81,12 +82,15 @@ public class GameEngine
     {
         if (_userInput.GraphemeCount == _targetGraphemes.Length)
         {
-            bool hasErrors = _charStates.Any(s => s == KeystrokeType.Incorrect);
-            if (!hasErrors || !_gameOptions.Require100Accuracy)
+            // bool hasErrors = _charStates.Any(s => s == KeystrokeType.Incorrect);
+            if (_gameOptions.Require100Accuracy)
             {
-                IsOver = true;
-                Stats.Stop();
+                if (_userInput.ToString() != TargetText)
+                    return;
             }
+
+            IsOver = true;
+            Stats.Stop();
         }
     }
 
@@ -105,10 +109,20 @@ public class GameEngine
         _targetGraphemes = list.ToArray();
         _userInput.Clear();
 
-        _charStates = new KeystrokeType[_targetGraphemes.Length];
-        Array.Fill(_charStates, KeystrokeType.Untyped);
+        // _charStates = new KeystrokeType[_targetGraphemes.Length];
+        // Array.Fill(_charStates, KeystrokeType.Untyped);
 
         IsOver = false;
         Stats = new GameStats();
+    }
+
+    internal KeystrokeType GetStatus(int index)
+    {
+        if (index >= _userInput.GraphemeCount)
+            return KeystrokeType.Untyped;
+
+        return _userInput.GetGraphemeAt(index) == _targetGraphemes[index]
+            ? KeystrokeType.Correct
+            : KeystrokeType.Incorrect;
     }
 }

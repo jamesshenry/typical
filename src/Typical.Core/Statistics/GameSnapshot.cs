@@ -10,16 +10,17 @@ public readonly record struct GameSnapshot(
     TimeSpan ElapsedTime
 )
 {
-    public static GameSnapshot Create(int correct, int totalTyped, int errors, TimeSpan elapsed)
+    public static GameSnapshot Create(CharacterStats chars, TimeSpan elapsed)
     {
-        double accValue = totalTyped == 0 ? 100.0 : (double)correct / totalTyped * 100.0;
+        int totalTyped = chars.Correct + chars.Corrections + chars.Incorrect;
+        double accValue = totalTyped == 0 ? 100.0 : (double)chars.Correct / totalTyped * 100.0;
         double minutes = elapsed.TotalMinutes;
-        double wpmValue = (minutes <= 0) ? 0 : (correct / 5.0) / minutes;
+        double wpmValue = (minutes <= 0) ? 0 : (chars.Correct / 5.0) / minutes;
 
         var snapshot = new GameSnapshot(
             WPM.From(Math.Max(0, wpmValue)),
             Accuracy.From(Math.Clamp(accValue, 0, 100)),
-            new CharacterStats(correct, totalTyped, errors),
+            chars,
             elapsed
         );
         Debug.WriteLine(snapshot);

@@ -64,10 +64,7 @@ public class TypingArea : View
             {
                 string grapheme = enumerator.GetTextElement();
 
-                if (globalIdx >= _viewModel.DisplayStates.Length)
-                    break;
-
-                var state = _viewModel.DisplayStates[globalIdx];
+                var state = _viewModel.GetStatus(globalIdx);
 
                 SetAttribute(GetAttributeForState(state));
 

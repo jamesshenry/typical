@@ -56,12 +56,12 @@ public class GameStats
 
     public GameSnapshot CreateSnapshot()
     {
-        var snapshot = GameSnapshot.Create(
+        var characterStats = new CharacterStats(
             _keystrokes.CorrectCount,
-            _keystrokes.TotalPhysicalKeystrokes,
             _keystrokes.ErrorCount,
-            ElapsedTime
+            _keystrokes.CorrectionCount
         );
+        var snapshot = GameSnapshot.Create(characterStats, ElapsedTime);
 
         _snapshots.Add(snapshot);
 

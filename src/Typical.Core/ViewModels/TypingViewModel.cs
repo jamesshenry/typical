@@ -25,8 +25,8 @@ public partial class TypingViewModel
     // [ObservableProperty]
     // private bool _isGameOver;
 
-    [ObservableProperty]
-    public partial KeystrokeType[] DisplayStates { get; set; } = [];
+    // [ObservableProperty]
+    // public partial KeystrokeType[] DisplayStates { get; set; } = [];
 
     [SetsRequiredMembers]
     public TypingViewModel(
@@ -63,7 +63,7 @@ public partial class TypingViewModel
 
         bool accepted = _engine.ProcessKeyPress(c, isBackspace);
 
-        DisplayStates = _engine.CharacterStates.ToArray();
+        // DisplayStates = _engine.CharacterStates.ToArray();
         UpdateState();
     }
 
@@ -94,8 +94,8 @@ public partial class TypingViewModel
     {
         Target = textSample ?? await _textProvider.GetQuoteAsync();
         _engine.LoadText(Target);
-        DisplayStates = new KeystrokeType[Target.Text.Length];
-        Array.Fill(DisplayStates, KeystrokeType.Untyped);
+        // DisplayStates = new KeystrokeType[Target.Text.Length];
+        // Array.Fill(DisplayStates, KeystrokeType.Untyped);
         UpdateState();
     }
 
@@ -110,5 +110,10 @@ public partial class TypingViewModel
         };
 
         await InitializeAsync(textSample);
+    }
+
+    public KeystrokeType GetStatus(int globalIdx)
+    {
+        return _engine.GetStatus(globalIdx);
     }
 }
