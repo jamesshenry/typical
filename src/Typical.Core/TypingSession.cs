@@ -14,16 +14,22 @@ public class TypingSession
     private readonly TypingBuffer _userInput = new();
     private string[] _targetGraphemes = [];
     private readonly GameOptions _gameOptions;
+    private readonly TimeProvider _timeProvider;
 
     // TODO: Add HeatmapCollector
     private readonly ILogger<TypingSession> _logger;
 
     // private KeystrokeType[] _charStates = [];
 
-    public TypingSession(GameOptions gameOptions, ILogger<TypingSession> logger)
+    public TypingSession(
+        GameOptions gameOptions,
+        ILogger<TypingSession> logger,
+        TimeProvider timeProvider
+    )
     {
         _gameOptions = gameOptions;
-        Stats = new GameStats();
+        _timeProvider = timeProvider;
+        Stats = new GameStats(_timeProvider);
         _logger = logger;
     }
 
@@ -113,7 +119,7 @@ public class TypingSession
         // Array.Fill(_charStates, KeystrokeType.Untyped);
 
         IsOver = false;
-        Stats = new GameStats();
+        Stats = new GameStats(_timeProvider);
     }
 
     internal KeystrokeType GetStatus(int index)

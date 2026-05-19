@@ -8,9 +8,9 @@ public class GameStats
     private long? _startTimestamp;
     private long? _endTimestamp;
 
-    public GameStats(TimeProvider? timeProvider = null)
+    public GameStats(TimeProvider timeProvider)
     {
-        _timeProvider = timeProvider ?? TimeProvider.System;
+        _timeProvider = timeProvider;
     }
 
     public IReadOnlyList<KeystrokeLog> Keystrokes => _keystrokes.GetLog();

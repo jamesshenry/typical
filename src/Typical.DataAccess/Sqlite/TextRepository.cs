@@ -12,6 +12,21 @@ namespace Typical.DataAccess.Sqlite;
 
 public class TextRepository(IOptions<TypicalDbOptions> options) : ITextRepository
 {
+    public async Task<Quote> GetQuoteByIdAsync(int id)
+    {
+        await using var connection = await GetOpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            @"SELECT Id, Text, Author, Tags, WordCount, CharCount FROM Quotes WHERE Id = @id;";
+        command.Parameters.AddWithValue("@id", id);
+        await using var reader = await command.ExecuteReaderAsync();
+        if (await reader.ReadAsync())
+        {
+            return MapReaderToQuote(reader);
+        }
+        throw new InvalidOperationException($"No quote found with Id {id}.");
+    }
+
     private async Task<SqliteConnection> GetOpenConnectionAsync()
     {
         var connection = new SqliteConnection(options.Value.GetConnectionString());
@@ -37,22 +52,27 @@ public class TextRepository(IOptions<TypicalDbOptions> options) : ITextRepositor
         ORDER BY Id ASC LIMIT 1;";
         command.Parameters.AddWithValue("@id", id);
 
-        await using var reader = await command.ExecuteReaderAsync();
-        if (await reader.ReadAsync())
+        await using (var reader = await command.ExecuteReaderAsync())
         {
-            return MapReaderToQuote(reader);
+            if (await reader.ReadAsync())
+            {
+                return MapReaderToQuote(reader);
+            }
         }
 
+        // Now safe to reuse command
         command.CommandText =
             @"
         SELECT Id, Text, Author, Tags, WordCount, CharCount 
         FROM Quotes 
         ORDER BY Id ASC LIMIT 1;";
 
-        await using var wrapReader = await command.ExecuteReaderAsync();
-        if (await wrapReader.ReadAsync())
+        await using (var wrapReader = await command.ExecuteReaderAsync())
         {
-            return MapReaderToQuote(wrapReader);
+            if (await wrapReader.ReadAsync())
+            {
+                return MapReaderToQuote(wrapReader);
+            }
         }
 
         throw new InvalidOperationException(

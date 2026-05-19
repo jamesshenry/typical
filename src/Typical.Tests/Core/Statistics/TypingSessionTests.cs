@@ -9,7 +9,7 @@ using Typical.Core.Events;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
 
-namespace Typical.Tests;
+namespace Typical.Tests.Core.Statistics;
 
 public class TypingSessionTests
 {
@@ -31,7 +31,7 @@ public class TypingSessionTests
         _defaultOptions = new GameOptions();
         _strictOptions = new GameOptions { ForbidIncorrectEntries = true };
         _logger = NullLogger<TypingSession>.Instance;
-        _stats = new GameStats();
+        _stats = new GameStats(TimeProvider.System);
     }
 
     // --- StartNewGame Tests ---
@@ -42,7 +42,7 @@ public class TypingSessionTests
         // Arrange
         var expectedText = "This is a test.";
         _mockTextProvider.SetText(expectedText);
-        var game = new TypingSession(_defaultOptions, _logger);
+        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
 
         // Act
         game.LoadText(await _mockTextProvider.GetWordsAsync());
@@ -56,7 +56,7 @@ public class TypingSessionTests
     {
         // Arrange
         // 1. Initial Setup
-        var game = new TypingSession(_defaultOptions, _logger);
+        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
         string firstText = "some text";
 
         // 2. Load the first game
@@ -91,7 +91,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_BackspaceKey_RemovesLastCharacter()
     {
         // Arrange
-        var game = new TypingSession(_defaultOptions, _logger);
+        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
 
         game.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
@@ -111,7 +111,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_BackspaceOnEmptyInput_DoesNothing()
     {
         // Arrange
-        var game = new TypingSession(_defaultOptions, _logger);
+        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
         game.LoadText(new TextSample() { Text = "abc", Source = "test" });
         await Assert.That(game.UserInput).IsEmpty();
 
@@ -126,7 +126,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_WhenGameIsCompleted_SetsIsOverToTrue()
     {
         // Arrange
-        var game = new TypingSession(_defaultOptions, _logger);
+        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
         game.LoadText(new TextSample() { Text = "hi", Source = "test" });
 
         // Act
@@ -145,7 +145,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_InStrictModeAndCorrectKey_AppendsCharacter()
     {
         // Arrange
-        var game = new TypingSession(_strictOptions, _logger); // _gameOptions.ForbidIncorrectEntries = true
+        var game = new TypingSession(_strictOptions, _logger, TimeProvider.System); // _gameOptions.ForbidIncorrectEntries = true
         game.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
@@ -161,7 +161,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_InStrictModeAndIncorrectKey_DoesNotAppendCharacter()
     {
         // Arrange
-        var game = new TypingSession(_strictOptions, _logger);
+        var game = new TypingSession(_strictOptions, _logger, TimeProvider.System);
         game.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
@@ -177,7 +177,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_InDefaultModeAndIncorrectKey_AppendsCharacter()
     {
         // Arrange
-        var game = new TypingSession(_defaultOptions, _logger); // _gameOptions.ForbidIncorrectEntries = false
+        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System); // _gameOptions.ForbidIncorrectEntries = false
         game.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
@@ -196,7 +196,7 @@ public class TypingSessionTests
 
         var text = lorem.Sentence();
 
-        var sut = new TypingSession(_defaultOptions, _logger);
+        var sut = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
         sut.LoadText(new TextSample() { Text = text, Source = "Bogus" });
 
         var enumerator = StringInfo.GetTextElementEnumerator(text);
@@ -209,6 +209,23 @@ public class TypingSessionTests
         }
 
         await Assert.That(sut.IsOver).IsTrue();
+    }
+
+    [Test]
+    public async Task ProcessKeyPress_WithEmoji_HandlesGraphemesCorrectly()
+    {
+        // Arrange: emoji with modifier (👍🏽)
+        var emojiText = "👍🏽";
+        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
+        game.LoadText(new TextSample { Text = emojiText, Source = "test" });
+
+        // Act: process the emoji as a single grapheme
+        game.ProcessKeyPress("👍🏽", false);
+
+        // Assert: should count as exactly 1 correct keystroke
+        await Assert.That(game.Stats.Keystrokes.Count).IsEqualTo(1);
+        await Assert.That(game.Stats.Keystrokes[0].Grapheme).IsEqualTo("👍🏽");
+        await Assert.That(game.Stats.Keystrokes[0].Type).IsEqualTo(KeystrokeType.Correct);
     }
 
     // [Test]

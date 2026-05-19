@@ -12,6 +12,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navService;
     private readonly ILogger<SettingsViewModel> _logger;
+    private readonly IMessenger _messenger;
 
     [ObservableProperty]
     private bool _enableLogging = true;
@@ -19,19 +20,21 @@ public sealed partial class SettingsViewModel : ObservableObject
     public SettingsViewModel(
         IDialogService dialogService,
         INavigationService navService,
-        ILogger<SettingsViewModel> logger
+        ILogger<SettingsViewModel> logger,
+        IMessenger messenger
     )
     {
         _dialogService = dialogService;
         _navService = navService;
         _logger = logger;
+        _messenger = messenger;
     }
 
     [RelayCommand]
     private void QuoteMode()
     {
         var message = new GameResetMessage(new QuoteMode(QuoteLength.Medium));
-        WeakReferenceMessenger.Default.Send(message);
+        _messenger.Send(message);
     }
 
     [RelayCommand]

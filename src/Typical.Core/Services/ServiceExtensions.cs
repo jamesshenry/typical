@@ -8,6 +8,7 @@ public static class ServiceExtensions
 {
     public static void AddCoreServices(this IServiceCollection services)
     {
+        services.AddMessenger();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ITextProvider, StaticTextProvider>();
         services.AddSingleton<GameOptions>(GameOptions.Default);

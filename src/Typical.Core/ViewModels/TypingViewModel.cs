@@ -18,6 +18,7 @@ public partial class TypingViewModel
     private readonly ITextProvider _textProvider;
     private readonly INavigationService _navigationService;
     private readonly ILogger<TypingViewModel> _logger;
+    private readonly IMessenger _messenger;
 
     [ObservableProperty]
     public required partial TextSample Target { get; set; } = TextSample.Empty;
@@ -33,18 +34,17 @@ public partial class TypingViewModel
         TypingSession engine,
         ITextProvider textProvider,
         INavigationService navigationService,
-        ILogger<TypingViewModel> logger
+        ILogger<TypingViewModel> logger,
+        IMessenger messenger
     )
     {
         _engine = engine;
         _textProvider = textProvider;
         _navigationService = navigationService;
         _logger = logger;
+        _messenger = messenger;
 
-        WeakReferenceMessenger.Default.Register<TypingViewModel, GameResetMessage>(
-            this,
-            (r, m) => r.Receive(m)
-        );
+        _messenger.Register<TypingViewModel, GameResetMessage>(this, (r, m) => r.Receive(m));
     }
 
     public bool IsGameOver => _engine.IsOver;
@@ -76,8 +76,7 @@ public partial class TypingViewModel
     private void UpdateState()
     {
         var snapshot = _engine.CreateSnapshot();
-
-        WeakReferenceMessenger.Default.Send(new GameStatsUpdatedMessage(snapshot));
+        _messenger.Send(new GameStatsUpdatedMessage(snapshot));
     }
 
     public void OnNavigatedTo()

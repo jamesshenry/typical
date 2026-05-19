@@ -4,7 +4,7 @@ using Terminal.Gui.Input;
 using Terminal.Gui.Views;
 using Typical.Binding;
 
-namespace Typical.Tests;
+namespace Typical.Tests.UI;
 
 public partial class BindingTests
 {

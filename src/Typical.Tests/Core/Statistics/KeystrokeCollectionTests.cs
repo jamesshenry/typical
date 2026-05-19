@@ -1,11 +1,6 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using TUnit;
-using TUnit;
 using Typical.Core.Statistics;
 
-namespace Typical.Tests;
+namespace Typical.Tests.Core.Statistics;
 
 public class KeystrokeCollectionTests
 {
