@@ -14,7 +14,7 @@ public partial class TypingViewModel
         INavigatableView,
         IRecipient<GameResetMessage>
 {
-    private readonly GameEngine _engine;
+    private readonly TypingSession _engine;
     private readonly ITextProvider _textProvider;
     private readonly INavigationService _navigationService;
     private readonly ILogger<TypingViewModel> _logger;
@@ -30,7 +30,7 @@ public partial class TypingViewModel
 
     [SetsRequiredMembers]
     public TypingViewModel(
-        GameEngine engine,
+        TypingSession engine,
         ITextProvider textProvider,
         INavigationService navigationService,
         ILogger<TypingViewModel> logger
@@ -77,7 +77,7 @@ public partial class TypingViewModel
     {
         var snapshot = _engine.CreateSnapshot();
 
-        WeakReferenceMessenger.Default.Send(new GameStateUpdatedMessage(snapshot));
+        WeakReferenceMessenger.Default.Send(new GameStatsUpdatedMessage(snapshot));
     }
 
     public void OnNavigatedTo()

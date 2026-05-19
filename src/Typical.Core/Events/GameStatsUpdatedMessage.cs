@@ -2,8 +2,8 @@ using Typical.Core.Statistics;
 
 namespace Typical.Core.Events;
 
-public record GameStateUpdatedMessage(
-    GameSnapshot State
+public record GameStatsUpdatedMessage(
+    GameStatsSnapshot State
 );
 
 public record GameResetMessage(ModeSettings Settings);

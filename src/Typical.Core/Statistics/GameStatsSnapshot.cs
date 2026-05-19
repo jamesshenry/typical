@@ -3,21 +3,21 @@ using Vogen;
 
 namespace Typical.Core.Statistics;
 
-public readonly record struct GameSnapshot(
+public readonly record struct GameStatsSnapshot(
     WPM WPM,
     Accuracy Accuracy,
     CharacterStats Chars,
     TimeSpan ElapsedTime
 )
 {
-    public static GameSnapshot Create(CharacterStats chars, TimeSpan elapsed)
+    public static GameStatsSnapshot Create(CharacterStats chars, TimeSpan elapsed)
     {
         int totalTyped = chars.Correct + chars.Corrections + chars.Incorrect;
         double accValue = totalTyped == 0 ? 100.0 : (double)chars.Correct / totalTyped * 100.0;
         double minutes = elapsed.TotalMinutes;
         double wpmValue = (minutes <= 0) ? 0 : (chars.Correct / 5.0) / minutes;
 
-        var snapshot = new GameSnapshot(
+        var snapshot = new GameStatsSnapshot(
             WPM.From(Math.Max(0, wpmValue)),
             Accuracy.From(Math.Clamp(accValue, 0, 100)),
             chars,
@@ -27,7 +27,7 @@ public readonly record struct GameSnapshot(
         return snapshot;
     }
 
-    public static GameSnapshot Empty =>
+    public static GameStatsSnapshot Empty =>
         new((WPM)0, (Accuracy)100, new CharacterStats(0, 0, 0), TimeSpan.Zero);
 }
 

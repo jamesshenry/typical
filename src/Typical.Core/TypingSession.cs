@@ -9,18 +9,18 @@ using Typical.Core.Text;
 
 namespace Typical.Core;
 
-public class GameEngine
+public class TypingSession
 {
     private readonly TypingBuffer _userInput = new();
     private string[] _targetGraphemes = [];
     private readonly GameOptions _gameOptions;
 
     // TODO: Add HeatmapCollector
-    private readonly ILogger<GameEngine> _logger;
+    private readonly ILogger<TypingSession> _logger;
 
     // private KeystrokeType[] _charStates = [];
 
-    public GameEngine(GameOptions gameOptions, ILogger<GameEngine> logger)
+    public TypingSession(GameOptions gameOptions, ILogger<TypingSession> logger)
     {
         _gameOptions = gameOptions;
         Stats = new GameStats();
@@ -35,7 +35,7 @@ public class GameEngine
     public bool IsOver { get; private set; }
     public bool IsRunning => !IsOver && Stats.IsRunning;
 
-    public GameSnapshot CreateSnapshot() => Stats.CreateSnapshot();
+    public GameStatsSnapshot CreateSnapshot() => Stats.CreateSnapshot();
 
     public bool ProcessKeyPress(string input, bool isBackspace)
     {

@@ -5,20 +5,20 @@ using Typical.Core.Statistics;
 
 namespace Typical.Core.ViewModels;
 
-public partial class StatsViewModel : ObservableObject, IRecipient<GameStateUpdatedMessage>
+public partial class StatsViewModel : ObservableObject, IRecipient<GameStatsUpdatedMessage>
 {
     [ObservableProperty]
-    public partial GameSnapshot Stats { get; set; }
+    public partial GameStatsSnapshot Stats { get; set; }
 
     public StatsViewModel()
     {
-        WeakReferenceMessenger.Default.Register<StatsViewModel, GameStateUpdatedMessage>(
+        WeakReferenceMessenger.Default.Register<StatsViewModel, GameStatsUpdatedMessage>(
             this,
             (r, m) => r.Receive(m)
         );
     }
 
-    public void Receive(GameStateUpdatedMessage message)
+    public void Receive(GameStatsUpdatedMessage message)
     {
         Stats = message.State;
     }

@@ -9,7 +9,7 @@ using Typical.Core.Interfaces;
 using Typical.Core.ViewModels;
 using Typical.Services;
 
-[assembly: GenerateImposter(typeof(GameEngine))]
+[assembly: GenerateImposter(typeof(TypingSession))]
 
 namespace Typical.Tests;
 
@@ -30,7 +30,7 @@ public class NavigationServiceTests
             _navigationService,
             NullLogger<HomeViewModel>.Instance
         ));
-        var gameEngine = new GameEngine(GameOptions.Default, NullLogger<GameEngine>.Instance);
+        var gameEngine = new TypingSession(GameOptions.Default, NullLogger<TypingSession>.Instance);
         services.AddTransient(sp => new TypingViewModel(
             gameEngine,
             new MockTextProvider(),

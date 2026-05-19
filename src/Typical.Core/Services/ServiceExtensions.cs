@@ -11,7 +11,7 @@ public static class ServiceExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ITextProvider, StaticTextProvider>();
         services.AddSingleton<GameOptions>(GameOptions.Default);
-        services.AddSingleton<GameEngine>();
+        services.AddSingleton<TypingSession>();
         services.AddSingleton<MainViewModel>();
         services.AddTransient<TypingViewModel>();
         services.AddTransient<SettingsViewModel>();

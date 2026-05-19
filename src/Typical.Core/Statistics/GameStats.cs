@@ -4,7 +4,7 @@ public class GameStats
 {
     private readonly TimeProvider _timeProvider;
     private readonly KeystrokeCollection _keystrokes = new();
-    private readonly List<GameSnapshot> _snapshots = [];
+    private readonly List<GameStatsSnapshot> _snapshots = [];
     private long? _startTimestamp;
     private long? _endTimestamp;
 
@@ -15,7 +15,7 @@ public class GameStats
 
     public IReadOnlyList<KeystrokeLog> Keystrokes => _keystrokes.GetLog();
 
-    public IReadOnlyList<GameSnapshot> Snapshots => _snapshots.AsReadOnly();
+    public IReadOnlyList<GameStatsSnapshot> Snapshots => _snapshots.AsReadOnly();
     public TimeSpan ElapsedTime =>
         _startTimestamp.HasValue
             ? _timeProvider.GetElapsedTime(
@@ -54,14 +54,14 @@ public class GameStats
 
     internal void Stop() => _endTimestamp = _timeProvider.GetTimestamp();
 
-    public GameSnapshot CreateSnapshot()
+    public GameStatsSnapshot CreateSnapshot()
     {
         var characterStats = new CharacterStats(
             _keystrokes.CorrectCount,
             _keystrokes.ErrorCount,
             _keystrokes.CorrectionCount
         );
-        var snapshot = GameSnapshot.Create(characterStats, ElapsedTime);
+        var snapshot = GameStatsSnapshot.Create(characterStats, ElapsedTime);
 
         _snapshots.Add(snapshot);
 
