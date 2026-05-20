@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Text;
-using System.Timers;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
@@ -12,7 +11,6 @@ public class TypingView : BindableView<TypingViewModel>
 {
     private readonly TypingArea _typingArea;
     private readonly Label _sourceLabel;
-    private readonly System.Timers.Timer _refreshTimer = new(100);
 
     public TypingView(TypingViewModel viewModel)
         : base(viewModel)
@@ -33,13 +31,11 @@ public class TypingView : BindableView<TypingViewModel>
         _sourceLabel = new Label();
         Add(_typingArea);
 
-        _refreshTimer.AutoReset = true;
-        _refreshTimer.Elapsed += OnRefreshTimerElapsed;
+        ViewModel.RefreshRequested += OnViewModelRefreshRequested;
 
         Initialized += (s, e) =>
         {
             _ = InitializeViewAsync();
-            _refreshTimer.Start();
         };
         this.Activating += (s, e) =>
         {
@@ -48,13 +44,8 @@ public class TypingView : BindableView<TypingViewModel>
         };
     }
 
-    private void OnRefreshTimerElapsed(object? sender, ElapsedEventArgs e)
+    private void OnViewModelRefreshRequested(object? sender, EventArgs e)
     {
-        if (ViewModel.IsGameOver)
-        {
-            return;
-        }
-
         App?.Invoke(() => ViewModel.RefreshState());
     }
 
@@ -80,7 +71,6 @@ public class TypingView : BindableView<TypingViewModel>
 
         if (rune != default || isBackspace)
         {
-            char c = isBackspace ? '\0' : (char)rune.Value;
             try
             {
                 ViewModel.ProcessInput(key.AsGrapheme, isBackspace);
@@ -112,8 +102,7 @@ public class TypingView : BindableView<TypingViewModel>
     {
         if (disposing)
         {
-            _refreshTimer.Stop();
-            _refreshTimer.Dispose();
+            ViewModel.RefreshRequested -= OnViewModelRefreshRequested;
         }
 
         base.Dispose(disposing);

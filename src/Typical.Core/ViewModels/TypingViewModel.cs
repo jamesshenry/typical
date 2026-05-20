@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Timers;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
@@ -8,6 +9,7 @@ using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
+using Timer = System.Timers.Timer;
 
 namespace Typical.Core.ViewModels;
 
@@ -22,6 +24,9 @@ public partial class TypingViewModel
     private readonly INavigationService _navigationService;
     private readonly ILogger<TypingViewModel> _logger;
     private readonly IMessenger _messenger;
+    private readonly Timer _refreshTimer;
+
+    public event EventHandler? RefreshRequested;
 
     [ObservableProperty]
     public required partial TextSample Target { get; set; } = TextSample.Empty;
@@ -43,6 +48,10 @@ public partial class TypingViewModel
         _navigationService = navigationService;
         _logger = logger;
         _messenger = messenger;
+
+        _refreshTimer = new Timer(100);
+        _refreshTimer.AutoReset = true;
+        _refreshTimer.Elapsed += OnRefreshTimerElapsed;
 
         _messenger.Register<TypingViewModel, GameResetMessage>(this, (r, m) => r.Receive(m));
     }
@@ -81,11 +90,23 @@ public partial class TypingViewModel
     public void OnNavigatedTo()
     {
         _logger.LogInformation($"Navigated to {nameof(TypingViewModel)}");
+        _refreshTimer.Start();
     }
 
     public void OnNavigatedFrom()
     {
         _logger.LogInformation($"Navigated from {nameof(TypingViewModel)}");
+        _refreshTimer.Stop();
+    }
+
+    private void OnRefreshTimerElapsed(object? sender, ElapsedEventArgs e)
+    {
+        if (_session.IsOver)
+        {
+            return;
+        }
+
+        RefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     public async Task InitializeAsync(TextSample? textSample = null)
