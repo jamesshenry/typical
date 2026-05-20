@@ -12,6 +12,7 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<Navigat
     private readonly INavigationService _navigationService;
     private readonly IDialogService _dialogService;
     private readonly ILogger<MainViewModel> _logger;
+    private readonly IMessenger _messenger;
 
     [ObservableProperty]
     public partial string AppTitle { get; set; } = "Typical";
@@ -25,17 +26,16 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<Navigat
     public MainViewModel(
         INavigationService navigationService,
         IDialogService dialogService,
-        ILogger<MainViewModel> logger
+        ILogger<MainViewModel> logger,
+        IMessenger messenger
     )
     {
         _navigationService = navigationService;
         _dialogService = dialogService;
         _logger = logger;
+        _messenger = messenger;
 
-        WeakReferenceMessenger.Default.Register<MainViewModel, NavigationChangedMessage>(
-            this,
-            (r, m) => r.Receive(m)
-        );
+        _messenger.Register<MainViewModel, NavigationChangedMessage>(this, (r, m) => r.Receive(m));
     }
 
     [RelayCommand]
