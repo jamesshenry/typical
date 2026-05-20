@@ -3,6 +3,7 @@ using System.Text;
 using Bogus;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
 using TUnit.Core.Logging;
 using Typical.Core;
 using Typical.Core.Events;
@@ -13,6 +14,7 @@ namespace Typical.Tests.Core.Statistics;
 
 public class TypingSessionTests
 {
+    private readonly TimeProvider _timeProvider = new FakeTimeProvider(new DateTime(2025, 01, 01));
     private readonly MockTextProvider _mockTextProvider;
     private readonly GameOptions _defaultOptions;
     private readonly GameOptions _strictOptions;
@@ -31,7 +33,7 @@ public class TypingSessionTests
         _defaultOptions = new GameOptions();
         _strictOptions = new GameOptions { ForbidIncorrectEntries = true };
         _logger = NullLogger<TypingSession>.Instance;
-        _stats = new GameStats(TimeProvider.System);
+        _stats = new GameStats(_timeProvider);
     }
 
     // --- StartNewGame Tests ---
@@ -42,13 +44,13 @@ public class TypingSessionTests
         // Arrange
         var expectedText = "This is a test.";
         _mockTextProvider.SetText(expectedText);
-        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
+        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
 
         // Act
-        game.LoadText(await _mockTextProvider.GetWordsAsync());
+        sut.LoadText(await _mockTextProvider.GetWordsAsync());
 
         // Assert
-        await Assert.That(game.TargetText).IsEqualTo(expectedText);
+        await Assert.That(sut.TargetText).IsEqualTo(expectedText);
     }
 
     [Test]
@@ -56,33 +58,30 @@ public class TypingSessionTests
     {
         // Arrange
         // 1. Initial Setup
-        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
+        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
         string firstText = "some text";
 
-        // 2. Load the first game
-        game.LoadText(new TextSample() { Text = firstText, Source = "test" });
+        // 2. Load the first sut
+        sut.LoadText(new TextSample() { Text = firstText, Source = "test" });
 
-        // 3. Simulate playing the game
-        game.ProcessKeyPress("s", false); // Correct first char
-        game.ProcessKeyPress("o", false);
+        // 3. Simulate playing the sut
+        sut.ProcessKeyPress("s", false); // Correct first char
+        sut.ProcessKeyPress("o", false);
 
         // Check that we actually have progress
-        await Assert.That(game.UserInput).IsEqualTo("so");
-        await Assert.That(game.IsRunning).IsTrue();
+        await Assert.That(sut.UserInput).IsEqualTo("so");
+        await Assert.That(sut.IsRunning).IsTrue();
 
-        // 4. Simulate an "Abort" via the Engine's Reset/Load mechanism
-        // (Esc is handled by the ViewModel, which then calls the Engine to reset)
         string newText = "new text";
 
         // Act - Loading new text should completely reset the internal state
-        game.LoadText(new TextSample() { Text = newText, Source = "test" });
+        sut.LoadText(new TextSample() { Text = newText, Source = "test" });
 
         // Assert
-        await Assert.That(game.IsOver).IsFalse();
-        await Assert.That(game.IsRunning).IsFalse(); // Should not be running until first key
-        await Assert.That(game.UserInput).IsEmpty();
-        await Assert.That(game.TargetText).IsEqualTo("new text");
-        // await Assert.That(game.CharacterStates.All(s => s == KeystrokeType.Untyped)).IsTrue();
+        await Assert.That(sut.IsOver).IsFalse();
+        await Assert.That(sut.IsRunning).IsFalse(); // Should not be running until first key
+        await Assert.That(sut.UserInput).IsEmpty();
+        await Assert.That(sut.TargetText).IsEqualTo("new text");
     }
 
     // --- ProcessKeyPress Tests ---
@@ -91,52 +90,51 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_BackspaceKey_RemovesLastCharacter()
     {
         // Arrange
-        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
+        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
 
-        game.LoadText(new TextSample() { Text = "abc", Source = "test" });
+        sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
-        game.ProcessKeyPress("a", false);
-        game.ProcessKeyPress("b", false);
-        await Assert.That(game.UserInput).IsEqualTo("ab");
+        sut.ProcessKeyPress("a", false);
+        sut.ProcessKeyPress("b", false);
+        await Assert.That(sut.UserInput).IsEqualTo("ab");
 
-        // Act - Pass '\0' or any char with isBackspace = true
-        game.ProcessKeyPress("\0", true);
+        // Act
+        sut.ProcessKeyPress("\0", true);
 
         // Assert
-        await Assert.That(game.UserInput).IsEqualTo("a");
-        // await Assert.That(game.CharacterStates[1]).IsEqualTo(KeystrokeType.Untyped);
+        await Assert.That(sut.UserInput).IsEqualTo("a");
     }
 
     [Test]
     public async Task ProcessKeyPress_BackspaceOnEmptyInput_DoesNothing()
     {
         // Arrange
-        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
-        game.LoadText(new TextSample() { Text = "abc", Source = "test" });
-        await Assert.That(game.UserInput).IsEmpty();
+        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
+        await Assert.That(sut.UserInput).IsEmpty();
 
         // Act
-        game.ProcessKeyPress("\0", true);
+        sut.ProcessKeyPress("\0", true);
 
         // Assert
-        await Assert.That(game.UserInput).IsEmpty();
+        await Assert.That(sut.UserInput).IsEmpty();
     }
 
     [Test]
     public async Task ProcessKeyPress_WhenGameIsCompleted_SetsIsOverToTrue()
     {
         // Arrange
-        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
-        game.LoadText(new TextSample() { Text = "hi", Source = "test" });
+        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        sut.LoadText(new TextSample() { Text = "hi", Source = "test" });
 
         // Act
-        game.ProcessKeyPress("h", false);
-        game.ProcessKeyPress("i", false);
+        sut.ProcessKeyPress("h", false);
+        sut.ProcessKeyPress("i", false);
 
         // Assert
-        await Assert.That(game.UserInput).IsEqualTo("hi");
-        await Assert.That(game.IsOver).IsTrue();
-        await Assert.That(game.IsRunning).IsFalse();
+        await Assert.That(sut.UserInput).IsEqualTo("hi");
+        await Assert.That(sut.IsOver).IsTrue();
+        await Assert.That(sut.IsRunning).IsFalse();
     }
 
     // --- GameOptions: ForbidIncorrectEntries (Strict Mode) Tests ---
@@ -145,48 +143,45 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_InStrictModeAndCorrectKey_AppendsCharacter()
     {
         // Arrange
-        var game = new TypingSession(_strictOptions, _logger, TimeProvider.System); // _gameOptions.ForbidIncorrectEntries = true
-        game.LoadText(new TextSample() { Text = "abc", Source = "test" });
+        var sut = new TypingSession(_strictOptions, _logger, _timeProvider); // _gameOptions.ForbidIncorrectEntries = true
+        sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
-        bool result = game.ProcessKeyPress("a", false);
+        bool result = sut.ProcessKeyPress("a", false);
 
         // Assert
         await Assert.That(result).IsTrue();
-        await Assert.That(game.UserInput).IsEqualTo("a");
-        // await Assert.That(game.CharacterStates[0]).IsEqualTo(KeystrokeType.Correct);
+        await Assert.That(sut.UserInput).IsEqualTo("a");
     }
 
     [Test]
     public async Task ProcessKeyPress_InStrictModeAndIncorrectKey_DoesNotAppendCharacter()
     {
         // Arrange
-        var game = new TypingSession(_strictOptions, _logger, TimeProvider.System);
-        game.LoadText(new TextSample() { Text = "abc", Source = "test" });
+        var sut = new TypingSession(_strictOptions, _logger, _timeProvider);
+        sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
-        bool result = game.ProcessKeyPress("x", false);
+        bool result = sut.ProcessKeyPress("x", false);
 
         // Assert
         await Assert.That(result).IsTrue(); // Engine rejected the key
-        await Assert.That(game.UserInput).IsEmpty();
-        // await Assert.That(game.CharacterStates[0]).IsEqualTo(KeystrokeType.Untyped);
+        await Assert.That(sut.UserInput).IsEmpty();
     }
 
     [Test]
     public async Task ProcessKeyPress_InDefaultModeAndIncorrectKey_AppendsCharacter()
     {
         // Arrange
-        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System); // _gameOptions.ForbidIncorrectEntries = false
-        game.LoadText(new TextSample() { Text = "abc", Source = "test" });
+        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider); // _gameOptions.ForbidIncorrectEntries = false
+        sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
-        bool result = game.ProcessKeyPress("x", false);
+        bool result = sut.ProcessKeyPress("x", false);
 
         // Assert
         await Assert.That(result).IsTrue(); // Engine accepted the mistake
-        await Assert.That(game.UserInput).IsEqualTo("x");
-        // await Assert.That(game.CharacterStates[0]).IsEqualTo(KeystrokeType.Incorrect);
+        await Assert.That(sut.UserInput).IsEqualTo("x");
     }
 
     [Test]
@@ -196,7 +191,7 @@ public class TypingSessionTests
 
         var text = lorem.Sentence();
 
-        var sut = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
+        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
         sut.LoadText(new TextSample() { Text = text, Source = "Bogus" });
 
         var enumerator = StringInfo.GetTextElementEnumerator(text);
@@ -216,45 +211,63 @@ public class TypingSessionTests
     {
         // Arrange: emoji with modifier (👍🏽)
         var emojiText = "👍🏽";
-        var game = new TypingSession(_defaultOptions, _logger, TimeProvider.System);
-        game.LoadText(new TextSample { Text = emojiText, Source = "test" });
+        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        sut.LoadText(new TextSample { Text = emojiText, Source = "test" });
 
         // Act: process the emoji as a single grapheme
-        game.ProcessKeyPress("👍🏽", false);
+        sut.ProcessKeyPress("👍🏽", false);
 
         // Assert: should count as exactly 1 correct keystroke
-        await Assert.That(game.Stats.Keystrokes.Count).IsEqualTo(1);
-        await Assert.That(game.Stats.Keystrokes[0].Grapheme).IsEqualTo("👍🏽");
-        await Assert.That(game.Stats.Keystrokes[0].Type).IsEqualTo(KeystrokeType.Correct);
+        await Assert.That(sut.Stats.Keystrokes.Count).IsEqualTo(1);
+        await Assert.That(sut.Stats.Keystrokes[0].Grapheme).IsEqualTo("👍🏽");
+        await Assert.That(sut.Stats.Keystrokes[0].Type).IsEqualTo(KeystrokeType.Correct);
     }
 
-    // [Test]
-    // [MethodDataSource(typeof(TestDataSources), nameof(TestDataSources.AdditionTestData))]
-    // public async Task Engine_ShouldHandleWordsInInternationalLocales(string locale)
-    // {
-    //     var faker = new Faker(locale);
-    //     var internationalText = faker.Random.Words(10);
-    //     var _engine = new GameEngine(_defaultOptions, _logger);
-    //     _engine.LoadText(new TextSample() { Text = internationalText, Source = locale });
+    [Test]
+    [MethodDataSource(typeof(TestDataSources), nameof(TestDataSources.AdditionTestData))]
+    public async Task Engine_ShouldHandleWordsInInternationalLocales(string locale)
+    {
+        var faker = new Faker(locale);
+        var internationalText = faker.Random.Words(10);
+        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        sut.LoadText(new TextSample() { Text = internationalText, Source = locale });
 
-    //     var visualCount = new StringInfo(
-    //         internationalText.Normalize(NormalizationForm.FormC)
-    //     ).LengthInTextElements;
-    //     await Assert.That(visualCount).IsEqualTo(_engine.CharacterStates.Count);
-    // }
+        // Act
+        var enumerator = StringInfo.GetTextElementEnumerator(internationalText);
+        int graphemeCount = 0;
 
-    // [Test]
-    // [MethodDataSource(typeof(TestDataSources), nameof(TestDataSources.AdditionTestData))]
-    // public async Task Engine_ShouldHandleSentencesInInternationalLocales(string locale)
-    // {
-    //     var faker = new Faker(locale);
-    //     var _engine = new GameEngine(_defaultOptions, _logger);
-    //     var textSample = new TextSample() { Text = faker.Lorem.Sentence(), Source = locale };
-    //     _engine.LoadText(textSample);
-    //     await _testLogger.LogDebugAsync(textSample.ToString());
-    //     var visualCount = new StringInfo(
-    //         textSample.Text.Normalize(NormalizationForm.FormC)
-    //     ).LengthInTextElements;
-    //     await Assert.That(visualCount).IsEqualTo(_engine.CharacterStates.Count);
-    // }
+        while (enumerator.MoveNext())
+        {
+            string grapheme = enumerator.GetTextElement();
+
+            sut.ProcessKeyPress(grapheme, false);
+            graphemeCount++;
+        }
+
+        await Assert.That(sut.Stats.Keystrokes.Count).IsEqualTo(graphemeCount);
+    }
+
+    [Test]
+    [MethodDataSource(typeof(TestDataSources), nameof(TestDataSources.AdditionTestData))]
+    public async Task Engine_ShouldHandleSentencesInInternationalLocales(string locale)
+    {
+        var faker = new Faker(locale);
+        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        var textSample = new TextSample() { Text = faker.Lorem.Sentence(), Source = locale };
+        sut.LoadText(textSample);
+
+        // Act
+        var enumerator = StringInfo.GetTextElementEnumerator(textSample.Text);
+        int graphemeCount = 0;
+
+        while (enumerator.MoveNext())
+        {
+            string grapheme = enumerator.GetTextElement();
+
+            sut.ProcessKeyPress(grapheme, false);
+            graphemeCount++;
+        }
+
+        await Assert.That(sut.Stats.Keystrokes.Count).IsEqualTo(graphemeCount);
+    }
 }
