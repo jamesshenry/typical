@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Imposter.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Typical.Core;
+using Typical.Core.Data;
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Core.Text;
@@ -9,11 +10,17 @@ using Typical.Core.ViewModels;
 
 [assembly: GenerateImposter(typeof(IMessenger))]
 [assembly: GenerateImposter(typeof(INavigationService))]
+[assembly: GenerateImposter(typeof(IStatsRepository))]
 
 namespace Typical.Tests.Core.ViewModels;
 
 public class TypingViewModelTests
 {
+    private readonly IMessengerImposter mockMessenger = IMessenger.Imposter();
+    private readonly INavigationServiceImposter mockNavigationService =
+        INavigationService.Imposter();
+    private readonly IStatsRepositoryImposter mockStatsRepository = IStatsRepository.Imposter();
+
     [Test]
     public async Task InitializeAsync_LoadsQuote_FromTextProvider()
     {
@@ -24,11 +31,11 @@ public class TypingViewModelTests
             NullLogger<TypingSession>.Instance,
             TimeProvider.System
         );
-        var mockMessenger = IMessenger.Imposter();
-        var mockNavigationService = INavigationService.Imposter();
+
         var vm = new TypingViewModel(
             engine,
             mockTextProvider,
+            mockStatsRepository.Instance(),
             mockNavigationService.Instance(),
             NullLogger<TypingViewModel>.Instance,
             mockMessenger.Instance()
@@ -47,13 +54,10 @@ public class TypingViewModelTests
             NullLogger<TypingSession>.Instance,
             TimeProvider.System
         );
-        var mockMessenger = IMessenger.Imposter();
-
-        var messenger = mockMessenger.Instance();
-        var mockNavigationService = INavigationService.Imposter();
         var vm = new TypingViewModel(
             engine,
             mockTextProvider,
+            mockStatsRepository.Instance(),
             mockNavigationService.Instance(),
             NullLogger<TypingViewModel>.Instance,
             mockMessenger.Instance()
@@ -79,6 +83,7 @@ public class TypingViewModelTests
         var vm = new TypingViewModel(
             engine,
             mockTextProvider,
+            mockStatsRepository.Instance(),
             mockNavigationService.Instance(),
             NullLogger<TypingViewModel>.Instance,
             mockMessenger.Instance()

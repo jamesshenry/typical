@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Terminal.Gui.ViewBase;
 using Typical.Core;
+using Typical.Core.Data;
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Core.Text;
@@ -32,9 +33,10 @@ public class NavigationServiceTests
 
         var dialogServiceMock = IDialogService.Imposter();
         var textProviderMock = ITextProvider.Imposter();
-
+        var statsRepoMock = IStatsRepository.Imposter();
         services.AddSingleton(dialogServiceMock.Instance());
         services.AddSingleton(textProviderMock.Instance());
+        services.AddSingleton(statsRepoMock.Instance());
 
         services.AddSingleton(sp => new TypingSession(
             new GameOptions(),
