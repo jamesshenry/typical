@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
+using Typical.Core.Data;
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
@@ -14,8 +16,9 @@ public partial class TypingViewModel
         INavigatableView,
         IRecipient<GameResetMessage>
 {
-    private readonly TypingSession _engine;
+    private readonly TypingSession _session;
     private readonly ITextProvider _textProvider;
+    private readonly IStatsRepository _statsRepository;
     private readonly INavigationService _navigationService;
     private readonly ILogger<TypingViewModel> _logger;
     private readonly IMessenger _messenger;
@@ -23,23 +26,20 @@ public partial class TypingViewModel
     [ObservableProperty]
     public required partial TextSample Target { get; set; } = TextSample.Empty;
 
-    // [ObservableProperty]
-    // private bool _isGameOver;
-
-    // [ObservableProperty]
-    // public partial KeystrokeType[] DisplayStates { get; set; } = [];
-
     [SetsRequiredMembers]
     public TypingViewModel(
-        TypingSession engine,
+        TypingSession session,
         ITextProvider textProvider,
+        IStatsRepository statsRepository,
         INavigationService navigationService,
         ILogger<TypingViewModel> logger,
         IMessenger messenger
     )
     {
-        _engine = engine;
+        _session = session;
+        _session.OnSessionFinished += async (s, result) => await HandleSessionFinished(result);
         _textProvider = textProvider;
+        _statsRepository = statsRepository;
         _navigationService = navigationService;
         _logger = logger;
         _messenger = messenger;
@@ -47,7 +47,7 @@ public partial class TypingViewModel
         _messenger.Register<TypingViewModel, GameResetMessage>(this, (r, m) => r.Receive(m));
     }
 
-    public bool IsGameOver => _engine.IsOver;
+    public bool IsGameOver => _session.IsOver;
 
     /// <summary>
     /// Processes input received from the View.
@@ -55,15 +55,14 @@ public partial class TypingViewModel
     /// </summary>
     public async void ProcessInput(string c, bool isBackspace)
     {
-        if (_engine.IsOver)
+        if (_session.IsOver)
         {
             await InitializeAsync();
             return;
         }
 
-        bool accepted = _engine.ProcessKeyPress(c, isBackspace);
+        bool accepted = _session.ProcessKeyPress(c, isBackspace);
 
-        // DisplayStates = _engine.CharacterStates.ToArray();
         UpdateState();
     }
 
@@ -75,7 +74,7 @@ public partial class TypingViewModel
     /// </summary>
     private void UpdateState()
     {
-        var snapshot = _engine.CreateSnapshot();
+        var snapshot = _session.CreateSnapshot();
         _messenger.Send(new GameStatsUpdatedMessage(snapshot));
     }
 
@@ -92,9 +91,7 @@ public partial class TypingViewModel
     public async Task InitializeAsync(TextSample? textSample = null)
     {
         Target = textSample ?? await _textProvider.GetQuoteAsync();
-        _engine.LoadText(Target);
-        // DisplayStates = new KeystrokeType[Target.Text.Length];
-        // Array.Fill(DisplayStates, KeystrokeType.Untyped);
+        _session.LoadText(Target);
         UpdateState();
     }
 
@@ -113,6 +110,13 @@ public partial class TypingViewModel
 
     public KeystrokeType GetStatus(int globalIdx)
     {
-        return _engine.GetStatus(globalIdx);
+        return _session.GetStatus(globalIdx);
+    }
+
+    private async Task HandleSessionFinished(GameResult result)
+    {
+        await _statsRepository.SaveGameResultAsync(result);
+
+        _messenger.Send(new GameCompletedMessage(result));
     }
 }

@@ -14,7 +14,7 @@ public static class ServiceExtensions
         services.AddSingleton<GameOptions>(GameOptions.Default);
         services.AddSingleton<TypingSession>();
         services.AddSingleton<MainViewModel>();
-        services.AddTransient<TypingViewModel>();
+        services.AddSingleton<TypingViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<HomeViewModel>();
         services.AddSingleton<StatsViewModel>();

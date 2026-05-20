@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Typical.Core.Events;
@@ -15,11 +16,8 @@ public class TypingSession
     private string[] _targetGraphemes = [];
     private readonly GameOptions _gameOptions;
     private readonly TimeProvider _timeProvider;
-
-    // TODO: Add HeatmapCollector
     private readonly ILogger<TypingSession> _logger;
-
-    // private KeystrokeType[] _charStates = [];
+    public event EventHandler<GameResult>? OnSessionFinished;
 
     public TypingSession(
         GameOptions gameOptions,
@@ -33,13 +31,14 @@ public class TypingSession
         _logger = logger;
     }
 
-    // public IReadOnlyList<KeystrokeType> CharacterStates => _userInput.GetCharacterStates();
     internal GameStats Stats { get; private set; }
     public string TargetText { get; private set; } = string.Empty;
 
     public string UserInput => _userInput.ToString();
     public bool IsOver { get; private set; }
     public bool IsRunning => !IsOver && Stats.IsRunning;
+
+    public TextSample SampleNormalized { get; private set; } = TextSample.Empty;
 
     public GameStatsSnapshot CreateSnapshot() => Stats.CreateSnapshot();
 
@@ -55,10 +54,8 @@ public class TypingSession
         {
             if (_userInput.GraphemeCount > 0)
             {
-                // int indexToReset = _userInput.GraphemeCount - 1;
                 _userInput.Pop();
 
-                // _charStates[indexToReset] = KeystrokeType.Untyped;
                 Stats.RecordBackspace();
             }
             return true;
@@ -77,7 +74,6 @@ public class TypingSession
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
             _userInput.Push(normalizedInput);
-            // _charStates[currentPos] = type;
             CheckEndCondition();
         }
 
@@ -88,21 +84,31 @@ public class TypingSession
     {
         if (_userInput.GraphemeCount == _targetGraphemes.Length)
         {
-            // bool hasErrors = _charStates.Any(s => s == KeystrokeType.Incorrect);
-            if (_gameOptions.Require100Accuracy)
+            if (_gameOptions.Require100Accuracy && _userInput.ToString() != TargetText)
             {
-                if (_userInput.ToString() != TargetText)
-                    return;
+                return;
             }
 
             IsOver = true;
             Stats.Stop();
+            var snapshot = Stats.CreateSnapshot();
+            var result = new GameResult(
+                DateTime.UtcNow,
+                snapshot.WPM,
+                snapshot.Accuracy,
+                snapshot.ElapsedTime,
+                SampleNormalized,
+                Stats.Keystrokes
+            );
+
+            OnSessionFinished?.Invoke(this, result);
         }
     }
 
     public void LoadText(TextSample sample)
     {
         TargetText = sample.Text.Normalize(NormalizationForm.FormC);
+        SampleNormalized = sample with { Text = sample.Text.Normalize(NormalizationForm.FormC) };
 
         List<string> list = [];
         var enumerator = StringInfo.GetTextElementEnumerator(TargetText);
@@ -114,9 +120,6 @@ public class TypingSession
 
         _targetGraphemes = list.ToArray();
         _userInput.Clear();
-
-        // _charStates = new KeystrokeType[_targetGraphemes.Length];
-        // Array.Fill(_charStates, KeystrokeType.Untyped);
 
         IsOver = false;
         Stats = new GameStats(_timeProvider);

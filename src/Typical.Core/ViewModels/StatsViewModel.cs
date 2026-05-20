@@ -7,15 +7,15 @@ namespace Typical.Core.ViewModels;
 
 public partial class StatsViewModel : ObservableObject, IRecipient<GameStatsUpdatedMessage>
 {
-    [ObservableProperty]
-    public partial GameStatsSnapshot Stats { get; set; }
+    private readonly IMessenger _messenger;
 
-    public StatsViewModel()
+    [ObservableProperty]
+    public partial GameStatsSnapshot Stats { get; set; } = GameStatsSnapshot.Empty;
+
+    public StatsViewModel(IMessenger messenger)
     {
-        WeakReferenceMessenger.Default.Register<StatsViewModel, GameStatsUpdatedMessage>(
-            this,
-            (r, m) => r.Receive(m)
-        );
+        _messenger = messenger;
+        _messenger.Register<StatsViewModel, GameStatsUpdatedMessage>(this, (r, m) => r.Receive(m));
     }
 
     public void Receive(GameStatsUpdatedMessage message)

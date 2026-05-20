@@ -1,7 +1,17 @@
 using System.Diagnostics;
+using Typical.Core.Text;
 using Vogen;
 
 namespace Typical.Core.Statistics;
+
+public readonly record struct GameResult(
+    DateTime PlayedAt,
+    WPM FinalWpm,
+    Accuracy FinalAccuracy,
+    TimeSpan Duration,
+    TextSample TargetText,
+    IReadOnlyList<KeystrokeLog> Telemetry
+);
 
 public readonly record struct GameStatsSnapshot(
     WPM WPM,

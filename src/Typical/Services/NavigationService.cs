@@ -15,15 +15,11 @@ public class NavigationService : ObservableObject, INavigationService
     private readonly IApplication _app;
     private readonly IMessenger _messenger;
 
-    public NavigationService(
-        IServiceProvider services,
-        IApplication app,
-        IMessenger? messenger = null
-    )
+    public NavigationService(IServiceProvider services, IApplication app, IMessenger messenger)
     {
         _services = services;
         _app = app;
-        _messenger = messenger ?? WeakReferenceMessenger.Default;
+        _messenger = messenger;
     }
 
     private ObservableObject? _currentViewModel;
