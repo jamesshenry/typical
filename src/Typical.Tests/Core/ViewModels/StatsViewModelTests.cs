@@ -17,9 +17,6 @@ public class StatsViewModelTests
         var messenger = provider.GetRequiredService<IMessenger>();
         var sut = new StatsViewModel(messenger);
 
-        // Manually register with the test messenger
-        messenger.Register<StatsViewModel, GameStatsUpdatedMessage>(sut, (r, m) => r.Receive(m));
-
         var fakeSnapshot = new GameStatsSnapshot(
             WPM: (WPM)65.8,
             Accuracy: (Accuracy)98.5,

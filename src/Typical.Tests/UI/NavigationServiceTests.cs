@@ -19,6 +19,9 @@ namespace Typical.Tests.UI;
 
 public class NavigationServiceTests
 {
+    private readonly IDialogServiceImposter _dialogServiceMock = IDialogService.Imposter();
+    private readonly ITextProviderImposter _textProviderMock = ITextProvider.Imposter();
+    private readonly IStatsRepositoryImposter _statsRepoMock = IStatsRepository.Imposter();
     private ServiceProvider _serviceProvider = null!;
     private INavigationService _navigationService = null!;
     private IMessenger _messenger = null!;
@@ -31,12 +34,9 @@ public class NavigationServiceTests
         _messenger = new StrongReferenceMessenger();
         services.AddSingleton(_messenger);
 
-        var dialogServiceMock = IDialogService.Imposter();
-        var textProviderMock = ITextProvider.Imposter();
-        var statsRepoMock = IStatsRepository.Imposter();
-        services.AddSingleton(dialogServiceMock.Instance());
-        services.AddSingleton(textProviderMock.Instance());
-        services.AddSingleton(statsRepoMock.Instance());
+        services.AddSingleton(_dialogServiceMock.Instance());
+        services.AddSingleton(_textProviderMock.Instance());
+        services.AddSingleton(_statsRepoMock.Instance());
 
         services.AddSingleton(sp => new TypingSession(
             new GameOptions(),
@@ -121,7 +121,7 @@ public class NavigationServiceTests
             var viewModel = _serviceProvider.GetRequiredService(type);
 
             // Act
-            var view = Typical.Navigation.ViewLocator.GetView(_serviceProvider, viewModel);
+            var view = Navigation.ViewLocator.GetView(_serviceProvider, viewModel);
 
             // Assert
             await Assert.That(view).IsNotNull();
