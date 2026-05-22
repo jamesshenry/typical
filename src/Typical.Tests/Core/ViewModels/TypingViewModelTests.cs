@@ -88,7 +88,7 @@ public class TypingViewModelTests
             NullLogger<TypingViewModel>.Instance,
             mockMessenger.Instance()
         );
-        var msg = new GameResetMessage(new QuoteMode(QuoteLength.Short));
+        var msg = new SessionResetMessage(new QuoteMode(QuoteLength.Short));
         vm.Receive(msg);
         await Task.Delay(10); // Allow async to complete
         await Assert.That(vm.Target.Text).IsEqualTo("reset quote");

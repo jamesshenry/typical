@@ -42,6 +42,21 @@ public class NavigationService : ObservableObject, INavigationService
         _messenger.Send(new NavigationChangedMessage(CurrentViewModel));
     }
 
+    public void NavigateTo<TViewModel>(Action<TViewModel> configure)
+        where TViewModel : ObservableObject
+    {
+        (CurrentViewModel as INavigatableView)?.OnNavigatedFrom();
+        var nextViewModel = _services.GetRequiredService<TViewModel>();
+
+        configure?.Invoke(nextViewModel);
+
+        CurrentViewModel = nextViewModel;
+
+        (CurrentViewModel as INavigatableView)?.OnNavigatedTo();
+
+        _messenger.Send(new NavigationChangedMessage(nextViewModel));
+    }
+
     public TResult? ShowModal<TViewModel, TResult>(Action<TViewModel>? configure = null)
         where TViewModel : class, IModalViewModel<TResult>
     {

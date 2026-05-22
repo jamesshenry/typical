@@ -120,6 +120,10 @@ public class MainShell : Window
         if (viewModel == null)
             return;
 
+        foreach (var child in _contentFrame.SubViews)
+        {
+            child.Dispose();
+        }
         _contentFrame.RemoveAll();
 
         var view = ViewLocator.GetView(_serviceProvider, viewModel);

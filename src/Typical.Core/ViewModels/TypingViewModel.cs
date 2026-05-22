@@ -16,15 +16,15 @@ namespace Typical.Core.ViewModels;
 public partial class TypingViewModel
     : ObservableObject,
         INavigatableView,
-        IRecipient<GameResetMessage>
+        IRecipient<SessionResetMessage>
 {
     private readonly TypingSession _session;
     private readonly ITextProvider _textProvider;
     private readonly IStatsRepository _statsRepository;
-    private readonly INavigationService _navigationService;
     private readonly ILogger<TypingViewModel> _logger;
     private readonly IMessenger _messenger;
     private readonly Timer _refreshTimer;
+    private bool _isFinishing;
 
     public event EventHandler? RefreshRequested;
 
@@ -45,7 +45,6 @@ public partial class TypingViewModel
         _session.OnSessionFinished += async (s, result) => await HandleSessionFinished(result);
         _textProvider = textProvider;
         _statsRepository = statsRepository;
-        _navigationService = navigationService;
         _logger = logger;
         _messenger = messenger;
 
@@ -53,7 +52,7 @@ public partial class TypingViewModel
         _refreshTimer.AutoReset = true;
         _refreshTimer.Elapsed += OnRefreshTimerElapsed;
 
-        _messenger.Register<TypingViewModel, GameResetMessage>(this, (r, m) => r.Receive(m));
+        _messenger.Register<TypingViewModel, SessionResetMessage>(this, (r, m) => r.Receive(m));
     }
 
     public bool IsGameOver => _session.IsOver;
@@ -116,7 +115,7 @@ public partial class TypingViewModel
         UpdateState();
     }
 
-    public async void Receive(GameResetMessage message)
+    public async void Receive(SessionResetMessage message)
     {
         TextSample textSample = message.Settings switch
         {
@@ -136,8 +135,18 @@ public partial class TypingViewModel
 
     private async Task HandleSessionFinished(GameResult result)
     {
-        await _statsRepository.SaveGameResultAsync(result);
+        if (_isFinishing)
+            return;
+        _isFinishing = true;
 
-        _messenger.Send(new GameCompletedMessage(result));
+        try
+        {
+            await _statsRepository.SaveGameResultAsync(result);
+            _messenger.Send(new SessionCompletedMessage(result));
+        }
+        finally
+        {
+            _isFinishing = false;
+        }
     }
 }

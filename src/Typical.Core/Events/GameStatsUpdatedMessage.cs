@@ -6,10 +6,6 @@ public record GameStatsUpdatedMessage(
     GameStatsSnapshot State
 );
 
-public record GameCompletedMessage(GameResult Result);
-
-public record GameResetMessage(ModeSettings Settings);
-
 public record WordsMode(int Count, bool Punctuation, bool Numbers);
 public record TimeMode(TimeSpan Duration, bool Punctuation, bool Numbers);
 public record QuoteMode(QuoteLength Length);

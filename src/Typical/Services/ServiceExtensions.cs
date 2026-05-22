@@ -9,6 +9,7 @@ using Terminal.Gui.App;
 using Typical.Configuration;
 using Typical.Core.Interfaces;
 using Typical.Logging;
+using Typical.Navigation;
 using Typical.Views;
 
 namespace Typical.Services;
@@ -57,6 +58,7 @@ public static class ServiceExtensions
         builder.Services.AddTransient<SettingsView>();
         builder.Services.AddTransient<TypingView>();
         builder.Services.AddTransient<StatsView>();
+        builder.Services.AddTransient<ResultsView>();
     }
 }
 

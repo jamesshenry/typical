@@ -7,7 +7,7 @@ using Typical.Core.Interfaces;
 
 namespace Typical.Core.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject, IRecipient<NavigationChangedMessage>
+public sealed partial class MainViewModel : ObservableObject, IRecipient<SessionCompletedMessage>
 {
     private readonly INavigationService _navigationService;
     private readonly IDialogService _dialogService;
@@ -31,11 +31,18 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<Navigat
     )
     {
         _navigationService = navigationService;
+        _navigationService.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(navigationService.CurrentViewModel))
+            {
+                CurrentPage = _navigationService.CurrentViewModel;
+            }
+        };
         _dialogService = dialogService;
         _logger = logger;
         _messenger = messenger;
 
-        _messenger.Register<MainViewModel, NavigationChangedMessage>(this, (r, m) => r.Receive(m));
+        _messenger.Register<MainViewModel, SessionCompletedMessage>(this, (r, m) => r.Receive(m));
     }
 
     [RelayCommand]
@@ -53,8 +60,8 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<Navigat
         _dialogService.ShowError("About", "Typical: A Terminal.Gui v2 MVVM Demo");
     }
 
-    public void Receive(NavigationChangedMessage message)
+    public void Receive(SessionCompletedMessage message)
     {
-        CurrentPage = message.Value;
+        _navigationService.NavigateTo<ResultsViewModel>(vm => vm.Initialize(message.Result));
     }
 }

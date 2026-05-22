@@ -13,6 +13,13 @@ public static class ViewLocator
             HomeViewModel => sp.GetRequiredService<HomeView>(),
             SettingsViewModel => sp.GetRequiredService<SettingsView>(),
             TypingViewModel => sp.GetRequiredService<TypingView>(),
+            ResultsViewModel => sp.GetRequiredService<ResultsView>(),
             _ => throw new ArgumentException($"No view registered for {viewModel.GetType()}"),
         };
+}
+
+public class ResultsView : BindableView<ResultsViewModel>
+{
+    public ResultsView(ResultsViewModel viewModel)
+        : base(viewModel) { }
 }
