@@ -6,6 +6,7 @@
     "cleanDirectories": [],
     "enableNugetUpload": false,
     "enableGithubRelease": true,
+    "defaultPreReleaseIdentifiers": "preview.0",
     "enableVelopackRelease": true
   },
   "artifacts": {
