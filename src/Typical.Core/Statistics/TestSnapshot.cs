@@ -1,33 +1,23 @@
 using System.Diagnostics;
-using Typical.Core.Text;
 using Vogen;
 
 namespace Typical.Core.Statistics;
 
-public readonly record struct GameResult(
-    DateTime PlayedAt,
-    WPM FinalWpm,
-    Accuracy FinalAccuracy,
-    TimeSpan Duration,
-    TextSample TargetText,
-    IReadOnlyList<KeystrokeLog> Telemetry
-);
-
-public readonly record struct GameStatsSnapshot(
+public readonly record struct TestSnapshot(
     WPM WPM,
     Accuracy Accuracy,
     CharacterStats Chars,
     TimeSpan ElapsedTime
 )
 {
-    public static GameStatsSnapshot Create(CharacterStats chars, TimeSpan elapsed)
+    public static TestSnapshot Create(CharacterStats chars, TimeSpan elapsed)
     {
         int totalTyped = chars.Correct + chars.Corrections + chars.Incorrect;
         double accValue = totalTyped == 0 ? 100.0 : (double)chars.Correct / totalTyped * 100.0;
         double minutes = elapsed.TotalMinutes;
         double wpmValue = (minutes <= 0) ? 0 : (chars.Correct / 5.0) / minutes;
 
-        var snapshot = new GameStatsSnapshot(
+        var snapshot = new TestSnapshot(
             WPM.From(Math.Max(0, wpmValue)),
             Accuracy.From(Math.Clamp(accValue, 0, 100)),
             chars,
@@ -37,7 +27,7 @@ public readonly record struct GameStatsSnapshot(
         return snapshot;
     }
 
-    public static GameStatsSnapshot Empty =>
+    public static TestSnapshot Empty =>
         new((WPM)0, (Accuracy)100, new CharacterStats(0, 0, 0), TimeSpan.Zero);
 }
 

@@ -38,9 +38,9 @@ public class NavigationServiceTests
         services.AddSingleton(_textProviderMock.Instance());
         services.AddSingleton(_statsRepoMock.Instance());
 
-        services.AddSingleton(sp => new TypingSession(
+        services.AddSingleton(sp => new TypingTest(
             new GameOptions(),
-            NullLogger<TypingSession>.Instance,
+            NullLogger<TypingTest>.Instance,
             TimeProvider.System
         ));
 

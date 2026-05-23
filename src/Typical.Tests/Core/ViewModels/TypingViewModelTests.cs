@@ -26,9 +26,9 @@ public class TypingViewModelTests
     {
         var mockTextProvider = new MockTextProvider();
         mockTextProvider.SetText("Hello world!");
-        var engine = new TypingSession(
+        var engine = new TypingTest(
             GameOptions.Default,
-            NullLogger<TypingSession>.Instance,
+            NullLogger<TypingTest>.Instance,
             TimeProvider.System
         );
 
@@ -49,9 +49,9 @@ public class TypingViewModelTests
     {
         var mockTextProvider = new MockTextProvider();
         mockTextProvider.SetText("a");
-        var engine = new TypingSession(
+        var engine = new TypingTest(
             GameOptions.Default,
-            NullLogger<TypingSession>.Instance,
+            NullLogger<TypingTest>.Instance,
             TimeProvider.System
         );
         var vm = new TypingViewModel(
@@ -73,9 +73,9 @@ public class TypingViewModelTests
     {
         var mockTextProvider = new MockTextProvider();
         mockTextProvider.SetText("reset quote");
-        var engine = new TypingSession(
+        var engine = new TypingTest(
             GameOptions.Default,
-            NullLogger<TypingSession>.Instance,
+            NullLogger<TypingTest>.Instance,
             TimeProvider.System
         );
         var mockMessenger = IMessenger.Imposter();
@@ -88,7 +88,7 @@ public class TypingViewModelTests
             NullLogger<TypingViewModel>.Instance,
             mockMessenger.Instance()
         );
-        var msg = new SessionResetMessage(new QuoteMode(QuoteLength.Short));
+        var msg = new TestResetMessage(new QuoteMode(QuoteLength.Short));
         vm.Receive(msg);
         await Task.Delay(10); // Allow async to complete
         await Assert.That(vm.Target.Text).IsEqualTo("reset quote");

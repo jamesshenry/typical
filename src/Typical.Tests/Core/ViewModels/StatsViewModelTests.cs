@@ -17,13 +17,13 @@ public class StatsViewModelTests
         var messenger = provider.GetRequiredService<IMessenger>();
         var sut = new StatsViewModel(messenger);
 
-        var fakeSnapshot = new GameStatsSnapshot(
+        var fakeSnapshot = new TestSnapshot(
             WPM: (WPM)65.8,
             Accuracy: (Accuracy)98.5,
             Chars: new CharacterStats(10, 1, 2),
             ElapsedTime: TimeSpan.FromSeconds(30)
         );
-        var msg = new GameStatsUpdatedMessage(fakeSnapshot);
+        var msg = new StatisticsUpdatedMessage(fakeSnapshot);
 
         messenger.Send(msg);
 

@@ -10,28 +10,28 @@ using Typical.Core.Text;
 
 namespace Typical.Core;
 
-public class TypingSession
+public class TypingTest
 {
     private readonly TypingBuffer _userInput = new();
     private string[] _targetGraphemes = [];
     private readonly GameOptions _gameOptions;
     private readonly TimeProvider _timeProvider;
-    private readonly ILogger<TypingSession> _logger;
-    public event EventHandler<GameResult>? OnSessionFinished;
+    private readonly ILogger<TypingTest> _logger;
+    public event EventHandler<TestResult>? OnTestFinished;
 
-    public TypingSession(
+    public TypingTest(
         GameOptions gameOptions,
-        ILogger<TypingSession> logger,
+        ILogger<TypingTest> logger,
         TimeProvider timeProvider
     )
     {
         _gameOptions = gameOptions;
         _timeProvider = timeProvider;
-        Stats = new GameStats(_timeProvider);
+        Stats = new Statistics.Statistics(_timeProvider);
         _logger = logger;
     }
 
-    internal GameStats Stats { get; private set; }
+    internal Statistics.Statistics Stats { get; private set; }
     public string TargetText { get; private set; } = string.Empty;
 
     public string UserInput => _userInput.ToString();
@@ -40,7 +40,7 @@ public class TypingSession
 
     public TextSample SampleNormalized { get; private set; } = TextSample.Empty;
 
-    public GameStatsSnapshot CreateSnapshot() => Stats.CreateSnapshot();
+    public TestSnapshot CreateSnapshot() => Stats.CreateSnapshot();
 
     public bool ProcessKeyPress(string input, bool isBackspace)
     {
@@ -92,7 +92,7 @@ public class TypingSession
             IsOver = true;
             Stats.Stop();
             var snapshot = Stats.CreateSnapshot();
-            var result = new GameResult(
+            var result = new TestResult(
                 DateTime.UtcNow,
                 snapshot.WPM,
                 snapshot.Accuracy,
@@ -101,7 +101,7 @@ public class TypingSession
                 Stats.Keystrokes
             );
 
-            OnSessionFinished?.Invoke(this, result);
+            OnTestFinished?.Invoke(this, result);
         }
     }
 
@@ -122,7 +122,7 @@ public class TypingSession
         _userInput.Clear();
 
         IsOver = false;
-        Stats = new GameStats(_timeProvider);
+        Stats = new Statistics.Statistics(_timeProvider);
     }
 
     internal KeystrokeType GetStatus(int index)

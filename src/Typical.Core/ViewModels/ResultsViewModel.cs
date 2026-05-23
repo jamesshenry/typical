@@ -5,7 +5,7 @@ namespace Typical.Core.ViewModels;
 
 public class ResultsViewModel : ObservableObject
 {
-    public void Initialize(GameResult result)
+    public void Initialize(TestResult result)
     {
         // TODO: finish implementing display of results
         throw new NotImplementedException();

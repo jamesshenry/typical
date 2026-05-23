@@ -12,19 +12,19 @@ using Typical.Core.Text;
 
 namespace Typical.Tests.Core.Statistics;
 
-public class TypingSessionTests
+public class TypingTestTests
 {
     private readonly TimeProvider _timeProvider = new FakeTimeProvider(new DateTime(2025, 01, 01));
     private readonly MockTextProvider _mockTextProvider;
     private readonly GameOptions _defaultOptions;
     private readonly GameOptions _strictOptions;
-    private readonly Microsoft.Extensions.Logging.ILogger<TypingSession> _logger;
-    private readonly GameStats _stats;
+    private readonly Microsoft.Extensions.Logging.ILogger<TypingTest> _logger;
+    private readonly Typical.Core.Statistics.Statistics _stats;
     private const int BOGUS_SEED = 999_999_001;
     private readonly Random _seed = new Random(BOGUS_SEED);
     private readonly DefaultLogger _testLogger;
 
-    public TypingSessionTests()
+    public TypingTestTests()
     {
         _testLogger = TestContext.Current!.GetDefaultLogger();
         Bogus.Randomizer.Seed = _seed;
@@ -32,8 +32,8 @@ public class TypingSessionTests
         _mockTextProvider = new MockTextProvider();
         _defaultOptions = new GameOptions();
         _strictOptions = new GameOptions { ForbidIncorrectEntries = true };
-        _logger = NullLogger<TypingSession>.Instance;
-        _stats = new GameStats(_timeProvider);
+        _logger = NullLogger<TypingTest>.Instance;
+        _stats = new Typical.Core.Statistics.Statistics(_timeProvider);
     }
 
     // --- StartNewGame Tests ---
@@ -44,7 +44,7 @@ public class TypingSessionTests
         // Arrange
         var expectedText = "This is a test.";
         _mockTextProvider.SetText(expectedText);
-        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
 
         // Act
         sut.LoadText(await _mockTextProvider.GetWordsAsync());
@@ -58,7 +58,7 @@ public class TypingSessionTests
     {
         // Arrange
         // 1. Initial Setup
-        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
         string firstText = "some text";
 
         // 2. Load the first sut
@@ -90,7 +90,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_BackspaceKey_RemovesLastCharacter()
     {
         // Arrange
-        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
 
         sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
@@ -109,7 +109,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_BackspaceOnEmptyInput_DoesNothing()
     {
         // Arrange
-        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
         sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
         await Assert.That(sut.UserInput).IsEmpty();
 
@@ -124,7 +124,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_WhenGameIsCompleted_SetsIsOverToTrue()
     {
         // Arrange
-        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
         sut.LoadText(new TextSample() { Text = "hi", Source = "test" });
 
         // Act
@@ -143,7 +143,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_InStrictModeAndCorrectKey_AppendsCharacter()
     {
         // Arrange
-        var sut = new TypingSession(_strictOptions, _logger, _timeProvider); // _gameOptions.ForbidIncorrectEntries = true
+        var sut = new TypingTest(_strictOptions, _logger, _timeProvider); // _gameOptions.ForbidIncorrectEntries = true
         sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
@@ -158,7 +158,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_InStrictModeAndIncorrectKey_DoesNotAppendCharacter()
     {
         // Arrange
-        var sut = new TypingSession(_strictOptions, _logger, _timeProvider);
+        var sut = new TypingTest(_strictOptions, _logger, _timeProvider);
         sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
@@ -173,7 +173,7 @@ public class TypingSessionTests
     public async Task ProcessKeyPress_InDefaultModeAndIncorrectKey_AppendsCharacter()
     {
         // Arrange
-        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider); // _gameOptions.ForbidIncorrectEntries = false
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider); // _gameOptions.ForbidIncorrectEntries = false
         sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
@@ -191,7 +191,7 @@ public class TypingSessionTests
 
         var text = lorem.Sentence();
 
-        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
         sut.LoadText(new TextSample() { Text = text, Source = "Bogus" });
 
         var enumerator = StringInfo.GetTextElementEnumerator(text);
@@ -211,7 +211,7 @@ public class TypingSessionTests
     {
         // Arrange: emoji with modifier (👍🏽)
         var emojiText = "👍🏽";
-        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
         sut.LoadText(new TextSample { Text = emojiText, Source = "test" });
 
         // Act: process the emoji as a single grapheme
@@ -229,7 +229,7 @@ public class TypingSessionTests
     {
         var faker = new Faker(locale);
         var internationalText = faker.Random.Words(10);
-        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
         sut.LoadText(new TextSample() { Text = internationalText, Source = locale });
 
         // Act
@@ -252,7 +252,7 @@ public class TypingSessionTests
     public async Task Engine_ShouldHandleSentencesInInternationalLocales(string locale)
     {
         var faker = new Faker(locale);
-        var sut = new TypingSession(_defaultOptions, _logger, _timeProvider);
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
         var textSample = new TextSample() { Text = faker.Lorem.Sentence(), Source = locale };
         sut.LoadText(textSample);
 

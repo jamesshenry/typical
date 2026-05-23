@@ -12,7 +12,7 @@ public static class ServiceExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ITextProvider, StaticTextProvider>();
         services.AddSingleton<GameOptions>(GameOptions.Default);
-        services.AddSingleton<TypingSession>();
+        services.AddSingleton<TypingTest>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<TypingViewModel>();
         services.AddTransient<SettingsViewModel>();

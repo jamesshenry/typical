@@ -9,7 +9,7 @@ public class GameStatsTests
     public async Task CreateSnapshot_CalculatesAccurateWPM_BasedOnTime()
     {
         var fakeTime = new FakeTimeProvider();
-        var stats = new GameStats(fakeTime);
+        var stats = new Typical.Core.Statistics.Statistics(fakeTime);
         stats.Start();
         // Record 6 correct characters ("hello ")
         for (int i = 0; i < 6; i++)
@@ -25,7 +25,7 @@ public class GameStatsTests
     public async Task CreateSnapshot_CalculatesAccuracy_WithErrors()
     {
         var fakeTime = new FakeTimeProvider();
-        var stats = new GameStats(fakeTime);
+        var stats = new Typical.Core.Statistics.Statistics(fakeTime);
         stats.Start();
         for (int i = 0; i < 9; i++)
             stats.RecordKey("a", KeystrokeType.Correct);
@@ -40,7 +40,7 @@ public class GameStatsTests
     public async Task CreateSnapshot_HandlesZeroElapsed_PreventsDivideByZero()
     {
         var fakeTime = new FakeTimeProvider();
-        var stats = new GameStats(fakeTime);
+        var stats = new Typical.Core.Statistics.Statistics(fakeTime);
         stats.Start();
         stats.Stop();
         var snapshot = stats.CreateSnapshot();

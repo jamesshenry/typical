@@ -2,4 +2,4 @@ using Typical.Core.Statistics;
 
 namespace Typical.Core.Events;
 
-public record SessionCompletedMessage(GameResult Result);
+public record TestCompletedMessage(TestResult Result);

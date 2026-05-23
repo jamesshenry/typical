@@ -38,13 +38,13 @@
 - **Action:**
   - Change the parameterless constructor to accept `TimeProvider timeProvider`.
   - Assign it to the `_timeProvider` readonly field.
-- **Target File:** `src/Typical.Core/TypingSession.cs`
+- **Target File:** `src/Typical.Core/TypingTest.cs`
 - **Action:**
   - Update the constructor to accept `TimeProvider timeProvider`.
   - Update the instantiation: `Stats = new GameStats(timeProvider);`.
-- **Target File:** `src/Typical.Tests/TypingSessionTests.cs`
+- **Target File:** `src/Typical.Tests/TypingTestTests.cs`
 - **Action:**
-  - Fix compiler errors by passing `TimeProvider.System` (or a `FakeTimeProvider`) to `TypingSession` instantiations in the test setups.
+  - Fix compiler errors by passing `TimeProvider.System` (or a `FakeTimeProvider`) to `TypingTest` instantiations in the test setups.
 
 ### Task 1.2: Abstract `IMessenger` in ViewModels
 
@@ -141,7 +141,7 @@
 
 ### Task 5.1: Grapheme Cluster Boundary Tests
 
-- **Target File:** `src/Typical.Tests/TypingSessionTests.cs`
+- **Target File:** `src/Typical.Tests/TypingTestTests.cs`
 - **Action:** Add a test `ProcessKeyPress_WithEmoji_HandlesGraphemesCorrectly`:
   - **Setup:** Load text containing an emoji with a modifier (e.g., `👍🏽`).
   - **Action:** Call `ProcessKeyPress("👍🏽", false)`.

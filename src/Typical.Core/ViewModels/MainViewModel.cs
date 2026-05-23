@@ -7,7 +7,7 @@ using Typical.Core.Interfaces;
 
 namespace Typical.Core.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject, IRecipient<SessionCompletedMessage>
+public sealed partial class MainViewModel : ObservableObject, IRecipient<TestCompletedMessage>
 {
     private readonly INavigationService _navigationService;
     private readonly IDialogService _dialogService;
@@ -42,7 +42,7 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<Session
         _logger = logger;
         _messenger = messenger;
 
-        _messenger.Register<MainViewModel, SessionCompletedMessage>(this, (r, m) => r.Receive(m));
+        _messenger.Register<MainViewModel, TestCompletedMessage>(this, (r, m) => r.Receive(m));
     }
 
     [RelayCommand]
@@ -60,7 +60,7 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<Session
         _dialogService.ShowError("About", "Typical: A Terminal.Gui v2 MVVM Demo");
     }
 
-    public void Receive(SessionCompletedMessage message)
+    public void Receive(TestCompletedMessage message)
     {
         _navigationService.NavigateTo<ResultsViewModel>(vm => vm.Initialize(message.Result));
     }

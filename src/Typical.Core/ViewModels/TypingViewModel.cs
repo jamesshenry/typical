@@ -16,9 +16,9 @@ namespace Typical.Core.ViewModels;
 public partial class TypingViewModel
     : ObservableObject,
         INavigatableView,
-        IRecipient<SessionResetMessage>
+        IRecipient<TestResetMessage>
 {
-    private readonly TypingSession _session;
+    private readonly TypingTest _Test;
     private readonly ITextProvider _textProvider;
     private readonly IStatsRepository _statsRepository;
     private readonly ILogger<TypingViewModel> _logger;
@@ -33,7 +33,7 @@ public partial class TypingViewModel
 
     [SetsRequiredMembers]
     public TypingViewModel(
-        TypingSession session,
+        TypingTest Test,
         ITextProvider textProvider,
         IStatsRepository statsRepository,
         INavigationService navigationService,
@@ -41,8 +41,8 @@ public partial class TypingViewModel
         IMessenger messenger
     )
     {
-        _session = session;
-        _session.OnSessionFinished += async (s, result) => await HandleSessionFinished(result);
+        _Test = Test;
+        _Test.OnTestFinished += async (s, result) => await HandleTestFinished(result);
         _textProvider = textProvider;
         _statsRepository = statsRepository;
         _logger = logger;
@@ -52,10 +52,10 @@ public partial class TypingViewModel
         _refreshTimer.AutoReset = true;
         _refreshTimer.Elapsed += OnRefreshTimerElapsed;
 
-        _messenger.Register<TypingViewModel, SessionResetMessage>(this, (r, m) => r.Receive(m));
+        _messenger.Register<TypingViewModel, TestResetMessage>(this, (r, m) => r.Receive(m));
     }
 
-    public bool IsGameOver => _session.IsOver;
+    public bool IsGameOver => _Test.IsOver;
 
     /// <summary>
     /// Processes input received from the View.
@@ -63,13 +63,13 @@ public partial class TypingViewModel
     /// </summary>
     public async void ProcessInput(string c, bool isBackspace)
     {
-        if (_session.IsOver)
+        if (_Test.IsOver)
         {
             await InitializeAsync();
             return;
         }
 
-        bool accepted = _session.ProcessKeyPress(c, isBackspace);
+        bool accepted = _Test.ProcessKeyPress(c, isBackspace);
 
         UpdateState();
     }
@@ -82,8 +82,8 @@ public partial class TypingViewModel
     /// </summary>
     private void UpdateState()
     {
-        var snapshot = _session.CreateSnapshot();
-        _messenger.Send(new GameStatsUpdatedMessage(snapshot));
+        var snapshot = _Test.CreateSnapshot();
+        _messenger.Send(new StatisticsUpdatedMessage(snapshot));
     }
 
     public void OnNavigatedTo()
@@ -100,7 +100,7 @@ public partial class TypingViewModel
 
     private void OnRefreshTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        if (_session.IsOver)
+        if (_Test.IsOver)
         {
             return;
         }
@@ -111,11 +111,11 @@ public partial class TypingViewModel
     public async Task InitializeAsync(TextSample? textSample = null)
     {
         Target = textSample ?? await _textProvider.GetQuoteAsync();
-        _session.LoadText(Target);
+        _Test.LoadText(Target);
         UpdateState();
     }
 
-    public async void Receive(SessionResetMessage message)
+    public async void Receive(TestResetMessage message)
     {
         TextSample textSample = message.Settings switch
         {
@@ -130,10 +130,10 @@ public partial class TypingViewModel
 
     public KeystrokeType GetStatus(int globalIdx)
     {
-        return _session.GetStatus(globalIdx);
+        return _Test.GetStatus(globalIdx);
     }
 
-    private async Task HandleSessionFinished(GameResult result)
+    private async Task HandleTestFinished(TestResult result)
     {
         if (_isFinishing)
             return;
@@ -142,7 +142,7 @@ public partial class TypingViewModel
         try
         {
             await _statsRepository.SaveGameResultAsync(result);
-            _messenger.Send(new SessionCompletedMessage(result));
+            _messenger.Send(new TestCompletedMessage(result));
         }
         finally
         {

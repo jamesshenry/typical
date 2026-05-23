@@ -33,7 +33,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void QuoteMode()
     {
-        var message = new SessionResetMessage(new QuoteMode(QuoteLength.Medium));
+        var message = new TestResetMessage(new QuoteMode(QuoteLength.Medium));
         _messenger.Send(message);
     }
 
