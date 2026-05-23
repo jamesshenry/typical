@@ -1,0 +1,2 @@
+-- Add stats tables here.
+-- This migration is intentionally empty until stats database schema is added.

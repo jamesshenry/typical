@@ -14,7 +14,7 @@ internal partial class SeedContext : JsonSerializerContext;
 internal record QuoteSeed(string Text, string Author, List<string>? Tags);
 
 [DbUpScript(ScriptType = DbUpScriptType.RunOnce, RunGroupOrder = 0)]
-public class Script_00200_SeedInitialQuotes : IScript
+public class Script_202605230237_SeedInitialQuotes : IScript
 {
     public string ProvideScript(Func<IDbCommand> dbCommandFactory)
     {
@@ -24,7 +24,7 @@ public class Script_00200_SeedInitialQuotes : IScript
         if ((long)(cmd.ExecuteScalar() ?? 0) == 1)
             return "";
 
-        var assembly = typeof(Script_00200_SeedInitialQuotes).Assembly;
+        var assembly = typeof(Script_202605230237_SeedInitialQuotes).Assembly;
         var path = AppContext.BaseDirectory;
         using var stream = File.OpenRead(Path.Combine(path, "Migrations", "quotes.json"));
         if (stream is null)

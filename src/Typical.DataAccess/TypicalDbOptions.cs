@@ -8,6 +8,8 @@ public class TypicalDbOptions
 
     public string DataDirectory { get; set; } = Path.GetTempPath();
 
+    public string ScriptsDirectory { get; set; } = "Migrations";
+
     public string GetDatabasePath() => Path.Combine(DataDirectory, DatabaseFileName);
 
     public string GetConnectionString() => $"Data Source={GetDatabasePath()}";
