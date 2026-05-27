@@ -6,7 +6,7 @@ namespace Typical.Core.Statistics;
 public readonly record struct TestSnapshot(
     WPM WPM,
     Accuracy Accuracy,
-    TestMetrics Chars,
+    TestMetrics Metrics,
     TimeSpan ElapsedTime
 )
 {

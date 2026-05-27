@@ -20,7 +20,7 @@ public class StatsViewModelTests
         var fakeSnapshot = new TestSnapshot(
             WPM: (WPM)65.8,
             Accuracy: (Accuracy)98.5,
-            Chars: new TestMetrics(10, 1, 2),
+            Metrics: new TestMetrics(10, 1, 2),
             ElapsedTime: TimeSpan.FromSeconds(30)
         );
         var msg = new TestSessionUpdatedMessage(fakeSnapshot);
@@ -29,9 +29,9 @@ public class StatsViewModelTests
 
         await Assert.That(sut.Stats.WPM.Value).IsEqualTo(65.8);
         await Assert.That(sut.Stats.Accuracy.Value).IsEqualTo(98.5);
-        await Assert.That(sut.Stats.Chars.Correct).IsEqualTo(10);
-        await Assert.That(sut.Stats.Chars.Incorrect).IsEqualTo(1);
-        await Assert.That(sut.Stats.Chars.Corrections).IsEqualTo(2);
+        await Assert.That(sut.Stats.Metrics.Correct).IsEqualTo(10);
+        await Assert.That(sut.Stats.Metrics.Incorrect).IsEqualTo(1);
+        await Assert.That(sut.Stats.Metrics.Corrections).IsEqualTo(2);
         await Assert.That(sut.Stats.ElapsedTime).IsEqualTo(TimeSpan.FromSeconds(30));
     }
 }
