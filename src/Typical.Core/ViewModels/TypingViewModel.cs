@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Timers;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -141,6 +140,8 @@ public partial class TypingViewModel
 
         try
         {
+            await Task.Delay(100);
+
             await _statsRepository.SaveTestResultAsync(result);
             _messenger.Send(new TestCompletedMessage(result));
         }
