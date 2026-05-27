@@ -32,16 +32,16 @@
 
 *Objective: Remove static coupling to allow deterministic testing of time and messaging.*
 
-### Task 1.1: Inject `TimeProvider` into Game Statistics
+### Task 1.1: Inject `TimeProvider` into Test Statistics
 
-- **Target File:** `src/Typical.Core/Statistics/GameStats.cs`
+- **Target File:** `src/Typical.Core/Statistics/TestStats.cs`
 - **Action:**
   - Change the parameterless constructor to accept `TimeProvider timeProvider`.
   - Assign it to the `_timeProvider` readonly field.
 - **Target File:** `src/Typical.Core/TypingTest.cs`
 - **Action:**
   - Update the constructor to accept `TimeProvider timeProvider`.
-  - Update the instantiation: `Stats = new GameStats(timeProvider);`.
+  - Update the instantiation: `Stats = new TestStats(timeProvider);`.
 - **Target File:** `src/Typical.Tests/TypingTestTests.cs`
 - **Action:**
   - Fix compiler errors by passing `TimeProvider.System` (or a `FakeTimeProvider`) to `TypingTest` instantiations in the test setups.
@@ -62,15 +62,15 @@
 
 ## 🧪 Phase 2: Core Domain Logic Tests
 
-*Objective: Implement tests for the currently empty GameStats test file.*
+*Objective: Implement tests for the currently empty TestStats test file.*
 
 ### Task 2.1: WPM and Accuracy Math Tests
 
-- **Target File:** `src/Typical.Tests/Core/GameStatsTests.cs`
+- **Target File:** `src/Typical.Tests/Core/TestStatsTests.cs`
 - **Dependencies to use:** `Microsoft.Extensions.TimeProvider.Testing` (`FakeTimeProvider`), `TUnit`.
 - **Action:** Implement the following tests:
   1. `CreateSnapshot_CalculatesAccurateWPM_BasedOnTime`:
-     - **Setup:** Create `FakeTimeProvider`, pass to `GameStats`. Call `Start()`.
+     - **Setup:** Create `FakeTimeProvider`, pass to `TestStats`. Call `Start()`.
      - **Action:** Record 6 correct characters (e.g., "hello "). Advance `FakeTimeProvider` by exactly 12 seconds. Call `Stop()`.
      - **Assert:** `WPM` should equal `6` (6 chars / 5 = 1.2 words. 1.2 words in 0.2 minutes = 6 WPM). `Accuracy` should equal `100`.
   2. `CreateSnapshot_CalculatesAccuracy_WithErrors`:
@@ -90,9 +90,9 @@
 
 - **Target File:** `src/Typical.Tests/StatsViewModelTests.cs`
 - **Action:** Implement tests using TUnit:
-  1. `Receive_GameStatsUpdatedMessage_UpdatesProperties`:
+  1. `Receive_TestStatsUpdatedMessage_UpdatesProperties`:
      - **Setup:** Instantiate `StatsViewModel`.
-     - **Action:** Call `Receive(new GameStatsUpdatedMessage(mockSnapshot))`.
+     - **Action:** Call `Receive(new TestStatsUpdatedMessage(mockSnapshot))`.
      - **Assert:** Verify the ViewModels properties (WPM, Accuracy, ElapsedTime) map exactly to the snapshot's values.
 
 ### Task 3.2: Create TypingViewModel Tests
@@ -106,9 +106,9 @@
   2. `ProcessInput_UpdatesEngine_AndBroadcastsMessage`:
      - **Setup:** Inject a mock `IMessenger`. Call `InitializeAsync()`.
      - **Action:** Call `ProcessInput("a", false)`.
-     - **Assert:** Verify `_messenger.Send` was called with a `GameStatsUpdatedMessage`.
-  3. `Receive_GameResetMessage_ReloadsText_BasedOnSettings`:
-     - **Action:** Call `Receive(new GameResetMessage(new QuoteMode(QuoteLength.Short)))`.
+     - **Assert:** Verify `_messenger.Send` was called with a `TestStatsUpdatedMessage`.
+  3. `Receive_TestResetMessage_ReloadsText_BasedOnSettings`:
+     - **Action:** Call `Receive(new TestResetMessage(new QuoteMode(QuoteLength.Short)))`.
      - **Assert:** Verify `ITextProvider.GetQuoteAsync(QuoteLength.Short)` was called.
 
 ---
@@ -145,7 +145,7 @@
 - **Action:** Add a test `ProcessKeyPress_WithEmoji_HandlesGraphemesCorrectly`:
   - **Setup:** Load text containing an emoji with a modifier (e.g., `👍🏽`).
   - **Action:** Call `ProcessKeyPress("👍🏽", false)`.
-  - **Assert:** Verify `GameStats.TotalPhysicalKeystrokes` counts this as exactly **1** correct keystroke, not multiple bytes.
+  - **Assert:** Verify `TestStats.TotalPhysicalKeystrokes` counts this as exactly **1** correct keystroke, not multiple bytes.
 
 ### Task 5.2: ViewLocator Completeness Test
 
