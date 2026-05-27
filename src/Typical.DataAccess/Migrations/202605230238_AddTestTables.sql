@@ -26,7 +26,6 @@ CREATE TABLE TestSnapshots (
     OffsetMs INTEGER NOT NULL,
     Wpm REAL NOT NULL,
     Accuracy REAL NOT NULL,
-    
     PRIMARY KEY (TestId, OffsetMs),
     FOREIGN KEY (TestId) REFERENCES Tests(Id) ON DELETE CASCADE
 ) WITHOUT ROWID;

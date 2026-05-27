@@ -10,7 +10,7 @@ public static class ServiceExtensions
     {
         services.AddMessenger();
         services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<ITextProvider, StaticTextProvider>();
+        services.AddSingleton<ITextProvider, TextProvider>();
         services.AddSingleton(TestOptions.Default);
         services.AddSingleton<TypingTest>();
         services.AddSingleton<MainViewModel>();

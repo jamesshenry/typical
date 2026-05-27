@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
@@ -15,13 +16,10 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
 
         try
         {
-            // 1. Insert the Test Header
             long testId = await InsertTestHeaderAsync(connection, transaction, result);
 
-            // 2. Insert Keystroke Telemetry (Bulk)
             await InsertTelemetryAsync(connection, transaction, testId, result);
 
-            // 3. Insert Snapshots (Bulk)
             await InsertSnapshotsAsync(connection, transaction, testId, result);
 
             await transaction.CommitAsync();
@@ -41,13 +39,12 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
     {
         const string sql = """
             INSERT INTO Tests (CreatedAt, Wpm, RawWpm, Accuracy, DurationMs, TargetText, Source)
-            VALUES (@CreatedAt, @Wpm, @RawWpm, @Accuracy, @DurationMs, @TargetText, @Source);
+            VALUES (@CreatedAt, @Wpm, @RawWpm, @Accuracy, @DurationMs, @QuoteId, @CustomText);
             SELECT last_insert_rowid();
             """;
 
         await using var cmd = new SqliteCommand(sql, conn, trans);
 
-        // Convert DateTime to Unix Milliseconds (Standard for SQLite INTEGER)
         cmd.Parameters.AddWithValue(
             "@CreatedAt",
             new DateTimeOffset(result.PlayedAt).ToUnixTimeMilliseconds()
@@ -56,8 +53,17 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         cmd.Parameters.AddWithValue("@RawWpm", result.RawWpm.Value);
         cmd.Parameters.AddWithValue("@Accuracy", result.FinalAccuracy.Value);
         cmd.Parameters.AddWithValue("@DurationMs", (long)result.Duration.TotalMilliseconds);
-        cmd.Parameters.AddWithValue("@TargetText", result.Target);
-        cmd.Parameters.AddWithValue("@Source", result.Target.Source ?? (object)DBNull.Value);
+
+        if (result.Target.SourceId.HasValue)
+        {
+            cmd.Parameters.AddWithValue("@QuoteId", result.Target.SourceId.Value);
+            cmd.Parameters.AddWithValue("@CustomText", DBNull.Value);
+        }
+        else
+        {
+            cmd.Parameters.AddWithValue("@QuoteId", DBNull.Value);
+            cmd.Parameters.AddWithValue("@CustomText", result.Target.Text);
+        }
 
         return (long)(await cmd.ExecuteScalarAsync() ?? 0L);
     }
@@ -83,10 +89,9 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
 
         pTestId.Value = testId;
 
-        // Note: result.Telemetry is your List<KeystrokeLog>
         foreach (var log in result.Telemetry)
         {
-            pOffset.Value = log.Timestamp; // Relative offset from test start
+            pOffset.Value = log.Timestamp;
             pIndex.Value = log.Index;
             pActual.Value = log.Value;
             pType.Value = (int)log.Type;
@@ -102,7 +107,6 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         TestResult result
     )
     {
-        // Use result.Snapshots.Count, not Telemetry.Count
         if (result.Snapshots.Count == 0)
             return;
 
@@ -123,7 +127,6 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         {
             pOffset.Value = (long)snap.ElapsedTime.TotalMilliseconds;
 
-            // Extract values from Vogen ValueObjects
             pWpm.Value = snap.WPM.Value;
             pAcc.Value = snap.Accuracy.Value;
 

@@ -4,19 +4,20 @@ using Typical.Core.Events;
 
 namespace Typical.Core.Text;
 
-public class StaticTextProvider(ITextRepository textRepository) : ITextProvider
+public class TextProvider(ITextRepository textRepository) : ITextProvider
 {
     private readonly Faker _faker = new Faker("en_GB");
 
     public async Task<TextSample> GetQuoteAsync(QuoteLength? length = null)
     {
-        var result = await textRepository.GetRandomQuoteAsync();
+        var quote = await textRepository.GetRandomQuoteAsync();
         return new TextSample()
         {
-            Source = result.Author,
-            Text = result.Text,
-            CharCount = result.CharCount,
-            WordCount = result.WordCount,
+            SourceId = quote.Id,
+            Source = quote.Author,
+            Text = quote.Text,
+            CharCount = quote.CharCount,
+            WordCount = quote.WordCount,
         };
     }
 
