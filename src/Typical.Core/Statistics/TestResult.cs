@@ -8,5 +8,7 @@ public readonly record struct TestResult(
     Accuracy FinalAccuracy,
     TimeSpan Duration,
     TextSample Target,
-    IReadOnlyList<KeystrokeLog> Telemetry
+    IReadOnlyList<KeystrokeLog> Telemetry,
+    IReadOnlyList<TestSnapshot> Snapshots,
+    WPM RawWpm
 );

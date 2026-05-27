@@ -1,3 +1,5 @@
+using Typical.Core.Text;
+
 namespace Typical.Core.Statistics;
 
 public class Statistics
@@ -25,17 +27,17 @@ public class Statistics
             : TimeSpan.Zero;
     public bool IsRunning => _startTimestamp.HasValue && !_endTimestamp.HasValue;
 
-    internal void RecordKey(string grapheme, KeystrokeType type)
+    internal void RecordKey(string grapheme, KeystrokeType type, int currentIndex)
     {
         if (!IsRunning)
             Start();
 
-        _keystrokes.Add(grapheme, type, _timeProvider.GetTimestamp());
+        _keystrokes.Add(grapheme, type, _timeProvider.GetTimestamp(), currentIndex);
     }
 
-    internal void RecordBackspace()
+    internal void RecordBackspace(int currentIndex)
     {
-        _keystrokes.Add("\b", KeystrokeType.Correction, _timeProvider.GetTimestamp());
+        _keystrokes.Add("\b", KeystrokeType.Correction, _timeProvider.GetTimestamp(), currentIndex);
     }
 
     internal void Start()
@@ -66,5 +68,22 @@ public class Statistics
         _snapshots.Add(snapshot);
 
         return snapshot;
+    }
+
+    internal TestResult GetFinalResult(TextSample targetSample)
+    {
+        var finalSnapshot = CreateSnapshot();
+        double minutes = ElapsedTime.Minutes;
+        double rawWpm = (minutes <= 0) ? 0 : (_keystrokes.TotalPhysical / 5.0) / minutes;
+        return new TestResult(
+            PlayedAt: DateTime.UtcNow,
+            FinalWpm: finalSnapshot.WPM,
+            RawWpm: WPM.From(rawWpm),
+            FinalAccuracy: finalSnapshot.Accuracy,
+            Duration: finalSnapshot.ElapsedTime,
+            Target: targetSample,
+            Telemetry: Keystrokes.ToList(),
+            Snapshots: Snapshots.ToList()
+        );
     }
 }

@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
+using Typical.Core.Data;
 using Typical.Core.Statistics;
 
 namespace Typical.DataAccess.Sqlite;
@@ -101,6 +102,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         TestResult result
     )
     {
+        // Use result.Snapshots.Count, not Telemetry.Count
         if (result.Snapshots.Count == 0)
             return;
 
@@ -120,6 +122,8 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         foreach (var snap in result.Snapshots)
         {
             pOffset.Value = (long)snap.ElapsedTime.TotalMilliseconds;
+
+            // Extract values from Vogen ValueObjects
             pWpm.Value = snap.WPM.Value;
             pAcc.Value = snap.Accuracy.Value;
 

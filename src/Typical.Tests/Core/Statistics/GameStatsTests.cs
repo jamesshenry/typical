@@ -10,10 +10,8 @@ public class GameStatsTests
     {
         var fakeTime = new FakeTimeProvider();
         var stats = new Typical.Core.Statistics.Statistics(fakeTime);
-        stats.Start();
-        // Record 6 correct characters ("hello ")
-        for (int i = 0; i < 6; i++)
-            stats.RecordKey("a", KeystrokeType.Correct);
+
+        var builder = new TelemetryBuilder(stats, fakeTime).Type("hello ");
         fakeTime.Advance(TimeSpan.FromSeconds(12));
         stats.Stop();
         var snapshot = stats.CreateSnapshot();
@@ -26,13 +24,18 @@ public class GameStatsTests
     {
         var fakeTime = new FakeTimeProvider();
         var stats = new Typical.Core.Statistics.Statistics(fakeTime);
-        stats.Start();
-        for (int i = 0; i < 9; i++)
-            stats.RecordKey("a", KeystrokeType.Correct);
-        stats.RecordKey("b", KeystrokeType.Incorrect);
+
+        // Use the builder to simulate a 90% accuracy run
+        new TelemetryBuilder(stats, fakeTime)
+            .Type("123456789") // 9 Correct
+            .Error("x"); // 1 Incorrect
+
         fakeTime.Advance(TimeSpan.FromSeconds(10));
         stats.Stop();
+
         var snapshot = stats.CreateSnapshot();
+
+        // 9 correct / 10 physical keystrokes = 90%
         await Assert.That(snapshot.Accuracy.Value).IsEqualTo(90);
     }
 

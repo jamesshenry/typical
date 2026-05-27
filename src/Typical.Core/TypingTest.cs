@@ -32,6 +32,7 @@ public class TypingTest
     }
 
     internal Statistics.Statistics Stats { get; private set; }
+    public TextSample TargetSample { get; private set; }
     public string TargetText { get; private set; } = string.Empty;
 
     public string UserInput => _userInput.ToString();
@@ -56,7 +57,7 @@ public class TypingTest
             {
                 _userInput.Pop();
 
-                Stats.RecordBackspace();
+                Stats.RecordBackspace(_userInput.GraphemeCount);
             }
             return true;
         }
@@ -69,7 +70,7 @@ public class TypingTest
         bool isCorrect = normalizedInput == _targetGraphemes[currentPos];
         var type = isCorrect ? KeystrokeType.Correct : KeystrokeType.Incorrect;
 
-        Stats.RecordKey(normalizedInput, type);
+        Stats.RecordKey(normalizedInput, type, _userInput.GraphemeCount);
 
         if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
         {
@@ -89,17 +90,9 @@ public class TypingTest
                 return;
             }
 
-            IsOver = true;
             Stats.Stop();
-            var snapshot = Stats.CreateSnapshot();
-            var result = new TestResult(
-                DateTime.UtcNow,
-                snapshot.WPM,
-                snapshot.Accuracy,
-                snapshot.ElapsedTime,
-                SampleNormalized,
-                Stats.Keystrokes
-            );
+            IsOver = true;
+            var result = Stats.GetFinalResult(TargetSample);
 
             OnTestFinished?.Invoke(this, result);
         }
@@ -107,6 +100,7 @@ public class TypingTest
 
     public void LoadText(TextSample sample)
     {
+        TargetSample = sample;
         TargetText = sample.Text.Normalize(NormalizationForm.FormC);
         SampleNormalized = sample with { Text = sample.Text.Normalize(NormalizationForm.FormC) };
 
