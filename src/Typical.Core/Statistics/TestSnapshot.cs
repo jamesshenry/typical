@@ -6,11 +6,11 @@ namespace Typical.Core.Statistics;
 public readonly record struct TestSnapshot(
     WPM WPM,
     Accuracy Accuracy,
-    CharacterStats Chars,
+    TestMetrics Chars,
     TimeSpan ElapsedTime
 )
 {
-    public static TestSnapshot Create(CharacterStats chars, TimeSpan elapsed)
+    public static TestSnapshot Create(TestMetrics chars, TimeSpan elapsed)
     {
         int totalTyped = chars.Correct + chars.Corrections + chars.Incorrect;
         double accValue = totalTyped == 0 ? 100.0 : (double)chars.Correct / totalTyped * 100.0;
@@ -28,7 +28,7 @@ public readonly record struct TestSnapshot(
     }
 
     public static TestSnapshot Empty =>
-        new((WPM)0, (Accuracy)100, new CharacterStats(0, 0, 0), TimeSpan.Zero);
+        new((WPM)0, (Accuracy)100, new TestMetrics(0, 0, 0), TimeSpan.Zero);
 }
 
 [ValueObject<double>]

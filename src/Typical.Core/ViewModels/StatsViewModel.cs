@@ -5,7 +5,7 @@ using Typical.Core.Statistics;
 
 namespace Typical.Core.ViewModels;
 
-public partial class StatsViewModel : ObservableObject, IRecipient<StatisticsUpdatedMessage>
+public partial class StatsViewModel : ObservableObject, IRecipient<TestSessionUpdatedMessage>
 {
     private readonly IMessenger _messenger;
 
@@ -15,11 +15,11 @@ public partial class StatsViewModel : ObservableObject, IRecipient<StatisticsUpd
     public StatsViewModel(IMessenger messenger)
     {
         _messenger = messenger;
-        _messenger.Register<StatsViewModel, StatisticsUpdatedMessage>(this, (r, m) => r.Receive(m));
+        _messenger.Register<StatsViewModel, TestSessionUpdatedMessage>(this, (r, m) => r.Receive(m));
     }
 
-    public void Receive(StatisticsUpdatedMessage message)
+    public void Receive(TestSessionUpdatedMessage message)
     {
-        Stats = message.State;
+        Stats = message.Snapshot;
     }
 }

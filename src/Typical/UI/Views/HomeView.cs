@@ -1,9 +1,9 @@
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
-using Typical.Binding;
+using Typical.UI.Binding;
 using Typical.Core.ViewModels;
 
-namespace Typical.Views;
+namespace Typical.UI.Views;
 
 public class HomeView : BindableView<HomeViewModel>
 {

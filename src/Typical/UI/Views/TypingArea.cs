@@ -7,7 +7,7 @@ using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
 using Attribute = Terminal.Gui.Drawing.Attribute;
 
-namespace Typical.Views;
+namespace Typical.UI.Views;
 
 public class TypingArea : View
 {

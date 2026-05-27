@@ -11,6 +11,7 @@ using Typical.Core.Interfaces;
 using Typical.Core.Text;
 using Typical.Core.ViewModels;
 using Typical.Services;
+using Typical.UI.Views;
 
 [assembly: GenerateImposter(typeof(IDialogService))]
 [assembly: GenerateImposter(typeof(ITextProvider))]
@@ -39,7 +40,7 @@ public class NavigationServiceTests
         services.AddSingleton(_statsRepoMock.Instance());
 
         services.AddSingleton(sp => new TypingTest(
-            new GameOptions(),
+            new TestOptions(),
             NullLogger<TypingTest>.Instance,
             TimeProvider.System
         ));
@@ -52,9 +53,9 @@ public class NavigationServiceTests
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<TypingViewModel>();
 
-        services.AddTransient<Views.HomeView>();
-        services.AddTransient<Views.SettingsView>();
-        services.AddTransient<Views.TypingView>();
+        services.AddTransient<HomeView>();
+        services.AddTransient<SettingsView>();
+        services.AddTransient<TypingView>();
 
         services.AddSingleton<INavigationService>(sp => new NavigationService(
             sp,

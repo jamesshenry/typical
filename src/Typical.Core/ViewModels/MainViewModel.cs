@@ -46,7 +46,7 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<TestCom
     }
 
     [RelayCommand]
-    private void NavigateToGameView() => _navigationService.NavigateTo<TypingViewModel>();
+    private void NavigateToTestView() => _navigationService.NavigateTo<TypingViewModel>();
 
     [RelayCommand]
     private void NavigateHome() => _navigationService.NavigateTo<HomeViewModel>();

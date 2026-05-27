@@ -1,4 +1,4 @@
-namespace Typical.Binding;
+namespace Typical.UI.Binding;
 
 /// <summary>
 /// A simple disposable action that executes a delegate when disposed.

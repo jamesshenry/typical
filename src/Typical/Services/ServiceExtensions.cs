@@ -10,7 +10,7 @@ using Typical.Configuration;
 using Typical.Core.Interfaces;
 using Typical.Logging;
 using Typical.Navigation;
-using Typical.Views;
+using Typical.UI.Views;
 
 namespace Typical.Services;
 

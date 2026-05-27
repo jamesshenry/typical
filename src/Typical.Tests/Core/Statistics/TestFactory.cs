@@ -6,9 +6,11 @@ public static class TestFactory
 {
     public static TestResult CreateResult(
         double wpm = 60,
+        double rawWpm = 0,
         double accuracy = 100,
         TextSample? target = null,
-        List<KeystrokeLog>? telemetry = null
+        List<KeystrokeLog>? telemetry = null,
+        List<TestSnapshot>? snapshots = null
     )
     {
         return new TestResult(
@@ -17,7 +19,9 @@ public static class TestFactory
             FinalAccuracy: Accuracy.From(accuracy),
             Duration: TimeSpan.FromSeconds(10),
             Target: target ?? TextSample.Empty,
-            Telemetry: telemetry ?? new List<KeystrokeLog>()
-        );
+            Telemetry: telemetry ?? new List<KeystrokeLog>(),
+            Snapshots: snapshots ?? new List<TestSnapshot>()
+,
+            RawWpm: WPM.From(rawWpm));
     }
 }

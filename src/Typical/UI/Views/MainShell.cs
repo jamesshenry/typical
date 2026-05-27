@@ -4,11 +4,11 @@ using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
-using Typical.Binding;
+using Typical.UI.Binding;
 using Typical.Core.ViewModels;
 using Typical.Navigation;
 
-namespace Typical.Views;
+namespace Typical.UI.Views;
 
 public class MainShell : Window
 {
@@ -90,7 +90,7 @@ public class MainShell : Window
             )
         );
 
-        _viewModel.NavigateToGameViewCommand.Execute(null);
+        _viewModel.NavigateToTestViewCommand.Execute(null);
 
         this.Activating += (s, e) =>
         {

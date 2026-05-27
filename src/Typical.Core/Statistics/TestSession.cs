@@ -2,7 +2,7 @@ using Typical.Core.Text;
 
 namespace Typical.Core.Statistics;
 
-public class Statistics
+public class TestSession
 {
     private readonly TimeProvider _timeProvider;
     private readonly KeystrokeCollection _keystrokes = new();
@@ -10,7 +10,7 @@ public class Statistics
     private long? _startTimestamp;
     private long? _endTimestamp;
 
-    public Statistics(TimeProvider timeProvider)
+    public TestSession(TimeProvider timeProvider)
     {
         _timeProvider = timeProvider;
     }
@@ -58,7 +58,7 @@ public class Statistics
 
     public TestSnapshot CreateSnapshot()
     {
-        var characterStats = new CharacterStats(
+        var characterStats = new TestMetrics(
             _keystrokes.CorrectCount,
             _keystrokes.ErrorCount,
             _keystrokes.CorrectionCount

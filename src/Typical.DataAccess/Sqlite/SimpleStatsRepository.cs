@@ -6,7 +6,7 @@ namespace Typical.DataAccess.Sqlite;
 
 public class SimpleStatsRepository : IStatsRepository
 {
-    public Task SaveGameResultAsync(TestResult result)
+    public Task SaveTestResultAsync(TestResult result)
     {
         Debug.WriteLine("SimpleStatsRepository");
 

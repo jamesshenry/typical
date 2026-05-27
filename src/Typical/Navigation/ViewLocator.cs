@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Terminal.Gui.ViewBase;
 using Typical.Core.ViewModels;
-using Typical.Views;
+using Typical.UI.Views;
 
 namespace Typical.Navigation;
 

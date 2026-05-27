@@ -2,8 +2,8 @@ using Typical.Core.Statistics;
 
 namespace Typical.Core.Events;
 
-public record StatisticsUpdatedMessage(
-    TestSnapshot State
+public record TestSessionUpdatedMessage(
+    TestSnapshot Snapshot
 );
 
 public record WordsMode(int Count, bool Punctuation, bool Numbers);

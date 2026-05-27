@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Terminal.Gui.Input;
 using Terminal.Gui.Views;
-using Typical.Binding;
+using Typical.UI.Binding;
 
 namespace Typical.Tests.UI;
 

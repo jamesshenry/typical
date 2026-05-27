@@ -9,7 +9,7 @@ namespace Typical.Tests.Core.ViewModels;
 public class StatsViewModelTests
 {
     [Test]
-    public async Task Receive_GameStatsUpdatedMessage_UpdatesProperties()
+    public async Task Receive_TestStatsUpdatedMessage_UpdatesProperties()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IMessenger, StrongReferenceMessenger>();
@@ -20,10 +20,10 @@ public class StatsViewModelTests
         var fakeSnapshot = new TestSnapshot(
             WPM: (WPM)65.8,
             Accuracy: (Accuracy)98.5,
-            Chars: new CharacterStats(10, 1, 2),
+            Chars: new TestMetrics(10, 1, 2),
             ElapsedTime: TimeSpan.FromSeconds(30)
         );
-        var msg = new StatisticsUpdatedMessage(fakeSnapshot);
+        var msg = new TestSessionUpdatedMessage(fakeSnapshot);
 
         messenger.Send(msg);
 

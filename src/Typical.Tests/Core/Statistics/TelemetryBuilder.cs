@@ -8,10 +8,10 @@ public class TelemetryBuilder
 {
     private readonly List<KeystrokeLog> _logs = new();
     private int _currentIndex = 0;
-    private readonly Typical.Core.Statistics.Statistics _stats;
+    private readonly TestSession _stats;
     private readonly FakeTimeProvider _time;
 
-    public TelemetryBuilder(Typical.Core.Statistics.Statistics stats, FakeTimeProvider fakeTime)
+    public TelemetryBuilder(TestSession stats, FakeTimeProvider fakeTime)
     {
         _stats = stats;
         _time = fakeTime;

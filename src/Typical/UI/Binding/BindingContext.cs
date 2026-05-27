@@ -1,4 +1,4 @@
-namespace Typical.Binding;
+namespace Typical.UI.Binding;
 
 /// <summary>
 /// Manages the lifecycle of multiple bindings, providing centralized cleanup.

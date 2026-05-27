@@ -14,24 +14,24 @@ public class TypingTest
 {
     private readonly TypingBuffer _userInput = new();
     private string[] _targetGraphemes = [];
-    private readonly GameOptions _gameOptions;
+    private readonly TestOptions _testOptions;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<TypingTest> _logger;
     public event EventHandler<TestResult>? OnTestFinished;
 
     public TypingTest(
-        GameOptions gameOptions,
+        TestOptions testOptions,
         ILogger<TypingTest> logger,
         TimeProvider timeProvider
     )
     {
-        _gameOptions = gameOptions;
+        _testOptions = testOptions;
         _timeProvider = timeProvider;
-        Stats = new Statistics.Statistics(_timeProvider);
+        Stats = new TestSession(_timeProvider);
         _logger = logger;
     }
 
-    internal Statistics.Statistics Stats { get; private set; }
+    internal TestSession Stats { get; private set; }
     public TextSample TargetSample { get; private set; }
     public string TargetText { get; private set; } = string.Empty;
 
@@ -48,7 +48,7 @@ public class TypingTest
         if (!IsRunning && !IsOver && !isBackspace)
         {
             Stats.Start();
-            CoreLogs.GameStarting(_logger);
+            CoreLogs.TestStarting(_logger);
         }
 
         if (isBackspace)
@@ -72,7 +72,7 @@ public class TypingTest
 
         Stats.RecordKey(normalizedInput, type, _userInput.GraphemeCount);
 
-        if (!_gameOptions.ForbidIncorrectEntries || isCorrect)
+        if (!_testOptions.ForbidIncorrectEntries || isCorrect)
         {
             _userInput.Push(normalizedInput);
             CheckEndCondition();
@@ -85,7 +85,7 @@ public class TypingTest
     {
         if (_userInput.GraphemeCount == _targetGraphemes.Length)
         {
-            if (_gameOptions.Require100Accuracy && _userInput.ToString() != TargetText)
+            if (_testOptions.Require100Accuracy && _userInput.ToString() != TargetText)
             {
                 return;
             }
@@ -116,7 +116,7 @@ public class TypingTest
         _userInput.Clear();
 
         IsOver = false;
-        Stats = new Statistics.Statistics(_timeProvider);
+        Stats = new TestSession(_timeProvider);
     }
 
     internal KeystrokeType GetStatus(int index)

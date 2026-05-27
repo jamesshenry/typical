@@ -27,7 +27,7 @@ public class TypingViewModelTests
         var mockTextProvider = new MockTextProvider();
         mockTextProvider.SetText("Hello world!");
         var engine = new TypingTest(
-            GameOptions.Default,
+            TestOptions.Default,
             NullLogger<TypingTest>.Instance,
             TimeProvider.System
         );
@@ -50,7 +50,7 @@ public class TypingViewModelTests
         var mockTextProvider = new MockTextProvider();
         mockTextProvider.SetText("a");
         var engine = new TypingTest(
-            GameOptions.Default,
+            TestOptions.Default,
             NullLogger<TypingTest>.Instance,
             TimeProvider.System
         );
@@ -69,12 +69,12 @@ public class TypingViewModelTests
     }
 
     [Test]
-    public async Task Receive_GameResetMessage_ReloadsText_BasedOnSettings()
+    public async Task Receive_TestResetMessage_ReloadsText_BasedOnSettings()
     {
         var mockTextProvider = new MockTextProvider();
         mockTextProvider.SetText("reset quote");
         var engine = new TypingTest(
-            GameOptions.Default,
+            TestOptions.Default,
             NullLogger<TypingTest>.Instance,
             TimeProvider.System
         );

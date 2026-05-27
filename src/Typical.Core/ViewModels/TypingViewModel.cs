@@ -55,11 +55,11 @@ public partial class TypingViewModel
         _messenger.Register<TypingViewModel, TestResetMessage>(this, (r, m) => r.Receive(m));
     }
 
-    public bool IsGameOver => _Test.IsOver;
+    public bool IsTestOver => _Test.IsOver;
 
     /// <summary>
     /// Processes input received from the View.
-    /// Maps Key events to Core Game Logic.
+    /// Maps Key events to Core Test Logic.
     /// </summary>
     public async void ProcessInput(string c, bool isBackspace)
     {
@@ -83,7 +83,7 @@ public partial class TypingViewModel
     private void UpdateState()
     {
         var snapshot = _Test.CreateSnapshot();
-        _messenger.Send(new StatisticsUpdatedMessage(snapshot));
+        _messenger.Send(new TestSessionUpdatedMessage(snapshot));
     }
 
     public void OnNavigatedTo()
@@ -141,7 +141,7 @@ public partial class TypingViewModel
 
         try
         {
-            await _statsRepository.SaveGameResultAsync(result);
+            await _statsRepository.SaveTestResultAsync(result);
             _messenger.Send(new TestCompletedMessage(result));
         }
         finally

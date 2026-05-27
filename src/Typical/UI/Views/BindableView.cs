@@ -1,10 +1,10 @@
 using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Terminal.Gui.ViewBase;
-using Typical.Binding;
+using Typical.UI.Binding;
 using Typical.Core.Interfaces;
 
-namespace Typical.Views;
+namespace Typical.UI.Views;
 
 /// <summary>
 /// Base class for Views that are bound to ViewModels.

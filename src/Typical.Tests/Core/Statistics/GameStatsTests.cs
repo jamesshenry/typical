@@ -3,13 +3,13 @@ using Typical.Core.Statistics;
 
 namespace Typical.Tests.Core.Statistics;
 
-public class GameStatsTests
+public class TestStatsTests
 {
     [Test]
     public async Task CreateSnapshot_CalculatesAccurateWPM_BasedOnTime()
     {
         var fakeTime = new FakeTimeProvider();
-        var stats = new Typical.Core.Statistics.Statistics(fakeTime);
+        var stats = new TestSession(fakeTime);
 
         var builder = new TelemetryBuilder(stats, fakeTime).Type("hello ");
         fakeTime.Advance(TimeSpan.FromSeconds(12));
@@ -23,7 +23,7 @@ public class GameStatsTests
     public async Task CreateSnapshot_CalculatesAccuracy_WithErrors()
     {
         var fakeTime = new FakeTimeProvider();
-        var stats = new Typical.Core.Statistics.Statistics(fakeTime);
+        var stats = new TestSession(fakeTime);
 
         // Use the builder to simulate a 90% accuracy run
         new TelemetryBuilder(stats, fakeTime)
@@ -43,7 +43,7 @@ public class GameStatsTests
     public async Task CreateSnapshot_HandlesZeroElapsed_PreventsDivideByZero()
     {
         var fakeTime = new FakeTimeProvider();
-        var stats = new Typical.Core.Statistics.Statistics(fakeTime);
+        var stats = new TestSession(fakeTime);
         stats.Start();
         stats.Stop();
         var snapshot = stats.CreateSnapshot();

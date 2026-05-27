@@ -8,7 +8,7 @@ namespace Typical.DataAccess.Sqlite;
 
 public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsRepository
 {
-    public async Task SaveGameResultAsync(TestResult result)
+    public async Task SaveTestResultAsync(TestResult result)
     {
         await using var connection = await GetConnectionAsync();
         await using var transaction = connection.BeginTransaction();
@@ -86,7 +86,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         // Note: result.Telemetry is your List<KeystrokeLog>
         foreach (var log in result.Telemetry)
         {
-            pOffset.Value = log.Timestamp; // Relative offset from game start
+            pOffset.Value = log.Timestamp; // Relative offset from test start
             pIndex.Value = log.Index;
             pActual.Value = log.Value;
             pType.Value = (int)log.Type;

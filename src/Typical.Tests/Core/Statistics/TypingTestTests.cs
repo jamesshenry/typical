@@ -16,10 +16,10 @@ public class TypingTestTests
 {
     private readonly TimeProvider _timeProvider = new FakeTimeProvider(new DateTime(2025, 01, 01));
     private readonly MockTextProvider _mockTextProvider;
-    private readonly GameOptions _defaultOptions;
-    private readonly GameOptions _strictOptions;
+    private readonly TestOptions _defaultOptions;
+    private readonly TestOptions _strictOptions;
     private readonly Microsoft.Extensions.Logging.ILogger<TypingTest> _logger;
-    private readonly Typical.Core.Statistics.Statistics _stats;
+    private readonly TestSession _stats;
     private const int BOGUS_SEED = 999_999_001;
     private readonly Random _seed = new Random(BOGUS_SEED);
     private readonly DefaultLogger _testLogger;
@@ -30,16 +30,16 @@ public class TypingTestTests
         Bogus.Randomizer.Seed = _seed;
         // This runs before each test, ensuring a clean state.
         _mockTextProvider = new MockTextProvider();
-        _defaultOptions = new GameOptions();
-        _strictOptions = new GameOptions { ForbidIncorrectEntries = true };
+        _defaultOptions = new TestOptions();
+        _strictOptions = new TestOptions { ForbidIncorrectEntries = true };
         _logger = NullLogger<TypingTest>.Instance;
-        _stats = new Typical.Core.Statistics.Statistics(_timeProvider);
+        _stats = new TestSession(_timeProvider);
     }
 
-    // --- StartNewGame Tests ---
+    // --- StartNewTest Tests ---
 
     [Test]
-    public async Task StartNewGame_Always_LoadsTextFromProvider()
+    public async Task StartNewTest_Always_LoadsTextFromProvider()
     {
         // Arrange
         var expectedText = "This is a test.";
@@ -54,7 +54,7 @@ public class TypingTestTests
     }
 
     [Test]
-    public async Task StartNewGame_WhenGameWasAlreadyInProgress_ResetsState()
+    public async Task StartNewTest_WhenTestWasAlreadyInProgress_ResetsState()
     {
         // Arrange
         // 1. Initial Setup
@@ -121,7 +121,7 @@ public class TypingTestTests
     }
 
     [Test]
-    public async Task ProcessKeyPress_WhenGameIsCompleted_SetsIsOverToTrue()
+    public async Task ProcessKeyPress_WhenTestIsCompleted_SetsIsOverToTrue()
     {
         // Arrange
         var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
@@ -137,13 +137,13 @@ public class TypingTestTests
         await Assert.That(sut.IsRunning).IsFalse();
     }
 
-    // --- GameOptions: ForbidIncorrectEntries (Strict Mode) Tests ---
+    // --- TestOptions: ForbidIncorrectEntries (Strict Mode) Tests ---
 
     [Test]
     public async Task ProcessKeyPress_InStrictModeAndCorrectKey_AppendsCharacter()
     {
         // Arrange
-        var sut = new TypingTest(_strictOptions, _logger, _timeProvider); // _gameOptions.ForbidIncorrectEntries = true
+        var sut = new TypingTest(_strictOptions, _logger, _timeProvider); // _testOptions.ForbidIncorrectEntries = true
         sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
@@ -173,7 +173,7 @@ public class TypingTestTests
     public async Task ProcessKeyPress_InDefaultModeAndIncorrectKey_AppendsCharacter()
     {
         // Arrange
-        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider); // _gameOptions.ForbidIncorrectEntries = false
+        var sut = new TypingTest(_defaultOptions, _logger, _timeProvider); // _testOptions.ForbidIncorrectEntries = false
         sut.LoadText(new TextSample() { Text = "abc", Source = "test" });
 
         // Act
@@ -187,7 +187,7 @@ public class TypingTestTests
     [Test]
     public async Task ProcessKeyPress_WithRandomText_MatchesState()
     {
-        var lorem = new Bogus.DataSets.Lorem("ru") { Random = new Bogus.Randomizer(BOGUS_SEED) };
+        var lorem = new Bogus.DataSets.Lorem("ru") { Random = new Randomizer(BOGUS_SEED) };
 
         var text = lorem.Sentence();
 

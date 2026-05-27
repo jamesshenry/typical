@@ -3,7 +3,7 @@ using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Typical.Core.ViewModels;
 
-namespace Typical.Views;
+namespace Typical.UI.Views;
 
 public class StatsView : BindableView<StatsViewModel>
 {

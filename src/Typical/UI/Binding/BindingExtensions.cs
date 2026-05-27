@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 
-namespace Typical.Binding;
+namespace Typical.UI.Binding;
 
 public static class BindingExtensions
 {
