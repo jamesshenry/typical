@@ -219,7 +219,7 @@ public class TypingTestTests
 
         // Assert: should count as exactly 1 correct keystroke
         await Assert.That(sut.Stats.Keystrokes.Count).IsEqualTo(1);
-        await Assert.That(sut.Stats.Keystrokes[0].Grapheme).IsEqualTo("👍🏽");
+        await Assert.That(sut.Stats.Keystrokes[0].Value).IsEqualTo("👍🏽");
         await Assert.That(sut.Stats.Keystrokes[0].Type).IsEqualTo(KeystrokeType.Correct);
     }
 

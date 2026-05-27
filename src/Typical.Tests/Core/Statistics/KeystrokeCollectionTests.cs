@@ -72,7 +72,7 @@ public class KeystrokeCollectionTests
         kc.Add("a", KeystrokeType.Correct, 1);
         var log = kc.GetLog();
         await Assert.That(log.Count).IsEqualTo(1);
-        await Assert.That(log[0].Grapheme).IsEqualTo("a");
+        await Assert.That(log[0].Value).IsEqualTo("a");
         await Assert.That(log[0].Type).IsEqualTo(KeystrokeType.Correct);
         await Assert.That(log[0].Timestamp).IsEqualTo(1);
     }
