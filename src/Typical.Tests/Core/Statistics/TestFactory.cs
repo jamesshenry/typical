@@ -15,13 +15,13 @@ public static class TestFactory
     {
         return new TestResult(
             PlayedAt: DateTime.UtcNow,
-            FinalWpm: WPM.From(wpm),
+            FinalWpm: Wpm.From(wpm),
             FinalAccuracy: Accuracy.From(accuracy),
             Duration: TimeSpan.FromSeconds(10),
             Target: target ?? TextSample.Empty,
             Telemetry: telemetry ?? new List<KeystrokeLog>(),
-            Snapshots: snapshots ?? new List<TestSnapshot>()
-,
-            RawWpm: WPM.From(rawWpm));
+            Snapshots: snapshots ?? new List<TestSnapshot>(),
+            RawWpm: Wpm.From(rawWpm)
+        );
     }
 }

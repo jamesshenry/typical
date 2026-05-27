@@ -1,10 +1,9 @@
 using System.Diagnostics;
-using Vogen;
 
 namespace Typical.Core.Statistics;
 
 public readonly record struct TestSnapshot(
-    WPM WPM,
+    Wpm WPM,
     Accuracy Accuracy,
     TestMetrics Metrics,
     TimeSpan ElapsedTime
@@ -18,7 +17,7 @@ public readonly record struct TestSnapshot(
         double wpmValue = (minutes <= 0) ? 0 : (chars.Correct / 5.0) / minutes;
 
         var snapshot = new TestSnapshot(
-            WPM.From(Math.Max(0, wpmValue)),
+            Wpm.From(Math.Max(0, wpmValue)),
             Accuracy.From(Math.Clamp(accValue, 0, 100)),
             chars,
             elapsed
@@ -28,23 +27,5 @@ public readonly record struct TestSnapshot(
     }
 
     public static TestSnapshot Empty =>
-        new((WPM)0, (Accuracy)100, new TestMetrics(0, 0, 0), TimeSpan.Zero);
-}
-
-[ValueObject<double>]
-public partial struct Accuracy
-{
-    public override string ToString()
-    {
-        return $"{Value:F1}";
-    }
-}
-
-[ValueObject<double>]
-public partial struct WPM
-{
-    public override string ToString()
-    {
-        return $"{Value:F1}";
-    }
+        new((Wpm)0, (Accuracy)100, new TestMetrics(0, 0, 0), TimeSpan.Zero);
 }

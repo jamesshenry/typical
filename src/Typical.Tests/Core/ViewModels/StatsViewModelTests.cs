@@ -18,7 +18,7 @@ public class StatsViewModelTests
         var sut = new StatsViewModel(messenger);
 
         var fakeSnapshot = new TestSnapshot(
-            WPM: (WPM)65.8,
+            WPM: (Wpm)65.8,
             Accuracy: (Accuracy)98.5,
             Metrics: new TestMetrics(10, 1, 2),
             ElapsedTime: TimeSpan.FromSeconds(30)

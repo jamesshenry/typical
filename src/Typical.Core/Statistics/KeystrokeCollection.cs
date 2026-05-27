@@ -18,11 +18,8 @@ public class KeystrokeCollection
     /// <param name="index">The current grapheme index in the target text.</param>
     public void Add(string actual, KeystrokeType type, long timestamp, int index)
     {
-        // Set the baseline for OffsetMs on the very first keypress
         _firstTimestamp ??= timestamp;
 
-        // Calculate offset in milliseconds (for SQLite efficiency)
-        // We use a helper or manual math here depending on your TimeProvider resolution
         long offsetMs = (timestamp - _firstTimestamp.Value) / TimeSpan.TicksPerMillisecond;
 
         var log = new KeystrokeLog(

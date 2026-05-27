@@ -4,11 +4,11 @@ namespace Typical.Core.Statistics;
 
 public readonly record struct TestResult(
     DateTime PlayedAt,
-    WPM FinalWpm,
+    Wpm FinalWpm,
     Accuracy FinalAccuracy,
     TimeSpan Duration,
     TextSample Target,
     IReadOnlyList<KeystrokeLog> Telemetry,
     IReadOnlyList<TestSnapshot> Snapshots,
-    WPM RawWpm
+    Wpm RawWpm
 );

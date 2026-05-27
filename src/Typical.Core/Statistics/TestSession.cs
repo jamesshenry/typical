@@ -78,7 +78,7 @@ public class TestSession
         return new TestResult(
             PlayedAt: DateTime.UtcNow,
             FinalWpm: finalSnapshot.WPM,
-            RawWpm: WPM.From(rawWpm),
+            RawWpm: Wpm.From(rawWpm),
             FinalAccuracy: finalSnapshot.Accuracy,
             Duration: finalSnapshot.ElapsedTime,
             Target: targetSample,
