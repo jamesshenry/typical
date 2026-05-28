@@ -9,7 +9,6 @@ using Terminal.Gui.App;
 using Typical.Configuration;
 using Typical.Core.Interfaces;
 using Typical.Logging;
-using Typical.Navigation;
 using Typical.UI.Views;
 
 namespace Typical.Services;

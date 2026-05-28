@@ -1,3 +1,4 @@
+using System.Reflection.Emit;
 using Microsoft.Extensions.DependencyInjection;
 using Terminal.Gui.ViewBase;
 using Typical.Core.ViewModels;
@@ -16,10 +17,4 @@ public static class ViewLocator
             ResultsViewModel => sp.GetRequiredService<ResultsView>(),
             _ => throw new ArgumentException($"No view registered for {viewModel.GetType()}"),
         };
-}
-
-public class ResultsView : BindableView<ResultsViewModel>
-{
-    public ResultsView(ResultsViewModel viewModel)
-        : base(viewModel) { }
 }
