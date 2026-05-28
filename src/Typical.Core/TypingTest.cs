@@ -41,7 +41,7 @@ public class TypingTest
 
     public TextSample SampleNormalized { get; private set; } = TextSample.Empty;
 
-    public TestSnapshot CreateSnapshot() => Stats.CreateSnapshot();
+    public TestSnapshot GetCurrentSnapshot() => Stats.GetCurrentSnapshot();
 
     public bool ProcessKeyPress(string input, bool isBackspace)
     {

@@ -38,7 +38,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
     )
     {
         const string sql = """
-            INSERT INTO Tests (CreatedAt, Wpm, RawWpm, Accuracy, DurationMs, TargetText, Source)
+            INSERT INTO Tests (CreatedAt, Wpm, RawWpm, Accuracy, DurationMs, QuoteId, CustomText)
             VALUES (@CreatedAt, @Wpm, @RawWpm, @Accuracy, @DurationMs, @QuoteId, @CustomText);
             SELECT last_insert_rowid();
             """;
@@ -125,6 +125,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
 
         foreach (var snap in result.Snapshots)
         {
+            pTestId.Value = testId;
             pOffset.Value = (long)snap.ElapsedTime.TotalMilliseconds;
 
             pWpm.Value = snap.WPM.Value;

@@ -4,10 +4,14 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Logging;
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
+using Typical.Core.Text;
 
 namespace Typical.Core.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject, IRecipient<TestCompletedMessage>
+public sealed partial class MainViewModel
+    : ObservableObject,
+        IRecipient<TestCompletedMessage>,
+        IRecipient<TestResetMessage>
 {
     private readonly INavigationService _navigationService;
     private readonly IDialogService _dialogService;
@@ -43,6 +47,7 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<TestCom
         _messenger = messenger;
 
         _messenger.Register<MainViewModel, TestCompletedMessage>(this, (r, m) => r.Receive(m));
+        _messenger.Register<MainViewModel, TestResetMessage>(this, (r, m) => r.Receive(m));
     }
 
     [RelayCommand]
@@ -63,5 +68,13 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<TestCom
     public void Receive(TestCompletedMessage message)
     {
         _navigationService.NavigateTo<ResultsViewModel>(vm => vm.Initialize(message.Result));
+    }
+
+    public async void Receive(TestResetMessage message)
+    {
+        _navigationService.NavigateTo<TypingViewModel>(vm =>
+        {
+            vm.InitializeAsync().Wait();
+        });
     }
 }

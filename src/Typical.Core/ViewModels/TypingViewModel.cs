@@ -12,10 +12,7 @@ using Timer = System.Timers.Timer;
 
 namespace Typical.Core.ViewModels;
 
-public partial class TypingViewModel
-    : ObservableObject,
-        INavigatableView,
-        IRecipient<TestResetMessage>
+public partial class TypingViewModel : ObservableObject, INavigatableView
 {
     private readonly TypingTest _Test;
     private readonly ITextProvider _textProvider;
@@ -50,8 +47,6 @@ public partial class TypingViewModel
         _refreshTimer = new Timer(100);
         _refreshTimer.AutoReset = true;
         _refreshTimer.Elapsed += OnRefreshTimerElapsed;
-
-        _messenger.Register<TypingViewModel, TestResetMessage>(this, (r, m) => r.Receive(m));
     }
 
     public bool IsTestOver => _Test.IsOver;
@@ -81,7 +76,7 @@ public partial class TypingViewModel
     /// </summary>
     private void UpdateState()
     {
-        var snapshot = _Test.CreateSnapshot();
+        var snapshot = _Test.GetCurrentSnapshot();
         _messenger.Send(new TestSessionUpdatedMessage(snapshot));
     }
 
@@ -104,6 +99,8 @@ public partial class TypingViewModel
             return;
         }
 
+        _Test.Stats.SampleSnapshot();
+
         RefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -112,19 +109,6 @@ public partial class TypingViewModel
         Target = textSample ?? await _textProvider.GetQuoteAsync();
         _Test.LoadText(Target);
         UpdateState();
-    }
-
-    public async void Receive(TestResetMessage message)
-    {
-        TextSample textSample = message.Settings switch
-        {
-            QuoteMode q => (await _textProvider.GetQuoteAsync(q.Length)),
-            _ => throw new InvalidOperationException(
-                $"Unsupported mode settings type: {message.Settings.Value?.GetType().Name ?? message.Settings.GetType().Name}"
-            ),
-        };
-
-        await InitializeAsync(textSample);
     }
 
     public KeystrokeType GetStatus(int globalIdx)

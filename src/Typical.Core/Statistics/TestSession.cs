@@ -56,23 +56,29 @@ public class TestSession
 
     internal void Stop() => _endTimestamp = _timeProvider.GetTimestamp();
 
-    public TestSnapshot CreateSnapshot()
+    public TestSnapshot GetCurrentSnapshot()
     {
         var characterStats = new TestMetrics(
             _keystrokes.CorrectCount,
             _keystrokes.ErrorCount,
             _keystrokes.CorrectionCount
         );
-        var snapshot = TestSnapshot.Create(characterStats, ElapsedTime);
+        return TestSnapshot.Create(characterStats, ElapsedTime);
+    }
 
+    public void SampleSnapshot()
+    {
+        var snapshot = GetCurrentSnapshot();
+        if (_snapshots.Count > 0 && _snapshots[^1].ElapsedTime == snapshot.ElapsedTime)
+        {
+            return;
+        }
         _snapshots.Add(snapshot);
-
-        return snapshot;
     }
 
     internal TestResult GetFinalResult(TextSample targetSample)
     {
-        var finalSnapshot = CreateSnapshot();
+        var finalSnapshot = GetCurrentSnapshot();
         double minutes = ElapsedTime.Minutes;
         double rawWpm = (minutes <= 0) ? 0 : (_keystrokes.TotalPhysical / 5.0) / minutes;
         return new TestResult(
