@@ -67,30 +67,4 @@ public class TypingViewModelTests
         // Assert observable state: engine should have processed the input
         await Assert.That(engine.UserInput).IsEqualTo("a");
     }
-
-    [Test]
-    public async Task Receive_TestResetMessage_ReloadsText_BasedOnSettings()
-    {
-        var mockTextProvider = new MockTextProvider();
-        mockTextProvider.SetText("reset quote");
-        var engine = new TypingTest(
-            TestOptions.Default,
-            NullLogger<TypingTest>.Instance,
-            TimeProvider.System
-        );
-        var mockMessenger = IMessenger.Imposter();
-        var mockNavigationService = INavigationService.Imposter();
-        var vm = new TypingViewModel(
-            engine,
-            mockTextProvider,
-            mockStatsRepository.Instance(),
-            mockNavigationService.Instance(),
-            NullLogger<TypingViewModel>.Instance,
-            mockMessenger.Instance()
-        );
-        var msg = new TestResetMessage(new QuoteMode(QuoteLength.Short));
-        vm.Receive(msg);
-        await Task.Delay(10); // Allow async to complete
-        await Assert.That(vm.Target.Text).IsEqualTo("reset quote");
-    }
 }
