@@ -57,7 +57,7 @@ public static class ServiceExtensions
         builder.Services.AddTransient<SettingsView>();
         builder.Services.AddTransient<TypingView>();
         builder.Services.AddTransient<StatsView>();
-        builder.Services.AddTransient<ResultsView>();
+        builder.Services.AddTransient<ResultsDialog>();
     }
 }
 

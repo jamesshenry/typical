@@ -1,10 +1,35 @@
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Terminal.Gui.ViewBase;
-using Typical.UI.Binding;
+using Terminal.Gui.Views;
 using Typical.Core.Interfaces;
+using Typical.UI.Binding;
 
 namespace Typical.UI.Views;
+
+public class TypicalDialog<TViewModel> : Dialog
+    where TViewModel : ObservableObject
+{
+    private readonly TViewModel _viewModel;
+    private bool _disposed;
+
+    public TypicalDialog(TViewModel viewModel)
+    {
+        _viewModel = viewModel;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && !_disposed)
+        {
+            // BindingContext.Dispose();
+            _disposed = true;
+        }
+        var pos = Pos.Absolute(1);
+        base.Dispose(disposing);
+    }
+}
 
 /// <summary>
 /// Base class for Views that are bound to ViewModels.
@@ -30,7 +55,7 @@ public abstract class BindableView<TViewModel> : View, INavigatableView
     /// </summary>
     protected BindableView(TViewModel viewModel)
     {
-        ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        ViewModel = viewModel;
         BindingContext = new BindingContext();
 
         Initialized += (s, e) => SetupBindings();

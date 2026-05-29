@@ -21,7 +21,6 @@ public partial class TypingViewModel : ObservableObject, INavigatableView
     private readonly IMessenger _messenger;
     private readonly Timer _refreshTimer;
     private bool _isFinishing;
-
     public event EventHandler? RefreshRequested;
 
     [ObservableProperty]
@@ -48,8 +47,6 @@ public partial class TypingViewModel : ObservableObject, INavigatableView
         _refreshTimer.AutoReset = true;
         _refreshTimer.Elapsed += OnRefreshTimerElapsed;
     }
-
-    public bool IsTestOver => _Test.IsOver;
 
     /// <summary>
     /// Processes input received from the View.

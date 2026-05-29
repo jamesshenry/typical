@@ -1,20 +1,23 @@
-using Terminal.Gui.ViewBase;
-using Terminal.Gui.Views;
+using Terminal.Gui.Input;
 using Typical.Core.ViewModels;
 
 namespace Typical.UI.Views;
 
-public class ResultsView : BindableView<ResultsViewModel>
+public class ResultsDialog : TypicalDialog<ResultsViewModel>
 {
-    public ResultsView(ResultsViewModel viewModel)
+    protected override bool OnAccepting(CommandEventArgs args)
+    {
+        if (base.OnAccepting(args))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public ResultsDialog(ResultsViewModel viewModel)
         : base(viewModel)
     {
-        var text = new TextField() { Text = "Results View" };
-        text.X = Pos.Center();
-        text.Y = Pos.Center();
-        text.Width = Dim.Fill();
-        text.Height = Dim.Fill();
-
-        Add(text);
+        AddButton(new() { Text = "_Cancel" });
+        AddButton(new() { Text = "_Ok" });
     }
 }
