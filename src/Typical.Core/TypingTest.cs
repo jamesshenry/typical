@@ -32,7 +32,7 @@ public class TypingTest
     }
 
     internal TestSession Stats { get; private set; }
-    public TextSample TargetSample { get; private set; }
+    public TextSample TargetSample { get; private set; } = TextSample.Empty;
     public string TargetText { get; private set; } = string.Empty;
 
     public string UserInput => _userInput.ToString();
