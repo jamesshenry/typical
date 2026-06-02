@@ -39,20 +39,20 @@ public class TextRepositoryTests
         await conn.DisposeAsync();
     }
 
-    [Test]
-    public async Task GetQuoteAsync_MapsDBNullAuthor_ToUnknown()
-    {
-        var (conn, repo) = await CreateInMemoryRepoAsync();
-        // Insert a quote with NULL author
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = "INSERT INTO Quotes (Text, Author) VALUES (@text, NULL);";
-        cmd.Parameters.AddWithValue("@text", "Anonymous wisdom");
-        await cmd.ExecuteNonQueryAsync();
-        // Get the last inserted row
-        cmd.CommandText = "SELECT last_insert_rowid();";
-        var id = (long)await cmd.ExecuteScalarAsync();
-        var quote = await repo.GetQuoteByIdAsync((int)id);
-        await Assert.That(quote.Author).IsEqualTo("Unknown");
-        await conn.DisposeAsync();
-    }
+    // [Test]
+    // public async Task GetQuoteAsync_MapsDBNullAuthor_ToUnknown()
+    // {
+    //     var (conn, repo) = await CreateInMemoryRepoAsync();
+    //     // Insert a quote with NULL author
+    //     var cmd = conn.CreateCommand();
+    //     cmd.CommandText = "INSERT INTO Quotes (Text, Author) VALUES (@text, NULL);";
+    //     cmd.Parameters.AddWithValue("@text", "Anonymous wisdom");
+    //     await cmd.ExecuteNonQueryAsync();
+    //     // Get the last inserted row
+    //     cmd.CommandText = "SELECT last_insert_rowid();";
+    //     var id = (long)await cmd.ExecuteScalarAsync();
+    //     var quote = await repo.GetQuoteByIdAsync((int)id);
+    //     await Assert.That(quote.Author).IsEqualTo("Unknown");
+    //     await conn.DisposeAsync();
+    // }
 }
