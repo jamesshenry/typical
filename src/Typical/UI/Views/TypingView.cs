@@ -1,26 +1,34 @@
 using System.ComponentModel;
 using System.Text;
+
+using Stanza.TerminalGui;
+
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
+
 using Typical.Core.ViewModels;
 
 namespace Typical.UI.Views;
 
-public class TypingView : BindableView<TypingViewModel>
+public class TypingView : View
 {
+    private readonly BindingContext _bindingContext;
     private readonly TypingArea _typingArea;
     private readonly Label _sourceLabel;
+    private bool _disposed;
+
+    public TypingViewModel ViewModel { get; }
 
     public TypingView(TypingViewModel viewModel)
-        : base(viewModel)
     {
         CanFocus = true;
         X = Pos.Center();
         Y = Pos.Center();
         Width = Dim.Fill();
         Height = Dim.Fill();
-
+ViewModel = viewModel;
+        _bindingContext = new BindingContext();
         _typingArea = new TypingArea(viewModel)
         {
             X = Pos.Center(),
@@ -30,7 +38,16 @@ public class TypingView : BindableView<TypingViewModel>
         };
         _sourceLabel = new Label();
         Add(_typingArea);
-
+        _bindingContext.AddBinding(ViewModel.Bind(() => ViewModel.Target,
+        target =>
+        {
+            App?.Invoke(() =>
+            {
+                _typingArea.Refresh();
+                _sourceLabel.Text = target?.Source ?? string.Empty;
+                SetNeedsDraw();
+            });
+        }));
         ViewModel.RefreshRequested += OnViewModelRefreshRequested;
 
         Initialized += (s, e) =>
@@ -86,22 +103,26 @@ public class TypingView : BindableView<TypingViewModel>
         return false;
     }
 
-    protected override void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        App?.Invoke(() =>
-        {
-            if (e.PropertyName == nameof(ViewModel.Target))
-            {
-                _typingArea.Refresh();
-                _sourceLabel.Text = ViewModel.Target.Source;
-            }
-        });
-    }
+    // protected void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    // {
+    //     App?.Invoke(() =>
+    //     {
+    //         if (e.PropertyName == nameof(ViewModel.Target))
+    //         {
+    //             _typingArea.Refresh();
+    //             _sourceLabel.Text = ViewModel.Target.Source;
+    //         }
+    //     });
+
+    //     SetNeedsDraw();
+    // }
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
+        if (disposing && !_disposed)
         {
+            _bindingContext.Dispose();
+            _disposed = true;
             ViewModel.RefreshRequested -= OnViewModelRefreshRequested;
         }
 
