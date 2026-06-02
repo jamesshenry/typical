@@ -1,9 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Dapper.AOT</InterceptorsNamespaces>
+    <PublishAot>true</PublishAot>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Dapper.AOT" />
     <PackageReference Include="dbup" />
     <PackageReference Include="dbup-sqlite" />
     <PackageReference Include="DbUp.SourceGen">

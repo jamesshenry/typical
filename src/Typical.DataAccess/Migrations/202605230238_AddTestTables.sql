@@ -6,11 +6,6 @@ CREATE TABLE Tests (
     RawWpm REAL,
     Accuracy REAL,
     DurationMs INTEGER,
-    
-    -- TargetText is now NULLABLE
-    TargetText TEXT NULL, 
-    
-    -- New hybrid columns
     QuoteId INTEGER NULL REFERENCES Quotes(Id),
     CustomText TEXT NULL
 );

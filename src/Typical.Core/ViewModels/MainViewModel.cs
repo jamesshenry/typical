@@ -67,7 +67,7 @@ public sealed partial class MainViewModel
 
     public void Receive(TestCompletedMessage message)
     {
-        _navigationService.NavigateTo<ResultsViewModel>(vm => vm.Initialize(message.Result));
+        _navigationService.ShowModal<ResultsViewModel, bool>(vm => vm.Initialize(message.Result));
     }
 
     public async void Receive(TestResetMessage message)

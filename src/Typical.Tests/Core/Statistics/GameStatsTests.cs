@@ -15,6 +15,7 @@ public class TestStatsTests
         fakeTime.Advance(TimeSpan.FromSeconds(12));
         stats.Stop();
         var snapshot = stats.GetCurrentSnapshot();
+
         await Assert.That(snapshot.WPM.Value).IsEqualTo(6).Within(0.0001);
         await Assert.That(snapshot.Accuracy.Value).IsEqualTo(100);
     }

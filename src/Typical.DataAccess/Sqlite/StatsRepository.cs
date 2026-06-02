@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using Typical.Core.Data;

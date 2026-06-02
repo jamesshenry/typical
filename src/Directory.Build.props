@@ -8,6 +8,7 @@
     <DebugType>embedded</DebugType>
     <ArtifactsPath>$(MSBuildThisFileDirectory)..\.artifacts</ArtifactsPath>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <Features>runtime-async=on</Features>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Roslynator.Analyzers">
