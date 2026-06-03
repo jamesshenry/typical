@@ -1,12 +1,9 @@
 using System.ComponentModel;
 using System.Text;
-
 using Stanza.TerminalGui;
-
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
-
 using Typical.Core.ViewModels;
 
 namespace Typical.UI.Views;
@@ -27,7 +24,7 @@ public class TypingView : View
         Y = Pos.Center();
         Width = Dim.Fill();
         Height = Dim.Fill();
-ViewModel = viewModel;
+        ViewModel = viewModel;
         _bindingContext = new BindingContext();
         _typingArea = new TypingArea(viewModel)
         {
@@ -38,16 +35,20 @@ ViewModel = viewModel;
         };
         _sourceLabel = new Label();
         Add(_typingArea);
-        _bindingContext.AddBinding(ViewModel.Bind(() => ViewModel.Target,
-        target =>
-        {
-            App?.Invoke(() =>
-            {
-                _typingArea.Refresh();
-                _sourceLabel.Text = target?.Source ?? string.Empty;
-                SetNeedsDraw();
-            });
-        }));
+        _bindingContext.AddBinding(
+            ViewModel.Bind(
+                () => ViewModel.Target,
+                target =>
+                {
+                    App?.Invoke(() =>
+                    {
+                        _typingArea.Refresh();
+                        _sourceLabel.Text = target?.Source ?? string.Empty;
+                        SetNeedsDraw();
+                    });
+                }
+            )
+        );
         ViewModel.RefreshRequested += OnViewModelRefreshRequested;
 
         Initialized += (s, e) =>
