@@ -1,7 +1,7 @@
+using Stanza.TerminalGui;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Typical.Core.ViewModels;
-using Stanza.TerminalGui;
 
 namespace Typical.UI.Views;
 
@@ -26,7 +26,7 @@ public class SettingsView : View
 
     public SettingsViewModel ViewModel { get; }
 
-   protected override void Dispose(bool disposing)
+    protected override void Dispose(bool disposing)
     {
         if (disposing)
         {

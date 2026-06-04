@@ -1,13 +1,13 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Typical.Infrastructure;
 using Serilog;
 using Terminal.Gui.App;
 using Typical.Configuration;
 using Typical.Core.Services;
 using Typical.DataAccess;
 using Typical.DataAccess.Sqlite;
+using Typical.Infrastructure;
 using Typical.Services;
 using Typical.UI.Views;
 using Velopack;

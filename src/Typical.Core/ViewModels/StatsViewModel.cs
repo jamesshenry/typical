@@ -15,7 +15,10 @@ public partial class StatsViewModel : ObservableObject, IRecipient<TestSessionUp
     public StatsViewModel(IMessenger messenger)
     {
         _messenger = messenger;
-        _messenger.Register<StatsViewModel, TestSessionUpdatedMessage>(this, (r, m) => r.Receive(m));
+        _messenger.Register<StatsViewModel, TestSessionUpdatedMessage>(
+            this,
+            (r, m) => r.Receive(m)
+        );
     }
 
     public void Receive(TestSessionUpdatedMessage message)

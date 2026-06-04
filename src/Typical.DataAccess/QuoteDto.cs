@@ -29,7 +29,10 @@ internal class QuoteDto
             Tags =
                 TagsJson?.IsWhiteSpace() == true
                     ? []
-                    : JsonSerializer.Deserialize(TagsJson ?? string.Empty, AppJsonContext.Default.ListString) ?? [],
+                    : JsonSerializer.Deserialize(
+                        TagsJson ?? string.Empty,
+                        AppJsonContext.Default.ListString
+                    ) ?? [],
             WordCount = WordCount,
             CharCount = CharCount,
         };

@@ -56,5 +56,4 @@ public class TextRepository(IOptions<TypicalDbOptions> options) : ITextRepositor
     {
         throw new NotImplementedException();
     }
-
 }

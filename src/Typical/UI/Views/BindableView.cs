@@ -1,9 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
-
 using Stanza.TerminalGui;
-
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Typical.Core.Interfaces;

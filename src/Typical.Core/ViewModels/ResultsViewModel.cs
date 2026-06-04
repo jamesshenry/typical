@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
 
