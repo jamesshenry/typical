@@ -1,10 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
+
+using Stanza.TerminalGui;
+
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
-using Typical.UI.Binding;
 using Typical.Core.ViewModels;
 using Typical.Navigation;
 
@@ -83,12 +85,7 @@ public class MainShell : Window
         _footerFrame.Add(statsView);
         Add(_leftSpacer, _rightSpacer, _headerFrame, _contentFrame, _footerFrame);
 
-        _bindingContext.AddBinding(
-            _viewModel.Bind(
-                () => _viewModel.CurrentPage,
-                _ => UpdateContent(_viewModel.CurrentPage)
-            )
-        );
+        _viewModel.Bind(this, vm => vm.CurrentPage, _ => UpdateContent(_viewModel.CurrentPage)).AddTo(_bindingContext);
 
         _viewModel.NavigateToTestViewCommand.Execute(null);
 

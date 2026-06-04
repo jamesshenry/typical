@@ -30,7 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Typical.Core\Typical.Core.csproj" />
     <ProjectReference Include="..\Typical.DataAccess\Typical.DataAccess.csproj" />
-    <ProjectReference Include="..\..\..\Terminal.Gui.Stanza\src\Stanza.TerminalGui\Stanza.TerminalGui.csproj" />
+    <ProjectReference Include="..\..\..\Stanza.TerminalGui\src\Stanza.TerminalGui\Stanza.TerminalGui.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Typical.Tests" />

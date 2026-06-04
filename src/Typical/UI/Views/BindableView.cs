@@ -1,10 +1,12 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.ComponentModel;
+
+using Stanza.TerminalGui;
+
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
 using Typical.Core.Interfaces;
-using Typical.UI.Binding;
 
 namespace Typical.UI.Views;
 
@@ -26,7 +28,6 @@ public class TypicalDialog<TViewModel> : Dialog
             // BindingContext.Dispose();
             _disposed = true;
         }
-        var pos = Pos.Absolute(1);
         base.Dispose(disposing);
     }
 }
@@ -103,12 +104,12 @@ public abstract class BindableView<TViewModel> : View, INavigatableView
         base.Dispose(disposing);
     }
 
-    protected void Bind<T>(
-        Func<T> getter,
-        Action<T> updateUi,
-        [CallerArgumentExpression(nameof(getter))] string expression = default!
-    )
-    {
-        BindingContext.AddBinding(ViewModel.Bind(getter, updateUi, expression));
-    }
+    // protected void Bind<T>(
+    //     Func<T> getter,
+    //     Action<T> updateUi,
+    //     [CallerArgumentExpression(nameof(getter))] string expression = default!
+    // )
+    // {
+    //     BindingContext.AddBinding(ViewModel.Bind(getter, updateUi, expression));
+    // }
 }

@@ -1,21 +1,25 @@
 using System.ComponentModel;
 using System.Text;
+
 using Stanza.TerminalGui;
+
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
+
 using Typical.Core.ViewModels;
 
 namespace Typical.UI.Views;
 
 public class TypingView : View
 {
-    private readonly BindingContext _bindingContext;
     private readonly TypingArea _typingArea;
     private readonly Label _sourceLabel;
     private bool _disposed;
 
-    public TypingViewModel ViewModel { get; }
+    public TypingViewModel ViewModel { get; set; }
+
+    public BindingContext BindingContext { get; }
 
     public TypingView(TypingViewModel viewModel)
     {
@@ -25,7 +29,7 @@ public class TypingView : View
         Width = Dim.Fill();
         Height = Dim.Fill();
         ViewModel = viewModel;
-        _bindingContext = new BindingContext();
+        BindingContext = new BindingContext();
         _typingArea = new TypingArea(viewModel)
         {
             X = Pos.Center(),
@@ -35,20 +39,14 @@ public class TypingView : View
         };
         _sourceLabel = new Label();
         Add(_typingArea);
-        _bindingContext.AddBinding(
-            ViewModel.Bind(
-                () => ViewModel.Target,
-                target =>
-                {
-                    App?.Invoke(() =>
-                    {
-                        _typingArea.Refresh();
-                        _sourceLabel.Text = target?.Source ?? string.Empty;
-                        SetNeedsDraw();
-                    });
-                }
-            )
-        );
+
+        ViewModel.Bind(this, vm => vm.Target, target =>
+        {
+            _typingArea.Refresh();
+            _sourceLabel.Text = target?.Source ?? string.Empty;
+            SetNeedsDraw();
+        }).AddTo(BindingContext);
+
         ViewModel.RefreshRequested += OnViewModelRefreshRequested;
 
         Initialized += (s, e) =>
@@ -122,9 +120,9 @@ public class TypingView : View
     {
         if (disposing && !_disposed)
         {
-            _bindingContext.Dispose();
+            BindingContext.Dispose();
             _disposed = true;
-            ViewModel.RefreshRequested -= OnViewModelRefreshRequested;
+            ViewModel?.RefreshRequested -= OnViewModelRefreshRequested;
         }
 
         base.Dispose(disposing);
@@ -134,7 +132,8 @@ public class TypingView : View
     {
         try
         {
-            await ViewModel.InitializeAsync();
+
+            await ViewModel.InitializeAsync() ;
             _typingArea.Refresh();
         }
         catch (Exception ex)
