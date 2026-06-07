@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Text;
 using Stanza.TerminalGui;
 using Terminal.Gui.Input;
@@ -8,15 +7,11 @@ using Typical.Core.ViewModels;
 
 namespace Typical.UI.Views;
 
-public class TypingView : View
+[StanzaView<TypingViewModel>]
+public partial class TypingView : View
 {
     private readonly TypingArea _typingArea;
     private readonly Label _sourceLabel;
-    private bool _disposed;
-
-    public TypingViewModel ViewModel { get; set; }
-
-    public BindingContext BindingContext { get; }
 
     public TypingView(TypingViewModel viewModel)
     {
@@ -26,7 +21,7 @@ public class TypingView : View
         Width = Dim.Fill();
         Height = Dim.Fill();
         ViewModel = viewModel;
-        BindingContext = new BindingContext();
+        _bindingContext = new BindingContext();
         _typingArea = new TypingArea(viewModel)
         {
             X = Pos.Center(),
@@ -65,7 +60,7 @@ public class TypingView : View
 
     private void OnViewModelRefreshRequested(object? sender, EventArgs e)
     {
-        App?.Invoke(() => ViewModel.RefreshState());
+        App?.Invoke(() => ViewModel?.RefreshState());
     }
 
     protected override void OnSubViewsLaidOut(LayoutEventArgs args)
@@ -92,7 +87,7 @@ public class TypingView : View
         {
             try
             {
-                ViewModel.ProcessInput(key.AsGrapheme, isBackspace);
+                ViewModel?.ProcessInput(key.AsGrapheme, isBackspace);
             }
             catch (Exception ex)
             {
@@ -105,37 +100,11 @@ public class TypingView : View
         return false;
     }
 
-    // protected void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    // {
-    //     App?.Invoke(() =>
-    //     {
-    //         if (e.PropertyName == nameof(ViewModel.Target))
-    //         {
-    //             _typingArea.Refresh();
-    //             _sourceLabel.Text = ViewModel.Target.Source;
-    //         }
-    //     });
-
-    //     SetNeedsDraw();
-    // }
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing && !_disposed)
-        {
-            BindingContext.Dispose();
-            _disposed = true;
-            ViewModel?.RefreshRequested -= OnViewModelRefreshRequested;
-        }
-
-        base.Dispose(disposing);
-    }
-
     private async Task InitializeViewAsync()
     {
         try
         {
-            await ViewModel.InitializeAsync();
+            await (ViewModel?.InitializeAsync() ?? Task.CompletedTask);
             _typingArea.Refresh();
         }
         catch (Exception ex)

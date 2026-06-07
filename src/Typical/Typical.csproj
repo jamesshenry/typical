@@ -22,6 +22,7 @@
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="Spectre.Console" />
+    <PackageReference Include="Stanza.TerminalGui" />
     <PackageReference Include="Terminal.Gui" />
     <TrimmerRootAssembly Include="Terminal.Gui" />
     <PackageReference Include="Velopack" />
@@ -30,7 +31,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Typical.Core\Typical.Core.csproj" />
     <ProjectReference Include="..\Typical.DataAccess\Typical.DataAccess.csproj" />
-    <ProjectReference Include="..\..\..\Stanza.TerminalGui\src\Stanza.TerminalGui\Stanza.TerminalGui.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Typical.Tests" />

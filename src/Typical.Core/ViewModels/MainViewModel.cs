@@ -8,10 +8,7 @@ using Typical.Core.Text;
 
 namespace Typical.Core.ViewModels;
 
-public sealed partial class MainViewModel
-    : ObservableObject,
-        IRecipient<TestCompletedMessage>,
-        IRecipient<TestResetMessage>
+public sealed partial class MainViewModel : ObservableObject
 {
     private readonly INavigationService _navigationService;
     private readonly IDialogService _dialogService;
