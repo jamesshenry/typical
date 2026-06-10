@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Terminal.Gui.App;
 using Terminal.Gui.Views;
 using Typical.Core.Events;
@@ -14,12 +15,19 @@ public class NavigationService : ObservableObject, INavigationService
     private readonly IServiceProvider _services;
     private readonly IApplication _app;
     private readonly IMessenger _messenger;
+    private readonly ILogger<NavigationService> _logger;
 
-    public NavigationService(IServiceProvider services, IApplication app, IMessenger messenger)
+    public NavigationService(
+        IServiceProvider services,
+        IApplication app,
+        IMessenger messenger,
+        ILogger<NavigationService> logger
+    )
     {
         _services = services;
         _app = app;
         _messenger = messenger;
+        _logger = logger;
     }
 
     private ObservableObject? _currentViewModel;
@@ -64,22 +72,44 @@ public class NavigationService : ObservableObject, INavigationService
         configure?.Invoke(vm);
         var view = ViewLocator.GetView(_services, vm);
 
-        if (view is IRunnable runnable)
+        EventHandler? handler = null;
+        handler = (s, e) => _app.RequestStop();
+        vm.RequestClose += handler;
+
+        try
         {
-            EventHandler? handler = null;
-            handler = (s, e) =>
+            if (view is Dialog dialog)
             {
-                _app.RequestStop();
-                vm.RequestClose -= handler;
-            };
-            vm.RequestClose += handler;
-            _app.Run(runnable);
+                _logger.LogInformation(
+                    "Showing modal dialog directly for {ViewModelType}",
+                    typeof(TViewModel).Name
+                );
+                _app.Run(dialog);
+            }
+            else if (view is IRunnable runnable)
+            {
+                _logger.LogInformation(
+                    "Showing runnable modal view for {ViewModelType}: {ViewType}",
+                    typeof(TViewModel).Name,
+                    view.GetType().Name
+                );
+                _app.Run(runnable);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Wrapping non-runnable modal view for {ViewModelType}: {ViewType}",
+                    typeof(TViewModel).Name,
+                    view.GetType().Name
+                );
+                var host = new Dialog { Title = "Modal Host" };
+                host.Add(view);
+                _app.Run(host);
+            }
         }
-        else
+        finally
         {
-            var host = new Dialog { Title = "Modal Host" };
-            host.Add(view);
-            _app.Run(host);
+            vm.RequestClose -= handler;
         }
 
         return vm.Result;

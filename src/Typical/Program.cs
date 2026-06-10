@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Stanza.TerminalGui;
 using Terminal.Gui.App;
 using Typical.Configuration;
 using Typical.Core.Services;
@@ -52,6 +53,7 @@ finally
 [RequiresDynamicCode("Calls Terminal.Gui.Application.Init(IDriver, String)")]
 static async Task Run(IHost host)
 {
+    host.UseStanzaLogging();
     var migrator = host.Services.GetRequiredService<IDatabaseMigrator>();
     await migrator.EnsureDatabaseUpdated();
 

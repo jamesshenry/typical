@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+
 using Typical.Core.Events;
 using Typical.Core.Statistics;
 
@@ -24,5 +25,9 @@ public partial class StatsViewModel : ObservableObject, IRecipient<TestSessionUp
     public void Receive(TestSessionUpdatedMessage message)
     {
         Stats = message.Snapshot;
+        StatsLabel = $"Elapsed: {Stats.ElapsedTime:mm\\:ss} | WPM: {Math.Round(Stats.WPM.Value)} | Acc: {Stats.Accuracy.ToString()}";
     }
+
+    [ObservableProperty]
+    public partial string StatsLabel { get; set; } = string.Empty;
 }

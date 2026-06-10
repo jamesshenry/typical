@@ -1,4 +1,6 @@
 using System.Text;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Stanza.TerminalGui;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
@@ -12,8 +14,9 @@ public partial class TypingView : View
 {
     private readonly TypingArea _typingArea;
     private readonly Label _sourceLabel;
+    private readonly ILogger<TypingView> _logger;
 
-    public TypingView(TypingViewModel viewModel)
+    public TypingView(TypingViewModel viewModel, ILogger<TypingView>? logger = null)
     {
         CanFocus = true;
         X = Pos.Center();
@@ -21,6 +24,7 @@ public partial class TypingView : View
         Width = Dim.Fill();
         Height = Dim.Fill();
         ViewModel = viewModel;
+        _logger = logger ?? NullLogger<TypingView>.Instance;
         _bindingContext = new BindingContext();
         _typingArea = new TypingArea(viewModel)
         {
@@ -32,20 +36,16 @@ public partial class TypingView : View
         _sourceLabel = new Label();
         Add(_typingArea);
 
-        ViewModel
-            .Bind(
-                this,
+        this.Bind(
+                ViewModel,
                 vm => vm.Target,
                 target =>
                 {
                     _typingArea.Refresh();
                     _sourceLabel.Text = target?.Source ?? string.Empty;
-                    SetNeedsDraw();
                 }
             )
-            .AddTo(BindingContext);
-
-        ViewModel.RefreshRequested += OnViewModelRefreshRequested;
+            .AddTo(_bindingContext);
 
         Initialized += (s, e) =>
         {
@@ -56,11 +56,6 @@ public partial class TypingView : View
             this.SetFocus();
             e.Handled = true; // Prevents the click from reaching MainShell
         };
-    }
-
-    private void OnViewModelRefreshRequested(object? sender, EventArgs e)
-    {
-        App?.Invoke(() => ViewModel?.RefreshState());
     }
 
     protected override void OnSubViewsLaidOut(LayoutEventArgs args)
@@ -91,7 +86,7 @@ public partial class TypingView : View
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Input Error: {ex.Message}");
+                _logger.LogError(ex, $"Input Error: {ex.Message}");
             }
 
             return true;
@@ -109,7 +104,7 @@ public partial class TypingView : View
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Init Error: {ex.Message}");
+            _logger.LogError(ex, $"Init Error: {ex.Message}");
         }
     }
 }

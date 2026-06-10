@@ -1,19 +1,20 @@
 using Stanza.TerminalGui;
+
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
+
 using Typical.Core.ViewModels;
 
 namespace Typical.UI.Views;
 
-public class SettingsView : View
+[StanzaView<SettingsViewModel>]
+public partial class SettingsView : View
 {
+    [BindCommand(nameof(SettingsViewModel.QuoteModeCommand))]
     private readonly Button _btnQuoteMode;
-    private readonly BindingContext _bindingContext;
 
     public SettingsView(SettingsViewModel viewModel)
     {
-        ViewModel = viewModel;
-        _bindingContext = new BindingContext();
         Width = Dim.Fill();
         Height = Dim.Fill();
 
@@ -21,22 +22,6 @@ public class SettingsView : View
 
         Add(_btnQuoteMode);
 
-        ViewModel.QuoteModeCommand.BindCommand(_btnQuoteMode).AddTo(_bindingContext);
+        ViewModel = viewModel;
     }
-
-    public SettingsViewModel ViewModel { get; }
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _bindingContext.Dispose(); // Cleans up command event subscriptions safely [1]
-        }
-        base.Dispose(disposing);
-    }
-
-    // protected override void SetupBindings()
-    // {
-    //     BindingContext.AddBinding(ViewModel.BindCommand(ViewModel.QuoteModeCommand, _btnQuoteMode));
-    // }
 }

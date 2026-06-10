@@ -1,9 +1,12 @@
+using Stanza.TerminalGui;
 using Terminal.Gui.Input;
+using Terminal.Gui.Views;
 using Typical.Core.ViewModels;
 
 namespace Typical.UI.Views;
 
-public class ResultsDialog : TypicalDialog<ResultsViewModel>
+[StanzaView<ResultsViewModel>]
+public partial class ResultsDialog : Dialog
 {
     protected override bool OnAccepting(CommandEventArgs args)
     {
@@ -15,9 +18,10 @@ public class ResultsDialog : TypicalDialog<ResultsViewModel>
     }
 
     public ResultsDialog(ResultsViewModel viewModel)
-        : base(viewModel)
     {
         AddButton(new() { Text = "_Cancel" });
         AddButton(new() { Text = "_Ok" });
+        Add(new CheckBox());
+        ViewModel = viewModel;
     }
 }

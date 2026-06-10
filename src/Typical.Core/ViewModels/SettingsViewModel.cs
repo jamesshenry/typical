@@ -37,6 +37,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         _messenger.Send(message);
     }
 
-    [RelayCommand]
-    private void Cancel() => _navService.NavigateTo<HomeViewModel>();
+    //[RelayCommand]
+    //private void Cancel() => _navService.NavigateTo<HomeViewModel>();
 }

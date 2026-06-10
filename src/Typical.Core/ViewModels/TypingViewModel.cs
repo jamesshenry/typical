@@ -21,7 +21,6 @@ public partial class TypingViewModel : ObservableObject, INavigatableView
     private readonly IMessenger _messenger;
     private readonly Timer _refreshTimer;
     private bool _isFinishing;
-    public event EventHandler? RefreshRequested;
 
     [ObservableProperty]
     public required partial TextSample Target { get; set; } = TextSample.Empty;
@@ -65,8 +64,6 @@ public partial class TypingViewModel : ObservableObject, INavigatableView
         UpdateState();
     }
 
-    public void RefreshState() => UpdateState();
-
     /// <summary>
     /// Synchronizes the Engine state with ViewModel properties.
     /// This triggers PropertyChanged notifications for the View.
@@ -91,14 +88,20 @@ public partial class TypingViewModel : ObservableObject, INavigatableView
 
     private void OnRefreshTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        if (_Test.IsOver)
+        try
         {
-            return;
+            if (_Test.IsOver)
+            {
+                return;
+            }
+
+            _Test.Stats.SampleSnapshot();
+            UpdateState();
         }
-
-        _Test.Stats.SampleSnapshot();
-
-        RefreshRequested?.Invoke(this, EventArgs.Empty);
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in refresh timer callback");
+        }
     }
 
     public async Task InitializeAsync(TextSample? textSample = null)
@@ -121,6 +124,8 @@ public partial class TypingViewModel : ObservableObject, INavigatableView
 
         try
         {
+            _refreshTimer.Stop();
+
             await Task.Delay(100);
 
             await _statsRepository.SaveTestResultAsync(result);

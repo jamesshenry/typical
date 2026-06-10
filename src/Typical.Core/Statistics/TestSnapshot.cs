@@ -22,7 +22,6 @@ public readonly record struct TestSnapshot(
             chars,
             elapsed
         );
-        Debug.WriteLine(snapshot);
         return snapshot;
     }
 

@@ -10,9 +10,9 @@ using Typical.Navigation;
 
 namespace Typical.UI.Views;
 
-public class MainShell : Window
+[StanzaView<MainViewModel>]
+public partial class MainShell : Window
 {
-    private readonly MainViewModel _viewModel;
     private readonly IServiceProvider _serviceProvider;
     private readonly FrameView _headerFrame;
     private readonly View _contentFrame;
@@ -20,16 +20,11 @@ public class MainShell : Window
     private readonly View _leftSpacer;
     private readonly View _rightSpacer;
 
-    // private readonly Label _statusLabel;
-    private readonly BindingContext _bindingContext;
-
     public MainShell(MainViewModel viewModel, IServiceProvider sp)
     {
-        _viewModel = viewModel;
         _serviceProvider = sp;
-        _bindingContext = new BindingContext();
         BorderStyle = LineStyle.None;
-        Title = _viewModel.AppTitle;
+        Title = viewModel.AppTitle;
 
         _leftSpacer = new View
         {
@@ -83,12 +78,6 @@ public class MainShell : Window
         _footerFrame.Add(statsView);
         Add(_leftSpacer, _rightSpacer, _headerFrame, _contentFrame, _footerFrame);
 
-        _viewModel
-            .Bind(this, vm => vm.CurrentPage, _ => UpdateContent(_viewModel.CurrentPage))
-            .AddTo(_bindingContext);
-
-        _viewModel.NavigateToTestViewCommand.Execute(null);
-
         this.Activating += (s, e) =>
         {
             if (e.Context?.Binding is MouseBinding { MouseEvent: { } mouse })
@@ -101,15 +90,17 @@ public class MainShell : Window
                 e.Handled = true;
             }
         };
+
+        ViewModel = viewModel;
+
+        ViewModel.NavigateToTestViewCommand.Execute(null);
     }
 
-    protected override void Dispose(bool disposing)
+    partial void OnApplyBindings(BindingContext context)
     {
-        if (disposing)
-        {
-            _bindingContext.Dispose();
-        }
-        base.Dispose(disposing);
+        if (ViewModel is not null)
+            this.Bind(ViewModel, vm => vm.CurrentPage, _ => UpdateContent(ViewModel.CurrentPage))
+                .AddTo(_bindingContext);
     }
 
     private void UpdateContent(ObservableObject? viewModel)

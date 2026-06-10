@@ -45,22 +45,20 @@ public class NavigationServiceTests
             TimeProvider.System
         ));
 
-        services.AddSingleton<ILogger<HomeViewModel>>(NullLogger<HomeViewModel>.Instance);
         services.AddSingleton<ILogger<SettingsViewModel>>(NullLogger<SettingsViewModel>.Instance);
         services.AddSingleton<ILogger<TypingViewModel>>(NullLogger<TypingViewModel>.Instance);
 
-        services.AddTransient<HomeViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<TypingViewModel>();
 
-        services.AddTransient<HomeView>();
         services.AddTransient<SettingsView>();
         services.AddTransient<TypingView>();
 
         services.AddSingleton<INavigationService>(sp => new NavigationService(
             sp,
             null!,
-            sp.GetRequiredService<IMessenger>()
+            sp.GetRequiredService<IMessenger>(),
+            NullLogger<NavigationService>.Instance
         ));
 
         _serviceProvider = services.BuildServiceProvider();
@@ -85,11 +83,11 @@ public class NavigationServiceTests
         try
         {
             // Act
-            _navigationService.NavigateTo<HomeViewModel>();
+            _navigationService.NavigateTo<SettingsViewModel>();
 
             // Assert
             await Assert.That(receivedMessage).IsNotNull();
-            await Assert.That(receivedMessage!.Value).IsTypeOf<HomeViewModel>();
+            await Assert.That(receivedMessage!.Value).IsTypeOf<SettingsViewModel>();
         }
         finally
         {
@@ -110,7 +108,7 @@ public class NavigationServiceTests
     [Test]
     public async Task ViewLocator_MapsAllNavigatableViewModels()
     {
-        var coreAssembly = typeof(HomeViewModel).Assembly;
+        var coreAssembly = typeof(SettingsViewModel).Assembly;
 
         var navigatableTypes = coreAssembly
             .GetTypes()

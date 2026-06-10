@@ -16,7 +16,7 @@ public static class ServiceExtensions
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<TypingViewModel>();
         services.AddTransient<SettingsViewModel>();
-        services.AddTransient<HomeViewModel>();
+        //services.AddTransient<HomeViewModel>();
         services.AddSingleton<StatsViewModel>();
         services.AddSingleton<ResultsViewModel>();
     }

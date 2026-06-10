@@ -50,8 +50,8 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void NavigateToTestView() => _navigationService.NavigateTo<TypingViewModel>();
 
-    [RelayCommand]
-    private void NavigateHome() => _navigationService.NavigateTo<HomeViewModel>();
+    //[RelayCommand]
+    //private void NavigateHome() => _navigationService.NavigateTo<HomeViewModel>();
 
     [RelayCommand]
     private void NavigateSettings() => _navigationService.NavigateTo<SettingsViewModel>();

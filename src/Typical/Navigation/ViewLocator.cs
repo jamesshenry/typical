@@ -11,7 +11,6 @@ public static class ViewLocator
     public static View GetView(IServiceProvider sp, object viewModel) =>
         viewModel switch
         {
-            HomeViewModel => sp.GetRequiredService<HomeView>(),
             SettingsViewModel => sp.GetRequiredService<SettingsView>(),
             TypingViewModel => sp.GetRequiredService<TypingView>(),
             ResultsViewModel => sp.GetRequiredService<ResultsDialog>(),
