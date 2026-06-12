@@ -1,9 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
+using Stanza.TerminalGui;
+
 using Terminal.Gui.App;
 using Terminal.Gui.Views;
+
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Navigation;
@@ -69,9 +74,12 @@ public class NavigationService : ObservableObject, INavigationService
         where TViewModel : class, IModalViewModel<TResult>
     {
         var vm = _services.GetRequiredService<TViewModel>();
-        configure?.Invoke(vm);
         var view = ViewLocator.GetView(_services, vm);
 
+        if (typeof(view).)
+        {
+
+        }
         EventHandler? handler = null;
         handler = (s, e) => _app.RequestStop();
         vm.RequestClose += handler;
@@ -110,6 +118,8 @@ public class NavigationService : ObservableObject, INavigationService
         finally
         {
             vm.RequestClose -= handler;
+
+            view.Dispose();
         }
 
         return vm.Result;
