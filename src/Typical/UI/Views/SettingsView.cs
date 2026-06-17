@@ -13,6 +13,9 @@ public partial class SettingsView : View
     [BindCommand(nameof(SettingsViewModel.QuoteModeCommand))]
     private readonly Button _btnQuoteMode;
 
+    [BindCommand(nameof(SettingsViewModel.ShowRandomResultCommand))]
+    private readonly Button _btnRandomResult;
+
     public SettingsView(SettingsViewModel viewModel)
     {
         Width = Dim.Fill();

@@ -37,6 +37,14 @@ public sealed partial class SettingsViewModel : ObservableObject
         _messenger.Send(message);
     }
 
+    [RelayCommand]
+    private void ShowRandomResult()
+    {
+        var message = new ShowResultDialogMessage(Random: true);
+        _messenger.Send(message);
+    }
+
     //[RelayCommand]
     //private void Cancel() => _navService.NavigateTo<HomeViewModel>();
 }
+

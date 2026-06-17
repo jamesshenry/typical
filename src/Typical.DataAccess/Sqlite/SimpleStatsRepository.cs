@@ -6,6 +6,11 @@ namespace Typical.DataAccess.Sqlite;
 
 public class SimpleStatsRepository : IStatsRepository
 {
+    public TestResult GetTestResultAsync()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SaveTestResultAsync(TestResult result)
     {
         Debug.WriteLine("SimpleStatsRepository");

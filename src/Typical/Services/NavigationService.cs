@@ -74,52 +74,35 @@ public class NavigationService : ObservableObject, INavigationService
         where TViewModel : class, IModalViewModel<TResult>
     {
         var vm = _services.GetRequiredService<TViewModel>();
+        configure?.Invoke(vm);
+
         var view = ViewLocator.GetView(_services, vm);
 
-        if (typeof(view).)
+        if (view is IStanzaView stanzaView)
         {
-
+            stanzaView.ViewModel = vm;
         }
-        EventHandler? handler = null;
-        handler = (s, e) => _app.RequestStop();
-        vm.RequestClose += handler;
+
+        // Differentiate only if you want to support non-Dialog Windows (standard top-level views)
+        // but typically for Modals, Dialog is the correct constraint.
+        if (view is not Dialog dialog)
+        {
+            throw new InvalidOperationException($"View for {typeof(TViewModel).Name} must be a Dialog.");
+        }
+
+        void StopRequest(object? s, EventArgs e) => _app.RequestStop();
+        vm.RequestClose += StopRequest;
 
         try
         {
-            if (view is Dialog dialog)
-            {
-                _logger.LogInformation(
-                    "Showing modal dialog directly for {ViewModelType}",
-                    typeof(TViewModel).Name
-                );
-                _app.Run(dialog);
-            }
-            else if (view is IRunnable runnable)
-            {
-                _logger.LogInformation(
-                    "Showing runnable modal view for {ViewModelType}: {ViewType}",
-                    typeof(TViewModel).Name,
-                    view.GetType().Name
-                );
-                _app.Run(runnable);
-            }
-            else
-            {
-                _logger.LogInformation(
-                    "Wrapping non-runnable modal view for {ViewModelType}: {ViewType}",
-                    typeof(TViewModel).Name,
-                    view.GetType().Name
-                );
-                var host = new Dialog { Title = "Modal Host" };
-                host.Add(view);
-                _app.Run(host);
-            }
+            // Terminal.Gui v2 logic: Application.Run works on any View, 
+            // but Dialogs provide the modal overlay/shadowing behavior.
+            _app.Run(dialog);
         }
         finally
         {
-            vm.RequestClose -= handler;
-
-            view.Dispose();
+            vm.RequestClose -= StopRequest;
+            view.Dispose(); // Kills Stanza bindings
         }
 
         return vm.Result;

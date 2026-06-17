@@ -1,6 +1,8 @@
+using System.ComponentModel;
+
 namespace Typical.Core.Interfaces;
 
-public interface IModalViewModel<TResult>
+public interface IModalViewModel<TResult> : INotifyPropertyChanged
 {
     // The result the modal will return (e.g., a bool, a string, or a complex object)
     TResult? Result { get; }

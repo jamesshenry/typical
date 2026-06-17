@@ -1,9 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+
 using Microsoft.Extensions.Logging;
+
+using Typical.Core.Data;
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
+using Typical.Core.Statistics;
 using Typical.Core.Text;
 
 namespace Typical.Core.ViewModels;
@@ -11,6 +15,7 @@ namespace Typical.Core.ViewModels;
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly INavigationService _navigationService;
+    private readonly IStatsRepository _statsRepository;
     private readonly IDialogService _dialogService;
     private readonly ILogger<MainViewModel> _logger;
     private readonly IMessenger _messenger;
@@ -29,7 +34,8 @@ public sealed partial class MainViewModel : ObservableObject
         IDialogService dialogService,
         ILogger<MainViewModel> logger,
         IMessenger messenger
-    )
+,
+        IStatsRepository statsRepository)
     {
         _navigationService = navigationService;
         _navigationService.PropertyChanged += (s, e) =>
@@ -45,6 +51,8 @@ public sealed partial class MainViewModel : ObservableObject
 
         _messenger.Register<MainViewModel, TestCompletedMessage>(this, (r, m) => r.Receive(m));
         _messenger.Register<MainViewModel, TestResetMessage>(this, (r, m) => r.Receive(m));
+        _messenger.Register<MainViewModel, ShowResultDialogMessage>(this, (r, m) => r.Receive(m));
+        _statsRepository = statsRepository;
     }
 
     [RelayCommand]
@@ -74,4 +82,14 @@ public sealed partial class MainViewModel : ObservableObject
             vm.InitializeAsync().Wait();
         });
     }
+
+    public async void Receive(ShowResultDialogMessage message)
+    {
+        TestResult result = _statsRepository.GetTestResultAsync();
+        _navigationService.ShowModal<ResultsViewModel, bool>((vm) =>
+        {
+            vm.Initialize(result);
+        });
+    }
+
 }

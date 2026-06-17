@@ -1,10 +1,14 @@
 using System.Reflection;
 using System.Text;
+
 using Dapper;
+
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
+
 using Typical.Core.Data;
 using Typical.Core.Statistics;
+using Typical.Core.Text;
 
 namespace Typical.DataAccess.Sqlite;
 
@@ -21,7 +25,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
 
             await InsertTelemetryAsync(connection, transaction, testId, result);
 
-            await InsertSnapshotsAsync(connection, transaction, testId, result);
+            await InsertSnapshotsAsync(connection, transaction, testId, result.Snapshots);
 
             await transaction.CommitAsync();
         }
@@ -30,6 +34,65 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    public async Task<TestResult> GetTestResultAsync(int? id = null)
+    {
+        await using var connection = await GetConnectionAsync();
+
+        if (id is null)
+        {
+            int maxId = await connection.ExecuteScalarAsync<int>(@"SELECT MAX(id) FROM Tests;");
+            id = Random.Shared.Next(1, maxId + 1);
+        }
+
+        // We fetch the Test, the Quote (if it exists), and all Snapshots
+        const string sql = @"
+        SELECT * FROM Tests WHERE Id = @testId;
+        
+        SELECT 
+            q.Id as SourceId, 
+            q.Text as Text, 
+            q.Author as Source, 
+            q.CharCount, 
+            q.WordCount 
+        FROM Quotes q
+        INNER JOIN Tests t ON t.QuoteId = q.Id
+        WHERE t.Id = @testId;
+
+        SELECT * FROM TestSnapshots WHERE TestId = @testId ORDER BY OffsetMs ASC;";
+        // Read using the Row DTOs
+        using var multi =await connection.QueryMultipleAsync(sql);
+
+        var testRow = await multi.ReadSingle<TestRow>();
+
+        var quoteRow = await multi.ReadSingle<QuoteRow>();
+        var snapshots = (await multi.ReadAsync<TestSnapshot>()).ToList();
+
+        // MAP TO DOMAIN
+        // 1. Convert QuoteRow -> TextSample
+        TextSample sample = quoteRow != null
+            ? new TextSample
+            {
+                SourceId = quoteRow.Id,
+                Text = quoteRow.Text,
+                Source = quoteRow.Author ?? "Unknown",
+                WordCount = quoteRow.WordCount,
+                CharCount = quoteRow.CharCount
+            }
+            : new TextSample
+            {
+                Text = testRow.CustomText ?? "",
+                Source = "Custom Text"
+            };
+
+        // 2. Construct the final Record
+        return new TestResult(
+            FinalWpm: (float)testRow.Wpm,
+            PlayedAt: DateTimeOffset.FromUnixTimeSeconds(testRow.CreatedAt).DateTime,
+            Target: sample,
+            Snapshots: snapshots
+        );
     }
 
     private async Task<long> InsertTestHeaderAsync(
@@ -105,10 +168,10 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         SqliteConnection conn,
         SqliteTransaction trans,
         long testId,
-        TestResult result
+        IEnumerable<TestSnapshot> snapshots
     )
     {
-        if (result.Snapshots.Count == 0)
+        if (snapshots.Count() == 0)
             return;
 
         const string sql = """
@@ -124,7 +187,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
 
         pTestId.Value = testId;
 
-        foreach (var snap in result.Snapshots)
+        foreach (var snap in snapshots)
         {
             pTestId.Value = testId;
             pOffset.Value = (long)snap.ElapsedTime.TotalMilliseconds;
@@ -142,4 +205,5 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         await connection.OpenAsync();
         return connection;
     }
+
 }
