@@ -85,7 +85,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public async void Receive(ShowResultDialogMessage message)
     {
-        TestResult result = _statsRepository.GetTestResultAsync();
+        TestResult result = await _statsRepository.GetTestResultAsync();
         _navigationService.ShowModal<ResultsViewModel, bool>((vm) =>
         {
             vm.Initialize(result);

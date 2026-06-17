@@ -1,3 +1,4 @@
+using System.ComponentModel.Design;
 using System.Reflection;
 using System.Text;
 
@@ -60,13 +61,16 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         INNER JOIN Tests t ON t.QuoteId = q.Id
         WHERE t.Id = @testId;
 
-        SELECT * FROM TestSnapshots WHERE TestId = @testId ORDER BY OffsetMs ASC;";
+        SELECT * FROM TestSnapshots WHERE TestId = @testId ORDER BY OffsetMs ASC;
+        SELECT * FROM KeystrokeTelemetry WHERE TestId = @testId ORDER BY OFfsetMs ASC; 
+        ";
+
         // Read using the Row DTOs
-        using var multi =await connection.QueryMultipleAsync(sql);
+        using var multi = await connection.QueryMultipleAsync(sql, new { testId = id });
 
-        var testRow = await multi.ReadSingle<TestRow>();
+        var testRow = await multi.ReadSingleAsync<TestRow>();
 
-        var quoteRow = await multi.ReadSingle<QuoteRow>();
+        var quoteRow = await multi.ReadSingleAsync<QuoteRow>();
         var snapshots = (await multi.ReadAsync<TestSnapshot>()).ToList();
 
         // MAP TO DOMAIN
@@ -78,20 +82,19 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
                 Text = quoteRow.Text,
                 Source = quoteRow.Author ?? "Unknown",
                 WordCount = quoteRow.WordCount,
-                CharCount = quoteRow.CharCount
+                CharCount = quoteRow.CharCount,
             }
-            : new TextSample
-            {
-                Text = testRow.CustomText ?? "",
-                Source = "Custom Text"
-            };
+            : TextSample.Empty;
 
         // 2. Construct the final Record
         return new TestResult(
-            FinalWpm: (float)testRow.Wpm,
             PlayedAt: DateTimeOffset.FromUnixTimeSeconds(testRow.CreatedAt).DateTime,
-            Target: sample,
-            Snapshots: snapshots
+            FinalWpm: Wpm.From(testRow.Wpm),
+            FinalAccuracy: Accuracy.From(testRow.Accuracy),
+            Duration: TimeSpan.FromMilliseconds(testRow.DurationMs),
+Target: TextSample.Empty,
+            Telemetry: [],
+            Snapshots: snapshots, RawWpm: Wpm.From(testRow.Wpm)
         );
     }
 
@@ -206,4 +209,22 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         return connection;
     }
 
+
+}
+
+internal class QuoteRow
+{
+    public int? Id { get; internal set; }
+    public string Text { get; internal set; }
+    public string? Author { get; internal set; }
+    public int WordCount { get; internal set; }
+    public int CharCount { get; internal set; }
+}
+
+internal class TestRow
+{
+    public float Wpm { get; internal set; }
+    public long CreatedAt { get; internal set; }
+    public float Accuracy { get; internal set; }
+    public double DurationMs { get; internal set; }
 }

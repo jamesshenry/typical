@@ -4,6 +4,6 @@ namespace Typical.Core.Data;
 
 public interface IStatsRepository
 {
-    TestResult GetTestResultAsync();
+    Task<TestResult> GetTestResultAsync(int? id = null);
     Task SaveTestResultAsync(TestResult result);
 }

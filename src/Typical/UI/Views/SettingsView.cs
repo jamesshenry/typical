@@ -22,8 +22,8 @@ public partial class SettingsView : View
         Height = Dim.Fill();
 
         _btnQuoteMode = new Button { X = Pos.Center(), Text = "Quote" };
-
-        Add(_btnQuoteMode);
+        _btnRandomResult = new Button { X = Pos.Right(_btnQuoteMode), Text = "Random Result" };
+        Add(_btnQuoteMode, _btnRandomResult);
 
         ViewModel = viewModel;
     }

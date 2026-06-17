@@ -1,22 +1,23 @@
 using System.Diagnostics;
+
 using Typical.Core.Data;
 using Typical.Core.Statistics;
 
 namespace Typical.DataAccess.Sqlite;
 
-public class SimpleStatsRepository : IStatsRepository
-{
-    public TestResult GetTestResultAsync()
-    {
-        throw new NotImplementedException();
-    }
+// public class SimpleStatsRepository : IStatsRepository
+// {
+//     public TestResult GetTestResultAsync()
+//     {
+//         throw new NotImplementedException();
+//     }
 
-    public Task SaveTestResultAsync(TestResult result)
-    {
-        Debug.WriteLine("SimpleStatsRepository");
+//     public Task SaveTestResultAsync(TestResult result)
+//     {
+//         Debug.WriteLine("SimpleStatsRepository");
 
-        Debug.WriteLine(result.ToString());
+//         Debug.WriteLine(result.ToString());
 
-        return Task.CompletedTask;
-    }
-}
+//         return Task.CompletedTask;
+//     }
+// }
