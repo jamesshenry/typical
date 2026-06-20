@@ -47,54 +47,63 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
             id = Random.Shared.Next(1, maxId + 1);
         }
 
-        // We fetch the Test, the Quote (if it exists), and all Snapshots
-        const string sql = @"
-        SELECT * FROM Tests WHERE Id = @testId;
-        
-        SELECT 
-            q.Id as SourceId, 
-            q.Text as Text, 
-            q.Author as Source, 
-            q.CharCount, 
-            q.WordCount 
-        FROM Quotes q
-        INNER JOIN Tests t ON t.QuoteId = q.Id
+        const string testSql =
+            @"
+        SELECT
+            t.Wpm,
+            t.CreatedAt,
+            t.Accuracy,
+            t.DurationMs,
+            q.Id as QuoteId,
+            q.Text as QuoteText,
+            q.Author as QuoteAuthor,
+            q.CharCount,
+            q.WordCount
+        FROM Tests t
+        LEFT JOIN Quotes q ON t.QuoteId = q.Id
         WHERE t.Id = @testId;
-
-        SELECT * FROM TestSnapshots WHERE TestId = @testId ORDER BY OffsetMs ASC;
-        SELECT * FROM KeystrokeTelemetry WHERE TestId = @testId ORDER BY OFfsetMs ASC; 
         ";
 
-        // Read using the Row DTOs
-        using var multi = await connection.QueryMultipleAsync(sql, new { testId = id });
+        var testRow = await connection.QueryFirstOrDefaultAsync<TestRow>(
+            testSql,
+            new { testId = id }
+        );
 
-        var testRow = await multi.ReadSingleAsync<TestRow>();
+        const string snapshotsSql =
+            @"
+        SELECT * FROM TestSnapshots WHERE TestId = @testId ORDER BY OffsetMs ASC;
+        ";
 
-        var quoteRow = await multi.ReadSingleAsync<QuoteRow>();
-        var snapshots = (await multi.ReadAsync<TestSnapshot>()).ToList();
+        var snapshots = (
+            await connection.QueryAsync<TestSnapshot>(snapshotsSql, new { testId = id })
+        ).ToList();
 
-        // MAP TO DOMAIN
-        // 1. Convert QuoteRow -> TextSample
-        TextSample sample = quoteRow != null
-            ? new TextSample
+        TextSample sample;
+        if (testRow?.QuoteId is not null)
+        {
+            sample = new TextSample
             {
-                SourceId = quoteRow.Id,
-                Text = quoteRow.Text,
-                Source = quoteRow.Author ?? "Unknown",
-                WordCount = quoteRow.WordCount,
-                CharCount = quoteRow.CharCount,
-            }
-            : TextSample.Empty;
+                SourceId = testRow.QuoteId,
+                Text = testRow.QuoteText!,
+                Source = testRow.QuoteAuthor ?? "Unknown",
+                WordCount = testRow.WordCount,
+                CharCount = testRow.CharCount,
+            };
+        }
+        else
+        {
+            sample = TextSample.Empty;
+        }
 
-        // 2. Construct the final Record
         return new TestResult(
-            PlayedAt: DateTimeOffset.FromUnixTimeSeconds(testRow.CreatedAt).DateTime,
+            PlayedAt: DateTimeOffset.FromUnixTimeSeconds(testRow!.CreatedAt).DateTime,
             FinalWpm: Wpm.From(testRow.Wpm),
             FinalAccuracy: Accuracy.From(testRow.Accuracy),
             Duration: TimeSpan.FromMilliseconds(testRow.DurationMs),
-Target: TextSample.Empty,
+            Target: sample,
             Telemetry: [],
-            Snapshots: snapshots, RawWpm: Wpm.From(testRow.Wpm)
+            Snapshots: snapshots,
+            RawWpm: Wpm.From(testRow.Wpm)
         );
     }
 
@@ -208,23 +217,17 @@ Target: TextSample.Empty,
         await connection.OpenAsync();
         return connection;
     }
-
-
-}
-
-internal class QuoteRow
-{
-    public int? Id { get; internal set; }
-    public string Text { get; internal set; }
-    public string? Author { get; internal set; }
-    public int WordCount { get; internal set; }
-    public int CharCount { get; internal set; }
 }
 
 internal class TestRow
 {
-    public float Wpm { get; internal set; }
-    public long CreatedAt { get; internal set; }
-    public float Accuracy { get; internal set; }
-    public double DurationMs { get; internal set; }
+    public float Wpm { get; set; }
+    public long CreatedAt { get; set; }
+    public float Accuracy { get; set; }
+    public double DurationMs { get; set; }
+    public int? QuoteId { get; set; }
+    public string? QuoteText { get; set; }
+    public string? QuoteAuthor { get; set; }
+    public int CharCount { get; set; }
+    public int WordCount { get; set; }
 }
