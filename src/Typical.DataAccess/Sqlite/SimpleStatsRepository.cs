@@ -1,5 +1,4 @@
 using System.Diagnostics;
-
 using Typical.Core.Data;
 using Typical.Core.Statistics;
 

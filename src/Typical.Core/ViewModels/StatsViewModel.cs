@@ -25,7 +25,8 @@ public partial class StatsViewModel : ObservableObject, IRecipient<TestSessionUp
     public void Receive(TestSessionUpdatedMessage message)
     {
         Stats = message.Snapshot;
-        StatsLabel = $"Elapsed: {Stats.ElapsedTime:mm\\:ss} | WPM: {Math.Round(Stats.WPM.Value)} | Acc: {Stats.Accuracy.ToString()}";
+        StatsLabel =
+            $"Elapsed: {Stats.ElapsedTime:mm\\:ss} | WPM: {Math.Round(Stats.WPM.Value)} | Acc: {Stats.Accuracy.ToString()}";
     }
 
     [ObservableProperty]

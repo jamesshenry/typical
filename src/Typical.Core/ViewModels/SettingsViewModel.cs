@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+
 using Microsoft.Extensions.Logging;
+
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 
@@ -47,4 +49,3 @@ public sealed partial class SettingsViewModel : ObservableObject
     //[RelayCommand]
     //private void Cancel() => _navService.NavigateTo<HomeViewModel>();
 }
-

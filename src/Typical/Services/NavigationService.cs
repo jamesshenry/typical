@@ -1,14 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
 using Stanza.TerminalGui;
-
 using Terminal.Gui.App;
 using Terminal.Gui.Views;
-
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Navigation;
@@ -87,7 +83,9 @@ public class NavigationService : ObservableObject, INavigationService
         // but typically for Modals, Dialog is the correct constraint.
         if (view is not Dialog dialog)
         {
-            throw new InvalidOperationException($"View for {typeof(TViewModel).Name} must be a Dialog.");
+            throw new InvalidOperationException(
+                $"View for {typeof(TViewModel).Name} must be a Dialog."
+            );
         }
 
         void StopRequest(object? s, EventArgs e) => _app.RequestStop();
@@ -95,7 +93,7 @@ public class NavigationService : ObservableObject, INavigationService
 
         try
         {
-            // Terminal.Gui v2 logic: Application.Run works on any View, 
+            // Terminal.Gui v2 logic: Application.Run works on any View,
             // but Dialogs provide the modal overlay/shadowing behavior.
             _app.Run(dialog);
         }

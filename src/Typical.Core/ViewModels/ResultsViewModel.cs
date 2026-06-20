@@ -1,8 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Drawing;
-
 using CommunityToolkit.Mvvm.ComponentModel;
-
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
 
@@ -31,6 +29,7 @@ public class ResultsViewModel : ObservableObject, IModalViewModel<bool>
         }
     }
 }
+
 public class GraphData
 {
     private readonly List<TestSnapshot> _snapshots = new List<TestSnapshot>();
@@ -40,16 +39,23 @@ public class GraphData
         _snapshots = snapshots.ToList();
     }
 
-    public List<PointF> Points => _snapshots
-        .Select(s => new PointF((float)s.ElapsedTime.TotalSeconds, (float)s.WPM)).ToList();
+    public List<PointF> Points =>
+        _snapshots
+            .Select(s => new PointF((float)s.ElapsedTime.TotalSeconds, (float)s.WPM))
+            .ToList();
 
     // ANALYZE: Provides the bounds for scaling
     public float MinWpm => _snapshots.Any() ? _snapshots.Min(s => (float)s.WPM) : 0;
     public float MaxWpm => _snapshots.Any() ? _snapshots.Max(s => (float)s.WPM) : 100;
-    public float TotalSeconds => _snapshots.Any() ? (float)_snapshots.Max(s => s.ElapsedTime.TotalSeconds) : 0;
+    public float TotalSeconds =>
+        _snapshots.Any() ? (float)_snapshots.Max(s => s.ElapsedTime.TotalSeconds) : 0;
 
     // CALCULATE: Logic for the "Perfect Frame"
-    public (PointF CellSize, PointF ScrollOffset, float Increment) GetScale(Size viewport, uint marginLeft, uint marginBottom)
+    public (PointF CellSize, PointF ScrollOffset, float Increment) GetScale(
+        Size viewport,
+        uint marginLeft,
+        uint marginBottom
+    )
     {
         float availableWidth = viewport.Width - marginLeft;
         float availableHeight = viewport.Height - marginBottom;
@@ -67,5 +73,4 @@ public class GraphData
 
         return (new PointF(cx, cy), new PointF(0, yMin), increment);
     }
-
 }

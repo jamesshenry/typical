@@ -1,9 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-
 using Microsoft.Extensions.Logging;
-
 using Typical.Core.Data;
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
@@ -33,9 +31,9 @@ public sealed partial class MainViewModel : ObservableObject
         INavigationService navigationService,
         IDialogService dialogService,
         ILogger<MainViewModel> logger,
-        IMessenger messenger
-,
-        IStatsRepository statsRepository)
+        IMessenger messenger,
+        IStatsRepository statsRepository
+    )
     {
         _navigationService = navigationService;
         _navigationService.PropertyChanged += (s, e) =>
@@ -86,10 +84,11 @@ public sealed partial class MainViewModel : ObservableObject
     public async void Receive(ShowResultDialogMessage message)
     {
         TestResult result = await _statsRepository.GetTestResultAsync();
-        _navigationService.ShowModal<ResultsViewModel, bool>((vm) =>
-        {
-            vm.Initialize(result);
-        });
+        _navigationService.ShowModal<ResultsViewModel, bool>(
+            (vm) =>
+            {
+                vm.Initialize(result);
+            }
+        );
     }
-
 }
