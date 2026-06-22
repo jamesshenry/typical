@@ -36,10 +36,20 @@ public partial class TypingViewModel : ObservableObject, INavigatableView
     )
     {
         _Test = Test;
-        _Test.OnTestFinished += async (s, result) => await HandleTestFinished(result);
         _textProvider = textProvider;
         _statsRepository = statsRepository;
         _logger = logger;
+        _Test.OnTestFinished += async (s, result) =>
+        {
+            try
+            {
+                await HandleTestFinished(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling test finished");
+            }
+        };
         _messenger = messenger;
 
         _refreshTimer = new Timer(100);
@@ -53,15 +63,22 @@ public partial class TypingViewModel : ObservableObject, INavigatableView
     /// </summary>
     public async void ProcessInput(string c, bool isBackspace)
     {
-        if (_Test.IsOver)
+        try
         {
-            await InitializeAsync();
-            return;
+            if (_Test.IsOver)
+            {
+                await InitializeAsync();
+                return;
+            }
+
+            bool accepted = _Test.ProcessKeyPress(c, isBackspace);
+
+            UpdateState();
         }
-
-        bool accepted = _Test.ProcessKeyPress(c, isBackspace);
-
-        UpdateState();
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing input");
+        }
     }
 
     /// <summary>

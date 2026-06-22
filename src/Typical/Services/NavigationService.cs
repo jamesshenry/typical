@@ -100,7 +100,8 @@ public class NavigationService : ObservableObject, INavigationService
         finally
         {
             vm.RequestClose -= StopRequest;
-            view.Dispose(); // Kills Stanza bindings
+            try { _app.RequestStop(); } catch { }
+            try { view.Dispose(); } catch { }
         }
 
         return vm.Result;

@@ -75,20 +75,34 @@ public sealed partial class MainViewModel : ObservableObject
 
     public async void Receive(TestResetMessage message)
     {
-        _navigationService.NavigateTo<TypingViewModel>(vm =>
+        try
         {
-            vm.InitializeAsync().Wait();
-        });
+            _navigationService.NavigateTo<TypingViewModel>(vm =>
+            {
+                vm.InitializeAsync().Wait();
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling test reset");
+        }
     }
 
     public async void Receive(ShowResultDialogMessage message)
     {
-        TestResult result = await _statsRepository.GetTestResultAsync();
-        _navigationService.ShowModal<ResultsViewModel, bool>(
-            (vm) =>
-            {
-                vm.Initialize(result);
-            }
-        );
+        try
+        {
+            TestResult result = await _statsRepository.GetTestResultAsync();
+            _navigationService.ShowModal<ResultsViewModel, bool>(
+                (vm) =>
+                {
+                    vm.Initialize(result);
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing random result");
+        }
     }
 }

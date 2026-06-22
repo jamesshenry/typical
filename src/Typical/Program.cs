@@ -1,9 +1,14 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 using Serilog;
+
 using Stanza.TerminalGui;
+
 using Terminal.Gui.App;
+
 using Typical.Configuration;
 using Typical.Core.Services;
 using Typical.DataAccess;
@@ -11,6 +16,7 @@ using Typical.DataAccess.Sqlite;
 using Typical.Infrastructure;
 using Typical.Services;
 using Typical.UI.Views;
+
 using Velopack;
 
 VelopackApp.Build().Run();
@@ -57,11 +63,17 @@ static async Task Run(IHost host)
     var migrator = host.Services.GetRequiredService<IDatabaseMigrator>();
     await migrator.EnsureDatabaseUpdated();
 
-    using var app = host.Services.GetRequiredService<IApplication>();
-    app.Init();
+    var app = host.Services.GetRequiredService<IApplication>();
 
-    var mainShell = host.Services.GetRequiredService<MainShell>();
-    app.Run(mainShell);
+    try
+    {
+        app.Init();
 
-    app.Dispose();
+        var mainShell = host.Services.GetRequiredService<MainShell>();
+        app.Run(mainShell);
+    }
+    finally
+    {
+        try { app.Dispose(); } catch { }
+    }
 }
