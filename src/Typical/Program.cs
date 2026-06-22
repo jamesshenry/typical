@@ -1,14 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
 using Serilog;
-
 using Stanza.TerminalGui;
-
 using Terminal.Gui.App;
-
 using Typical.Configuration;
 using Typical.Core.Services;
 using Typical.DataAccess;
@@ -16,7 +11,6 @@ using Typical.DataAccess.Sqlite;
 using Typical.Infrastructure;
 using Typical.Services;
 using Typical.UI.Views;
-
 using Velopack;
 
 VelopackApp.Build().Run();
@@ -74,6 +68,10 @@ static async Task Run(IHost host)
     }
     finally
     {
-        try { app.Dispose(); } catch { }
+        try
+        {
+            app.Dispose();
+        }
+        catch { }
     }
 }

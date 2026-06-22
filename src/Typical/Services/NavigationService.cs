@@ -100,8 +100,16 @@ public class NavigationService : ObservableObject, INavigationService
         finally
         {
             vm.RequestClose -= StopRequest;
-            try { _app.RequestStop(); } catch { }
-            try { view.Dispose(); } catch { }
+            try
+            {
+                _app.RequestStop();
+            }
+            catch { }
+            try
+            {
+                view.Dispose();
+            }
+            catch { }
         }
 
         return vm.Result;

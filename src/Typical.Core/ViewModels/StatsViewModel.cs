@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
-
 using Typical.Core.Events;
 using Typical.Core.Statistics;
 

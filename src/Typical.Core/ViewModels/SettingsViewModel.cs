@@ -1,9 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-
 using Microsoft.Extensions.Logging;
-
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 
