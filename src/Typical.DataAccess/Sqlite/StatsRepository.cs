@@ -8,6 +8,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 
 using Typical.Core.Data;
+using Typical.Core.Exceptions;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
 
@@ -43,8 +44,13 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
 
         if (id is null)
         {
-            int maxId = await connection.ExecuteScalarAsync<int>(@"SELECT MAX(id) FROM Tests;");
-            id = Random.Shared.Next(1, maxId + 1);
+            int? maxId = await connection.ExecuteScalarAsync<int?>(@"SELECT MAX(id) FROM Tests;");
+
+            if (maxId is null)
+            {
+                throw new TypicalException();
+            }
+            id = Random.Shared.Next(1, maxId.Value + 1);
         }
         var testIdParam = new { testId = id };
 
@@ -218,6 +224,23 @@ WHERE kt.TestId = @testId;
         var connection = new SqliteConnection(options.Value.GetConnectionString());
         await connection.OpenAsync();
         return connection;
+    }
+}
+
+
+[Serializable]
+public class NoTestsExistException : TypicalException
+{
+    public NoTestsExistException()
+    {
+    }
+
+    public NoTestsExistException(string? message) : base(message)
+    {
+    }
+
+    public NoTestsExistException(string? message, Exception? innerException) : base(message, innerException)
+    {
     }
 }
 

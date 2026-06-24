@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 
 using Typical.Core.Data;
 using Typical.Core.Events;
+using Typical.Core.Exceptions;
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
@@ -108,6 +109,10 @@ public sealed partial class MainViewModel : ObservableObject
                     vm.Initialize(result);
                 }
             );
+        }
+        catch (TypicalException tex)
+        {
+            _logger.LogError(tex, "Application Error");
         }
         catch (Exception ex)
         {
