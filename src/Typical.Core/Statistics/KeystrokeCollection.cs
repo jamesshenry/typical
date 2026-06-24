@@ -60,5 +60,5 @@ public class KeystrokeCollection
     internal IReadOnlyList<KeystrokeLog> GetLog() => _logs.AsReadOnly();
 
     [Conditional("DEBUG")]
-    private void LogDebug(KeystrokeLog log) => Debug.WriteLine(log);
+    private void LogDebug(KeystrokeLog log) { }// Debug.WriteLine(log);
 }

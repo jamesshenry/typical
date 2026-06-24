@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+
 using Microsoft.Extensions.Logging;
+
 using Typical.Core.Data;
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
@@ -47,7 +49,14 @@ public sealed partial class MainViewModel : ObservableObject
         _logger = logger;
         _messenger = messenger;
 
-        _messenger.Register<MainViewModel, TestCompletedMessage>(this, (r, m) => r.Receive(m));
+        System.Diagnostics.Debug.WriteLine("MainViewModel constructor called");
+
+        _messenger.Register<MainViewModel, TestCompletedMessage>(this, (r, m) =>
+        {
+            System.Diagnostics.Debug.WriteLine("TestCompletedMessage handler called");
+            r.Receive(m);
+        });
+
         _messenger.Register<MainViewModel, TestResetMessage>(this, (r, m) => r.Receive(m));
         _messenger.Register<MainViewModel, ShowResultDialogMessage>(this, (r, m) => r.Receive(m));
         _statsRepository = statsRepository;

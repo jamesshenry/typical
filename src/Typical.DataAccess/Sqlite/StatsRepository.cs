@@ -1,9 +1,12 @@
 using System.ComponentModel.Design;
 using System.Reflection;
 using System.Text;
+
 using Dapper;
+
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
+
 using Typical.Core.Data;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
@@ -43,6 +46,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
             int maxId = await connection.ExecuteScalarAsync<int>(@"SELECT MAX(id) FROM Tests;");
             id = Random.Shared.Next(1, maxId + 1);
         }
+        var testIdParam = new { testId = id };
 
         const string testSql =
             @"
@@ -61,9 +65,9 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         WHERE t.Id = @testId;
         ";
 
-        var testRow = await connection.QueryFirstOrDefaultAsync<TestRow>(
+        var testRow = await connection.QueryFirstOrDefaultAsync<TestDto>(
             testSql,
-            new { testId = id }
+            testIdParam
         );
 
         const string snapshotsSql =
@@ -71,14 +75,19 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         SELECT * FROM TestSnapshots WHERE TestId = @testId ORDER BY OffsetMs ASC;
         ";
 
-        var snapshots = (
-            await connection.QueryAsync<TestSnapshot>(snapshotsSql, new { testId = id })
-        ).ToList();
+        var snapshotDtos = await connection.QueryAsync<TestSnapshotDto>(snapshotsSql, testIdParam);
+        var snapshots = snapshotDtos.Select(dto => dto.ToDomain()).ToList();
+        const string telemetrySql = @"
+SELECT * FROM KeystrokeTelemetry kt
+WHERE kt.TestId = @testId;
+";
 
-        TextSample sample;
-        if (testRow?.QuoteId is not null)
-        {
-            sample = new TextSample
+        var telemetryDto = await connection.QueryAsync<KeystrokeTelemetryDto>(telemetrySql, testIdParam);
+        var telemetry = telemetryDto.Select(row => row.ToDomain()).ToList();
+
+        TextSample sample = testRow?.QuoteId is null
+            ? TextSample.Empty
+            : new TextSample
             {
                 SourceId = testRow.QuoteId,
                 Text = testRow.QuoteText!,
@@ -86,19 +95,13 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
                 WordCount = testRow.WordCount,
                 CharCount = testRow.CharCount,
             };
-        }
-        else
-        {
-            sample = TextSample.Empty;
-        }
-
         return new TestResult(
-            PlayedAt: DateTimeOffset.FromUnixTimeSeconds(testRow!.CreatedAt).DateTime,
+            PlayedAt: DateTimeOffset.FromUnixTimeMilliseconds(testRow!.CreatedAt).DateTime,
             FinalWpm: Wpm.From(testRow.Wpm),
             FinalAccuracy: Accuracy.From(testRow.Accuracy),
             Duration: TimeSpan.FromMilliseconds(testRow.DurationMs),
             Target: sample,
-            Telemetry: [],
+            Telemetry: telemetry,
             Snapshots: snapshots,
             RawWpm: Wpm.From(testRow.Wpm)
         );
@@ -115,6 +118,22 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
             VALUES (@CreatedAt, @Wpm, @RawWpm, @Accuracy, @DurationMs, @QuoteId, @CustomText);
             SELECT last_insert_rowid();
             """;
+
+        // Create an anonymous object for the parameters.
+        // Dapper.AOT unpacks this at compile time into raw ADO.NET assignments.
+        var args = new
+        {
+            CreatedAt = new DateTimeOffset(result.PlayedAt).ToUnixTimeMilliseconds(),
+            Wpm = result.FinalWpm.Value,         // Unwrap Vogen
+            RawWpm = result.RawWpm.Value,        // Unwrap Vogen
+            Accuracy = result.FinalAccuracy.Value, // Unwrap Vogen
+            DurationMs = (long)result.Duration.TotalMilliseconds,
+            QuoteId = result.Target.SourceId,
+            CustomText = result.Target.SourceId.HasValue ? null : result.Target.Text
+        };
+
+        // Use ExecuteScalarAsync to grab the newly inserted ID
+        return await conn.ExecuteScalarAsync<long>(sql, args, trans);
 
         await using var cmd = new SqliteCommand(sql, conn, trans);
 
@@ -139,6 +158,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         }
 
         return (long)(await cmd.ExecuteScalarAsync() ?? 0L);
+
     }
 
     private async Task InsertTelemetryAsync(
@@ -153,24 +173,16 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
             VALUES (@TestId, @OffsetMs, @Index, @Actual, @Type);
             """;
 
-        await using var cmd = new SqliteCommand(sql, conn, trans);
-        var pTestId = cmd.Parameters.Add("@TestId", SqliteType.Integer);
-        var pOffset = cmd.Parameters.Add("@OffsetMs", SqliteType.Integer);
-        var pIndex = cmd.Parameters.Add("@Index", SqliteType.Integer);
-        var pActual = cmd.Parameters.Add("@Actual", SqliteType.Text);
-        var pType = cmd.Parameters.Add("@Type", SqliteType.Integer);
-
-        pTestId.Value = testId;
-
-        foreach (var log in result.Telemetry)
+        var args = result.Telemetry.Select(log => new TelemetryInsertArgs
         {
-            pOffset.Value = log.Timestamp;
-            pIndex.Value = log.Index;
-            pActual.Value = log.Value;
-            pType.Value = (int)log.Type;
+            TestId = testId,
+            OffsetMs = log.OffsetMs,
+            GraphemeIndex = log.Index,
+            ActualText = log.Value,
+            KeystrokeType = (int)log.Type // Cast enum to int
+        });
 
-            await cmd.ExecuteNonQueryAsync();
-        }
+        await conn.ExecuteAsync(sql, args, trans);
     }
 
     private async Task InsertSnapshotsAsync(
@@ -188,24 +200,17 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
             VALUES (@TestId, @OffsetMs, @Wpm, @Acc);
             """;
 
-        await using var cmd = new SqliteCommand(sql, conn, trans);
-        var pTestId = cmd.Parameters.Add("@TestId", SqliteType.Integer);
-        var pOffset = cmd.Parameters.Add("@OffsetMs", SqliteType.Integer);
-        var pWpm = cmd.Parameters.Add("@Wpm", SqliteType.Real);
-        var pAcc = cmd.Parameters.Add("@Acc", SqliteType.Real);
-
-        pTestId.Value = testId;
-
-        foreach (var snap in snapshots)
+        // Project your domain models to the flattened primitive args
+        var args = snapshots.Select(snap => new SnapshotInsertArgs
         {
-            pTestId.Value = testId;
-            pOffset.Value = (long)snap.ElapsedTime.TotalMilliseconds;
+            TestId = testId,
+            OffsetMs = (long)snap.ElapsedTime.TotalMilliseconds,
+            Wpm = snap.WPM.Value,           // Unwrap
+            Accuracy = snap.Accuracy.Value  // Unwrap
+        });
 
-            pWpm.Value = snap.WPM.Value;
-            pAcc.Value = snap.Accuracy.Value;
-
-            await cmd.ExecuteNonQueryAsync();
-        }
+        // Pass the IEnumerable directly! Dapper.AOT handles the iteration internally.
+        await conn.ExecuteAsync(sql, args, trans);
     }
 
     private async Task<SqliteConnection> GetConnectionAsync()
@@ -216,7 +221,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
     }
 }
 
-internal class TestRow
+internal class TestDto
 {
     public float Wpm { get; set; }
     public long CreatedAt { get; set; }
@@ -227,4 +232,74 @@ internal class TestRow
     public string? QuoteAuthor { get; set; }
     public int CharCount { get; set; }
     public int WordCount { get; set; }
+}
+
+[DapperAot]
+internal class TestSnapshotDto
+{
+    public long TestId { get; set; }
+    public long OffsetMs { get; set; }
+    public double Wpm { get; set; }
+    [DbValue(Name = "Acc")]
+    public double Accuracy { get; set; }
+
+    internal TestSnapshot ToDomain()
+    {
+        return new TestSnapshot(
+            Core.Statistics.Wpm.From(Wpm),
+            Core.Statistics.Accuracy.From(Accuracy),
+            new TestMetrics(0, 0, 0), // Metrics aren't stored in the snapshot table
+            TimeSpan.FromMilliseconds(OffsetMs)
+        );
+    }
+}
+
+[DapperAot]
+internal class KeystrokeTelemetryDto
+{
+    public long TestId { get; set; }
+    public long OffsetMs { get; set; }
+    public int GraphemeIndex { get; set; }
+    public string? ActualText { get; set; }
+    public int KeystrokeType { get; set; }
+
+    internal KeystrokeLog ToDomain()
+    {
+        return new KeystrokeLog(
+            Value: ActualText ?? string.Empty,
+            Type: (KeystrokeType)KeystrokeType, // Cast the raw int back to the enum
+
+            // Note: In InsertTelemetryAsync you save log.Timestamp into the @OffsetMs parameter.
+            // We map it back to both here so the domain model stays fully populated.
+            Timestamp: OffsetMs,
+            OffsetMs: OffsetMs,
+
+            Index: GraphemeIndex
+        );
+    }
+}
+[DapperAot]
+internal struct SnapshotInsertArgs
+{
+    public long TestId { get; set; }
+    public long OffsetMs { get; set; }
+    public double Wpm { get; set; }
+
+    [DbValue(Name = "Acc")] // Maps to the @Acc parameter in your SQL
+    public double Accuracy { get; set; }
+}
+[DapperAot]
+internal struct TelemetryInsertArgs
+{
+    public long TestId { get; set; }
+    public long OffsetMs { get; set; }
+
+    [DbValue(Name = "Index")]
+    public int GraphemeIndex { get; set; }
+
+    [DbValue(Name = "Actual")]
+    public string ActualText { get; set; }
+
+    [DbValue(Name = "Type")]
+    public int KeystrokeType { get; set; }
 }

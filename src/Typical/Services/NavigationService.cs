@@ -1,10 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 using Stanza.TerminalGui;
+
 using Terminal.Gui.App;
 using Terminal.Gui.Views;
+
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Navigation;
@@ -79,8 +83,6 @@ public class NavigationService : ObservableObject, INavigationService
             stanzaView.ViewModel = vm;
         }
 
-        // Differentiate only if you want to support non-Dialog Windows (standard top-level views)
-        // but typically for Modals, Dialog is the correct constraint.
         if (view is not Dialog dialog)
         {
             throw new InvalidOperationException(
@@ -93,21 +95,15 @@ public class NavigationService : ObservableObject, INavigationService
 
         try
         {
-            // Terminal.Gui v2 logic: Application.Run works on any View,
-            // but Dialogs provide the modal overlay/shadowing behavior.
             _app.Run(dialog);
         }
         finally
         {
             vm.RequestClose -= StopRequest;
+
             try
             {
-                _app.RequestStop();
-            }
-            catch { }
-            try
-            {
-                view.Dispose();
+                dialog.Dispose();
             }
             catch { }
         }
