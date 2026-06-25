@@ -22,7 +22,7 @@
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="Spectre.Console" />
-    <PackageReference Include="Stanza.TerminalGui" />
+    <PackageReference Include="Stanza.TerminalGui" PrivateAssets="all" />
     <PackageReference Include="Terminal.Gui" />
     <TrimmerRootAssembly Include="Terminal.Gui" />
     <PackageReference Include="Velopack" />

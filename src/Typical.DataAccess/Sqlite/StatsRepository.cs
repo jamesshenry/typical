@@ -140,31 +140,6 @@ WHERE kt.TestId = @testId;
 
         // Use ExecuteScalarAsync to grab the newly inserted ID
         return await conn.ExecuteScalarAsync<long>(sql, args, trans);
-
-        await using var cmd = new SqliteCommand(sql, conn, trans);
-
-        cmd.Parameters.AddWithValue(
-            "@CreatedAt",
-            new DateTimeOffset(result.PlayedAt).ToUnixTimeMilliseconds()
-        );
-        cmd.Parameters.AddWithValue("@Wpm", result.FinalWpm.Value);
-        cmd.Parameters.AddWithValue("@RawWpm", result.RawWpm.Value);
-        cmd.Parameters.AddWithValue("@Accuracy", result.FinalAccuracy.Value);
-        cmd.Parameters.AddWithValue("@DurationMs", (long)result.Duration.TotalMilliseconds);
-
-        if (result.Target.SourceId.HasValue)
-        {
-            cmd.Parameters.AddWithValue("@QuoteId", result.Target.SourceId.Value);
-            cmd.Parameters.AddWithValue("@CustomText", DBNull.Value);
-        }
-        else
-        {
-            cmd.Parameters.AddWithValue("@QuoteId", DBNull.Value);
-            cmd.Parameters.AddWithValue("@CustomText", result.Target.Text);
-        }
-
-        return (long)(await cmd.ExecuteScalarAsync() ?? 0L);
-
     }
 
     private async Task InsertTelemetryAsync(
