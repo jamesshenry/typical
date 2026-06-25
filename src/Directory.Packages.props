@@ -47,9 +47,9 @@
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Spectre.Console" Version="0.55.2" />
-    <PackageVersion Include="Stanza.TerminalGui" Version="0.1.0-preview.8" />
+    <PackageVersion Include="Stanza.TerminalGui" Version="0.1.1-preview.1" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
-    <PackageVersion Include="Terminal.Gui" Version="2.4.3" />
+    <PackageVersion Include="Terminal.Gui" Version="2.4.11" />
     <PackageVersion Include="Velopack" Version="0.0.1298" />
     <PackageVersion Include="Vogen" Version="8.0.5" />
     <PackageVersion Include="Xdg.Directories" Version="0.1.2" />
