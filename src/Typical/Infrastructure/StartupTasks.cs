@@ -6,7 +6,7 @@ using Typical.Configuration;
 using Velopack.Locators;
 using Velopack.Logging;
 
-namespace MinCh.Infrastructure;
+namespace Typical.Infrastructure;
 
 public static class StartupTasks
 {

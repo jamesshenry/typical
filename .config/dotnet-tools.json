@@ -3,7 +3,7 @@
   "isRoot": true,
   "tools": {
     "dotnet-reportgenerator-globaltool": {
-      "version": "5.5.9",
+      "version": "5.5.10",
       "commands": [
         "reportgenerator"
       ],
@@ -17,14 +17,14 @@
       "rollForward": false
     },
     "loom.build": {
-      "version": "0.5.0",
+      "version": "0.6.1",
       "commands": [
         "loom"
       ],
       "rollForward": false
     },
     "vpk": {
-      "version": "0.0.1589-ga2c5a97",
+      "version": "1.2.0",
       "commands": [
         "vpk"
       ],

@@ -9,7 +9,7 @@ using Terminal.Gui.App;
 using Typical.Configuration;
 using Typical.Core.Interfaces;
 using Typical.Logging;
-using Typical.Views;
+using Typical.UI.Views;
 
 namespace Typical.Services;
 
@@ -23,11 +23,11 @@ public static class ServiceExtensions
     /// </summary>
     public static Logger CreateAppLogger() =>
         new LoggerConfiguration()
-            .MinimumLevel.Information()
+            .MinimumLevel.Verbose()
             .WriteTo.File(
                 formatter: new MessageTemplateTextFormatter(OutputTemplate),
                 Path.Combine(AppPaths.LogDirectory, "app-.log"),
-                restrictedToMinimumLevel: LogEventLevel.Debug,
+                restrictedToMinimumLevel: LogEventLevel.Verbose,
                 shared: true,
                 rollingInterval: RollingInterval.Day
             )
@@ -53,10 +53,11 @@ public static class ServiceExtensions
         builder.Services.AddSingleton<IAppLifetime, AppLifetime>();
 
         builder.Services.AddSingleton<MainShell>();
-        builder.Services.AddTransient<HomeView>();
+        //builder.Services.AddTransient<HomeView>();
         builder.Services.AddTransient<SettingsView>();
         builder.Services.AddTransient<TypingView>();
         builder.Services.AddTransient<StatsView>();
+        builder.Services.AddTransient<ResultsDialog>();
     }
 }
 

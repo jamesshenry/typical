@@ -1,17 +1,25 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+
 using Microsoft.Extensions.Logging;
+
+using Typical.Core.Data;
 using Typical.Core.Events;
+using Typical.Core.Exceptions;
 using Typical.Core.Interfaces;
+using Typical.Core.Statistics;
+using Typical.Core.Text;
 
 namespace Typical.Core.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject, IRecipient<NavigationChangedMessage>
+public sealed partial class MainViewModel : ObservableObject
 {
     private readonly INavigationService _navigationService;
+    private readonly IStatsRepository _statsRepository;
     private readonly IDialogService _dialogService;
     private readonly ILogger<MainViewModel> _logger;
+    private readonly IMessenger _messenger;
 
     [ObservableProperty]
     public partial string AppTitle { get; set; } = "Typical";
@@ -25,24 +33,41 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<Navigat
     public MainViewModel(
         INavigationService navigationService,
         IDialogService dialogService,
-        ILogger<MainViewModel> logger
+        ILogger<MainViewModel> logger,
+        IMessenger messenger,
+        IStatsRepository statsRepository
     )
     {
         _navigationService = navigationService;
+        _navigationService.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(navigationService.CurrentViewModel))
+            {
+                CurrentPage = _navigationService.CurrentViewModel;
+            }
+        };
         _dialogService = dialogService;
         _logger = logger;
+        _messenger = messenger;
 
-        WeakReferenceMessenger.Default.Register<MainViewModel, NavigationChangedMessage>(
-            this,
-            (r, m) => r.Receive(m)
-        );
+        System.Diagnostics.Debug.WriteLine("MainViewModel constructor called");
+
+        _messenger.Register<MainViewModel, TestCompletedMessage>(this, (r, m) =>
+        {
+            System.Diagnostics.Debug.WriteLine("TestCompletedMessage handler called");
+            r.Receive(m);
+        });
+
+        _messenger.Register<MainViewModel, TestResetMessage>(this, (r, m) => r.Receive(m));
+        _messenger.Register<MainViewModel, ShowResultDialogMessage>(this, (r, m) => r.Receive(m));
+        _statsRepository = statsRepository;
     }
 
     [RelayCommand]
-    private void NavigateToGameView() => _navigationService.NavigateTo<TypingViewModel>();
+    private void NavigateToTestView() => _navigationService.NavigateTo<TypingViewModel>();
 
-    [RelayCommand]
-    private void NavigateHome() => _navigationService.NavigateTo<HomeViewModel>();
+    //[RelayCommand]
+    //private void NavigateHome() => _navigationService.NavigateTo<HomeViewModel>();
 
     [RelayCommand]
     private void NavigateSettings() => _navigationService.NavigateTo<SettingsViewModel>();
@@ -53,8 +78,45 @@ public sealed partial class MainViewModel : ObservableObject, IRecipient<Navigat
         _dialogService.ShowError("About", "Typical: A Terminal.Gui v2 MVVM Demo");
     }
 
-    public void Receive(NavigationChangedMessage message)
+    public void Receive(TestCompletedMessage message)
     {
-        CurrentPage = message.Value;
+        _navigationService.ShowModal<ResultsViewModel, bool>(vm => vm.Initialize(message.Result));
+    }
+
+    public async void Receive(TestResetMessage message)
+    {
+        try
+        {
+            _navigationService.NavigateTo<TypingViewModel>(vm =>
+            {
+                vm.InitializeAsync().Wait();
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling test reset");
+        }
+    }
+
+    public async void Receive(ShowResultDialogMessage message)
+    {
+        try
+        {
+            TestResult result = await _statsRepository.GetTestResultAsync();
+            _navigationService.ShowModal<ResultsViewModel, bool>(
+                (vm) =>
+                {
+                    vm.Initialize(result);
+                }
+            );
+        }
+        catch (TypicalException tex)
+        {
+            _logger.LogError(tex, "Application Error");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing random result");
+        }
     }
 }

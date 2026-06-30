@@ -1,15 +1,22 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using MinCh.Infrastructure;
+
 using Serilog;
+
+using Stanza.TerminalGui;
+
 using Terminal.Gui.App;
+
 using Typical.Configuration;
 using Typical.Core.Services;
 using Typical.DataAccess;
 using Typical.DataAccess.Sqlite;
+using Typical.Infrastructure;
 using Typical.Services;
-using Typical.Views;
+using Typical.UI.Views;
+
 using Velopack;
 
 VelopackApp.Build().Run();
@@ -52,14 +59,26 @@ finally
 [RequiresDynamicCode("Calls Terminal.Gui.Application.Init(IDriver, String)")]
 static async Task Run(IHost host)
 {
+    host.UseStanzaLogging();
     var migrator = host.Services.GetRequiredService<IDatabaseMigrator>();
     await migrator.EnsureDatabaseUpdated();
 
-    using var app = host.Services.GetRequiredService<IApplication>();
-    app.Init();
+    var app = host.Services.GetRequiredService<IApplication>();
 
-    var mainShell = host.Services.GetRequiredService<MainShell>();
-    app.Run(mainShell);
+    try
+    {
+        app.Init();
 
-    app.Dispose();
+        var mainShell = host.Services.GetRequiredService<MainShell>();
+        app.Run(mainShell);
+    }
+    finally
+    {
+        try
+        {
+            app.Dispose();
+        }
+        catch { }
+        Environment.Exit(1);
+    }
 }

@@ -5,19 +5,19 @@ namespace Typical.Core.Logging;
 
 public static partial class CoreLogs
 {
-    // --- GameEngine Logs (2000-2099) ---
-    [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "New game starting.")]
-    public static partial void GameStarting(ILogger logger);
+    // --- TestEngine Logs (2000-2099) ---
+    [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "New test starting.")]
+    public static partial void TestStarting(ILogger logger);
 
     [LoggerMessage(
         EventId = 2001,
         Level = LogLevel.Information,
-        Message = "Game finished successfully. {Stats}"
+        Message = "Test finished successfully. {Stats}"
     )]
-    public static partial void GameFinished(ILogger logger, GameSnapshot stats);
+    public static partial void TestFinished(ILogger logger, TestSnapshot stats);
 
-    [LoggerMessage(EventId = 2002, Level = LogLevel.Information, Message = "Game quit by user.")]
-    public static partial void GameQuit(ILogger logger);
+    [LoggerMessage(EventId = 2002, Level = LogLevel.Information, Message = "Test quit by user.")]
+    public static partial void TestQuit(ILogger logger);
 
     [LoggerMessage(
         EventId = 2003,
@@ -33,22 +33,22 @@ public static partial class CoreLogs
     [LoggerMessage(
         EventId = 2004,
         Level = LogLevel.Trace,
-        Message = "Publishing game state update."
+        Message = "Publishing test state update."
     )]
     public static partial void PublishingState(ILogger logger);
 
-    // --- GameStats Logs (2100-2199) ---
-    [LoggerMessage(EventId = 2100, Level = LogLevel.Debug, Message = "GameStats started.")]
+    // --- TestStats Logs (2100-2199) ---
+    [LoggerMessage(EventId = 2100, Level = LogLevel.Debug, Message = "TestStats started.")]
     public static partial void StatsStarted(ILogger logger);
 
     [LoggerMessage(
         EventId = 2101,
         Level = LogLevel.Debug,
-        Message = "GameStats stopped. Elapsed: {ElapsedTime}ms"
+        Message = "TestStats stopped. Elapsed: {ElapsedTime}ms"
     )]
     public static partial void StatsStopped(ILogger logger, double ElapsedTime);
 
-    [LoggerMessage(EventId = 2102, Level = LogLevel.Debug, Message = "GameStats reset.")]
+    [LoggerMessage(EventId = 2102, Level = LogLevel.Debug, Message = "TestStats reset.")]
     public static partial void StatsReset(ILogger logger);
 
     [LoggerMessage(

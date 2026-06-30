@@ -1,8 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <TUnitEnableVerboseDiagnostics>true</TUnitEnableVerboseDiagnostics>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Bogus" />
     <PackageReference Include="Imposter" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />

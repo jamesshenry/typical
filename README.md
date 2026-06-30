@@ -1,4 +1,4 @@
 ## TODO
 
-- add separate stats view and viewmodel that can receive messages during game.
+- add separate stats view and viewmodel that can receive messages during test.
 - finishing wireframes

@@ -1,87 +1,85 @@
 using System.Diagnostics.CodeAnalysis;
-
+using System.Timers;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
-
 using Microsoft.Extensions.Logging;
-
+using Typical.Core.Data;
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
+using Timer = System.Timers.Timer;
 
 namespace Typical.Core.ViewModels;
 
-public partial class TypingViewModel
-    : ObservableObject,
-        INavigatableView,
-        IRecipient<GameResetMessage>
+public partial class TypingViewModel : ObservableObject, INavigatableView
 {
-    private readonly GameEngine _engine;
+    private readonly TypingTest _Test;
     private readonly ITextProvider _textProvider;
-    private readonly INavigationService _navigationService;
+    private readonly IStatsRepository _statsRepository;
     private readonly ILogger<TypingViewModel> _logger;
+    private readonly IMessenger _messenger;
+    private readonly Timer _refreshTimer;
+    private bool _isFinishing;
 
     [ObservableProperty]
     public required partial TextSample Target { get; set; } = TextSample.Empty;
 
-    // [ObservableProperty]
-    // private bool _isGameOver;
-
-    [ObservableProperty]
-    public partial KeystrokeType[] DisplayStates { get; set; } = [];
-
     [SetsRequiredMembers]
     public TypingViewModel(
-        GameEngine engine,
+        TypingTest Test,
         ITextProvider textProvider,
+        IStatsRepository statsRepository,
         INavigationService navigationService,
-        ILogger<TypingViewModel> logger
+        ILogger<TypingViewModel> logger,
+        IMessenger messenger
     )
     {
-        _engine = engine;
+        _Test = Test;
         _textProvider = textProvider;
-        _navigationService = navigationService;
+        _statsRepository = statsRepository;
         _logger = logger;
+        _Test.OnTestFinished += async (s, result) =>
+        {
+            try
+            {
+                await HandleTestFinished(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling test finished");
+            }
+        };
+        _messenger = messenger;
 
-        WeakReferenceMessenger.Default.Register<TypingViewModel, GameResetMessage>(
-            this,
-            (r, m) => r.Receive(m)
-        );
+        _refreshTimer = new Timer(100);
+        _refreshTimer.AutoReset = true;
+        _refreshTimer.Elapsed += OnRefreshTimerElapsed;
     }
-
-    public bool IsGameOver => _engine.IsOver;
 
     /// <summary>
     /// Processes input received from the View.
-    /// Maps Key events to Core Game Logic.
+    /// Maps Key events to Core Test Logic.
     /// </summary>
-    public async void ProcessInput(char c, bool isBackspace)
+    public async void ProcessInput(string c, bool isBackspace)
     {
-        if (_engine.IsOver)
+        try
         {
-            await InitializeAsync();
-            return;
-        }
-
-        bool accepted = _engine.ProcessKeyPress(c, isBackspace);
-
-        var states = _engine.CharacterStates.ToArray();
-
-        if (!accepted && !isBackspace && c != '\0')
-        {
-            int pos = _engine.UserInput.Length;
-            if (pos < states.Length)
+            if (_Test.IsOver)
             {
-                states[pos] = KeystrokeType.Incorrect;
+                await InitializeAsync();
+                return;
             }
+
+            bool accepted = _Test.ProcessKeyPress(c, isBackspace);
+
+            UpdateState();
         }
-
-        DisplayStates = states;
-        UpdateState();
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing input");
+        }
     }
-
-    public void RefreshState() => UpdateState();
 
     /// <summary>
     /// Synchronizes the Engine state with ViewModel properties.
@@ -89,47 +87,70 @@ public partial class TypingViewModel
     /// </summary>
     private void UpdateState()
     {
-        var snapshot = _engine.CreateSnapshot();
-
-        WeakReferenceMessenger.Default.Send(new GameStateUpdatedMessage(snapshot));
-    }
-
-    public KeystrokeType GetStatus(int index)
-    {
-        return index < 0 || index >= _engine.CharacterStates.Count
-            ? KeystrokeType.Untyped
-            : _engine.CharacterStates[index];
+        var snapshot = _Test.GetCurrentSnapshot();
+        _messenger.Send(new TestSessionUpdatedMessage(snapshot));
     }
 
     public void OnNavigatedTo()
     {
         _logger.LogInformation($"Navigated to {nameof(TypingViewModel)}");
+        _refreshTimer.Start();
     }
 
     public void OnNavigatedFrom()
     {
         _logger.LogInformation($"Navigated from {nameof(TypingViewModel)}");
+        _refreshTimer.Stop();
+    }
+
+    private void OnRefreshTimerElapsed(object? sender, ElapsedEventArgs e)
+    {
+        try
+        {
+            if (_Test.IsOver)
+            {
+                return;
+            }
+
+            _Test.Stats.SampleSnapshot();
+            UpdateState();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in refresh timer callback");
+        }
     }
 
     public async Task InitializeAsync(TextSample? textSample = null)
     {
         Target = textSample ?? await _textProvider.GetQuoteAsync();
-        _engine.LoadText(Target);
-        DisplayStates = new KeystrokeType[Target.Text.Length];
-        Array.Fill(DisplayStates, KeystrokeType.Untyped);
+        _Test.LoadText(Target);
         UpdateState();
     }
 
-    public async void Receive(GameResetMessage message)
+    public KeystrokeType GetStatus(int globalIdx)
     {
-        TextSample textSample = message.Settings switch
-        {
-            QuoteMode q => (await _textProvider.GetQuoteAsync(q.Length)),
-            _ => throw new InvalidOperationException(
-                $"Unsupported mode settings type: {message.Settings.Value?.GetType().Name ?? message.Settings.GetType().Name}"
-            ),
-        };
+        return _Test.GetStatus(globalIdx);
+    }
 
-        await InitializeAsync(textSample);
+    private async Task HandleTestFinished(TestResult result)
+    {
+        if (_isFinishing)
+            return;
+        _isFinishing = true;
+
+        try
+        {
+            _refreshTimer.Stop();
+
+            await Task.Delay(100);
+
+            await _statsRepository.SaveTestResultAsync(result);
+            _messenger.Send(new TestCompletedMessage(result));
+        }
+        finally
+        {
+            _isFinishing = false;
+        }
     }
 }

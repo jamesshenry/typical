@@ -1,3 +1,9 @@
 namespace Typical.Core.Statistics;
 
-public record struct KeystrokeLog(char Character, KeystrokeType Type, long Timestamp);
+public record struct KeystrokeLog(
+    string Value,
+    KeystrokeType Type,
+    long Timestamp,
+    long OffsetMs,
+    int Index
+);

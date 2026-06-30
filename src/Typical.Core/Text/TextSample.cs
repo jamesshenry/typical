@@ -1,7 +1,7 @@
 namespace Typical.Core.Text;
 
 /// <summary>
-/// Represents a piece of text to be used in a typing game,
+/// Represents a piece of text to be used in a typing test,
 /// including the text itself and relevant metadata.
 /// This is a generic DTO, decoupled from any specific data source.
 /// </summary>

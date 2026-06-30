@@ -53,9 +53,9 @@ public static partial class AppLogs
     [LoggerMessage(
         EventId = 1003,
         Level = LogLevel.Warning,
-        Message = "Starting direct game with Mode: {Mode}, Duration: {Duration}"
+        Message = "Starting direct test with Mode: {Mode}, Duration: {Duration}"
     )]
-    public static partial void StartingGame(ILogger logger, string mode, int duration);
+    public static partial void StartingTest(ILogger logger, string mode, int duration);
 
     [LoggerMessage(
         EventId = 1004,

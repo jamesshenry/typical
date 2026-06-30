@@ -18,6 +18,7 @@ public static class ServiceExtensions
         var options = section.Get<TypicalDbOptions>();
         services.AddSingleton<IDatabaseMigrator, DatabaseMigrator>();
         services.AddSingleton<ITextRepository, TextRepository>();
+        services.AddSingleton<IStatsRepository, StatsRepository>();
         return services;
     }
 }

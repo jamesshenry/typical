@@ -5,21 +5,29 @@ using Typical.Core.Statistics;
 
 namespace Typical.Core.ViewModels;
 
-public partial class StatsViewModel : ObservableObject, IRecipient<GameStateUpdatedMessage>
+public partial class StatsViewModel : ObservableObject, IRecipient<TestSessionUpdatedMessage>
 {
-    [ObservableProperty]
-    public partial GameSnapshot Stats { get; set; }
+    private readonly IMessenger _messenger;
 
-    public StatsViewModel()
+    [ObservableProperty]
+    public partial TestSnapshot Stats { get; set; } = TestSnapshot.Empty;
+
+    public StatsViewModel(IMessenger messenger)
     {
-        WeakReferenceMessenger.Default.Register<StatsViewModel, GameStateUpdatedMessage>(
+        _messenger = messenger;
+        _messenger.Register<StatsViewModel, TestSessionUpdatedMessage>(
             this,
             (r, m) => r.Receive(m)
         );
     }
 
-    public void Receive(GameStateUpdatedMessage message)
+    public void Receive(TestSessionUpdatedMessage message)
     {
-        Stats = message.State;
+        Stats = message.Snapshot;
+        StatsLabel =
+            $"Elapsed: {Stats.ElapsedTime:mm\\:ss} | WPM: {Math.Round(Stats.WPM.Value)} | Acc: {Stats.Accuracy.ToString()}";
     }
+
+    [ObservableProperty]
+    public partial string StatsLabel { get; set; } = string.Empty;
 }
