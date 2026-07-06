@@ -46,14 +46,14 @@
     <PackageVersion Include="Serilog.Settings.Configuration" Version="10.0.1" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="Spectre.Console" Version="0.57.1" />
-    <PackageVersion Include="Stanza.TerminalGui" Version="0.1.1-preview.1" />
+    <PackageVersion Include="Spectre.Console" Version="0.57.2" />
+    <PackageVersion Include="Stanza.TerminalGui" Version="0.1.1-preview.2" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
-    <PackageVersion Include="Terminal.Gui" Version="2.4.11" />
+    <PackageVersion Include="Terminal.Gui" Version="2.4.16" />
     <PackageVersion Include="Velopack" Version="1.2.0" />
     <PackageVersion Include="Vogen" Version="8.0.5" />
     <PackageVersion Include="Xdg.Directories" Version="0.1.2" />
     <PackageVersion Include="Imposter" Version="0.1.9" />
-    <PackageVersion Include="TUnit" Version="1.56.35" />
+    <PackageVersion Include="TUnit" Version="1.58.0" />
   </ItemGroup>
 </Project>
