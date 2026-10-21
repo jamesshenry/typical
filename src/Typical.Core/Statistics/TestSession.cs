@@ -27,20 +27,22 @@ public class TestSession
             : TimeSpan.Zero;
     public bool IsRunning => _startTimestamp.HasValue && !_endTimestamp.HasValue;
 
-    internal void RecordKey(string grapheme, KeystrokeType type, int currentIndex)
+    public void RecordKey(string grapheme, KeystrokeType type, int currentIndex)
     {
         if (!IsRunning)
+        {
             Start();
+        }
 
         _keystrokes.Add(grapheme, type, _timeProvider.GetTimestamp(), currentIndex);
     }
 
-    internal void RecordBackspace(int currentIndex)
+    public void RecordBackspace(int currentIndex)
     {
         _keystrokes.Add("\b", KeystrokeType.Correction, _timeProvider.GetTimestamp(), currentIndex);
     }
 
-    internal void Start()
+    public void Start()
     {
         Reset();
         _startTimestamp = _timeProvider.GetTimestamp();
@@ -54,7 +56,7 @@ public class TestSession
         _snapshots.Clear();
     }
 
-    internal void Stop() => _endTimestamp = _timeProvider.GetTimestamp();
+    public void Stop() => _endTimestamp = _timeProvider.GetTimestamp();
 
     public TestSnapshot GetCurrentSnapshot()
     {

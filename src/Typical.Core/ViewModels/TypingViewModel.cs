@@ -1,13 +1,17 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Timers;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+
 using Microsoft.Extensions.Logging;
+
 using Typical.Core.Data;
 using Typical.Core.Events;
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
+
 using Timer = System.Timers.Timer;
 
 namespace Typical.Core.ViewModels;
@@ -136,7 +140,9 @@ public partial class TypingViewModel : ObservableObject, INavigatableView
     private async Task HandleTestFinished(TestResult result)
     {
         if (_isFinishing)
+        {
             return;
+        }
         _isFinishing = true;
 
         try

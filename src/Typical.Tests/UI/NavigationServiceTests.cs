@@ -1,9 +1,13 @@
 using CommunityToolkit.Mvvm.Messaging;
+
 using Imposter.Abstractions;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+
 using Terminal.Gui.ViewBase;
+
 using Typical.Core;
 using Typical.Core.Data;
 using Typical.Core.Events;
@@ -39,11 +43,12 @@ public class NavigationServiceTests
         services.AddSingleton(_textProviderMock.Instance());
         services.AddSingleton(_statsRepoMock.Instance());
 
-        services.AddSingleton(sp => new TypingTest(
-            new TestOptions(),
-            NullLogger<TypingTest>.Instance,
-            TimeProvider.System
-        ));
+        services.AddSingleton(sp =>
+                new TypingTest(
+                    new TestOptions(),
+                    NullLogger<TypingTest>.Instance,
+                    TimeProvider.System
+                ));
 
         services.AddSingleton<ILogger<SettingsViewModel>>(NullLogger<SettingsViewModel>.Instance);
         services.AddSingleton<ILogger<TypingViewModel>>(NullLogger<TypingViewModel>.Instance);
@@ -54,17 +59,17 @@ public class NavigationServiceTests
         services.AddTransient<SettingsView>();
         services.AddTransient<TypingView>();
 
-        services.AddSingleton<INavigationService>(sp => new NavigationService(
-            sp,
-            null!,
-            sp.GetRequiredService<IMessenger>(),
-            NullLogger<NavigationService>.Instance
-        ));
+        services.AddSingleton<INavigationService>(sp =>
+                new NavigationService(
+                    sp,
+                    null!,
+                    sp.GetRequiredService<IMessenger>(),
+                    NullLogger<NavigationService>.Instance
+                ));
 
         _serviceProvider = services.BuildServiceProvider();
 
-        _navigationService = (NavigationService)
-            _serviceProvider.GetRequiredService<INavigationService>();
+        _navigationService = (NavigationService)_serviceProvider.GetRequiredService<INavigationService>();
     }
 
     [After(Test)]

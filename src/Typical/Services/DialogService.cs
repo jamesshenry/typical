@@ -1,5 +1,6 @@
 using Terminal.Gui.App;
 using Terminal.Gui.Views;
+
 using Typical.Core.Interfaces;
 
 namespace Typical.Services;

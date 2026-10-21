@@ -1,14 +1,20 @@
 using System.Globalization;
 using System.Text;
+
 using Bogus;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
+
 using TUnit.Core.Logging;
+
 using Typical.Core;
 using Typical.Core.Events;
 using Typical.Core.Statistics;
 using Typical.Core.Text;
+
+using TestState = Typical.Core.TestState;
 
 namespace Typical.Tests.Core.Statistics;
 
@@ -217,10 +223,8 @@ public class TypingTestTests
         // Act: process the emoji as a single grapheme
         sut.ProcessKeyPress("👍🏽", false);
 
-        // Assert: should count as exactly 1 correct keystroke
-        await Assert.That(sut.Stats.Keystrokes.Count).IsEqualTo(1);
-        await Assert.That(sut.Stats.Keystrokes[0].Value).IsEqualTo("👍🏽");
-        await Assert.That(sut.Stats.Keystrokes[0].Type).IsEqualTo(KeystrokeType.Correct);
+        await Assert.That(sut.UserInput).IsEqualTo("👍🏽");
+        await Assert.That(sut.IsOver).IsTrue();
     }
 
     [Test]
@@ -230,7 +234,7 @@ public class TypingTestTests
         var faker = new Faker(locale);
         var internationalText = faker.Random.Words(10);
         var sut = new TypingTest(_defaultOptions, _logger, _timeProvider);
-        sut.LoadText(new TextSample() { Text = internationalText, Source = locale });
+        sut.LoadText(internationalText);
 
         // Act
         var enumerator = StringInfo.GetTextElementEnumerator(internationalText);
@@ -243,8 +247,7 @@ public class TypingTestTests
             sut.ProcessKeyPress(grapheme, false);
             graphemeCount++;
         }
-
-        await Assert.That(sut.Stats.Keystrokes.Count).IsEqualTo(graphemeCount);
+        await Assert.That(sut.UserInput).IsEqualTo(internationalText);
     }
 
     [Test]
@@ -267,7 +270,7 @@ public class TypingTestTests
             sut.ProcessKeyPress(grapheme, false);
             graphemeCount++;
         }
+        await Assert.That(sut.UserInput).IsEqualTo(textSample.Text);
 
-        await Assert.That(sut.Stats.Keystrokes.Count).IsEqualTo(graphemeCount);
     }
 }

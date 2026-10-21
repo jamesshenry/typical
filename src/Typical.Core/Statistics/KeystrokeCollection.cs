@@ -48,7 +48,7 @@ public class KeystrokeCollection
         LogDebug(log);
     }
 
-    internal void Clear()
+    public void Clear()
     {
         _logs.Clear();
         _firstTimestamp = null;
@@ -57,7 +57,7 @@ public class KeystrokeCollection
         CorrectionCount = 0;
     }
 
-    internal IReadOnlyList<KeystrokeLog> GetLog() => _logs.AsReadOnly();
+    public IReadOnlyList<KeystrokeLog> GetLog() => _logs.AsReadOnly();
 
     [Conditional("DEBUG")]
     private void LogDebug(KeystrokeLog log) { }// Debug.WriteLine(log);

@@ -1,4 +1,5 @@
 using Bogus;
+
 using Typical.Core.Data;
 using Typical.Core.Events;
 

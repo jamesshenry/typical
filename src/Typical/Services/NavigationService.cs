@@ -37,14 +37,9 @@ public class NavigationService : ObservableObject, INavigationService
 
     private ObservableObject? _currentViewModel;
 
-    public ObservableObject CurrentViewModel
-    {
-        get => _currentViewModel!;
-        private set => SetProperty(ref _currentViewModel, value);
-    }
+    public ObservableObject CurrentViewModel { get => _currentViewModel!; private set => SetProperty(ref _currentViewModel, value); }
 
-    public void NavigateTo<TViewModel>()
-        where TViewModel : ObservableObject
+    public void NavigateTo<TViewModel>() where TViewModel : ObservableObject
     {
         (CurrentViewModel as INavigatableView)?.OnNavigatedFrom();
 
@@ -55,8 +50,7 @@ public class NavigationService : ObservableObject, INavigationService
         _messenger.Send(new NavigationChangedMessage(CurrentViewModel));
     }
 
-    public void NavigateTo<TViewModel>(Action<TViewModel> configure)
-        where TViewModel : ObservableObject
+    public void NavigateTo<TViewModel>(Action<TViewModel> configure) where TViewModel : ObservableObject
     {
         (CurrentViewModel as INavigatableView)?.OnNavigatedFrom();
         var nextViewModel = _services.GetRequiredService<TViewModel>();
@@ -70,8 +64,7 @@ public class NavigationService : ObservableObject, INavigationService
         _messenger.Send(new NavigationChangedMessage(nextViewModel));
     }
 
-    public TResult? ShowModal<TViewModel, TResult>(Action<TViewModel>? configure = null)
-        where TViewModel : class, IModalViewModel<TResult>
+    public TResult? ShowModal<TViewModel, TResult>(Action<TViewModel>? configure = null) where TViewModel : class, IModalViewModel<TResult>
     {
         var vm = _services.GetRequiredService<TViewModel>();
         configure?.Invoke(vm);

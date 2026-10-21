@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 using Typical.Core.Data;
 using Typical.DataAccess.Sqlite;
 

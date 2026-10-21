@@ -22,25 +22,30 @@ public class Script_202605230237_SeedInitialQuotes : IScript
 
         cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM Quotes LIMIT 1)";
         if ((long)(cmd.ExecuteScalar() ?? 0) == 1)
+        {
             return "";
+        }
 
         var assembly = typeof(Script_202605230237_SeedInitialQuotes).Assembly;
         var path = AppContext.BaseDirectory;
         using var stream = File.OpenRead(Path.Combine(path, "Migrations", "quotes.json"));
         if (stream is null)
+        {
             throw new FileNotFoundException("Could not find embedded quotes.json");
+        }
 
         var seeds = JsonSerializer.Deserialize(stream, SeedContext.Default.ListQuoteSeed);
         if (seeds is null || seeds.Count == 0)
+        {
             return "No seeds found in JSON.";
+        }
 
         cmd.CommandText = "BEGIN TRANSACTION";
         cmd.ExecuteNonQuery();
 
         try
         {
-            cmd.CommandText =
-                "INSERT INTO Quotes (Text, Author, Tags) VALUES (@text, @author, @tags)";
+            cmd.CommandText = "INSERT INTO Quotes (Text, Author, Tags) VALUES (@text, @author, @tags)";
 
             var pText = cmd.CreateParameter();
             pText.ParameterName = "@text";
@@ -58,10 +63,7 @@ public class Script_202605230237_SeedInitialQuotes : IScript
                 pAuthor.Value = quote.Author ?? (object)DBNull.Value;
 
                 // Serialize tags to JSON string for the DB
-                pTags.Value =
-                    quote.Tags != null
-                        ? JsonSerializer.Serialize(quote.Tags, SeedContext.Default.ListString)
-                        : DBNull.Value;
+                pTags.Value = quote.Tags != null ? JsonSerializer.Serialize(quote.Tags, SeedContext.Default.ListString) : DBNull.Value;
 
                 cmd.ExecuteNonQuery();
             }

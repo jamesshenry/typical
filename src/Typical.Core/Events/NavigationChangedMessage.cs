@@ -6,5 +6,4 @@ namespace Typical.Core.Events;
 /// <summary>
 /// Message sent when the active view model has changed.
 /// </summary>
-public class NavigationChangedMessage(ObservableObject value)
-    : ValueChangedMessage<ObservableObject>(value);
+public class NavigationChangedMessage(ObservableObject value) : ValueChangedMessage<ObservableObject>(value);

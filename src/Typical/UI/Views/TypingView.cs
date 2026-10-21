@@ -1,10 +1,14 @@
 using System.Text;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+
 using Stanza.TerminalGui;
+
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
+
 using Typical.Core.ViewModels;
 
 namespace Typical.UI.Views;
@@ -36,15 +40,11 @@ public partial class TypingView : View
         _sourceLabel = new Label();
         Add(_typingArea);
 
-        this.Bind(
-                ViewModel,
-                vm => vm.Target,
-                target =>
-                {
-                    _typingArea.Refresh();
-                    _sourceLabel.Text = target?.Source ?? string.Empty;
-                }
-            )
+        this.Bind(ViewModel, vm => vm.Target, target =>
+            {
+                _typingArea.Refresh();
+                _sourceLabel.Text = target?.Source ?? string.Empty;
+            })
             .AddTo(_bindingContext);
 
         Initialized += (s, e) =>
@@ -76,7 +76,9 @@ public partial class TypingView : View
         Rune rune = key.AsRune;
 
         if (rune == default)
+        {
             return base.OnKeyDown(key);
+        }
 
         if (rune != default || isBackspace)
         {

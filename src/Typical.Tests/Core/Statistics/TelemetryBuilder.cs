@@ -1,5 +1,7 @@
 using System.Globalization;
+
 using Microsoft.Extensions.Time.Testing;
+
 using Typical.Core.Statistics;
 
 namespace Typical.Tests.Core.Statistics;
@@ -20,10 +22,13 @@ public class TelemetryBuilder
     public TelemetryBuilder Type(string text, int delayMs = 0)
     {
         foreach (var grapheme in text.EnumerateRunes()) // Simplification for test
+
         {
             _stats.RecordKey(grapheme.ToString(), KeystrokeType.Correct, _currentIndex++);
             if (delayMs > 0)
+            {
                 _time.Advance(TimeSpan.FromMilliseconds(delayMs));
+            }
         }
         return this;
     }
@@ -38,7 +43,9 @@ public class TelemetryBuilder
         _stats.RecordKey(actualGrapheme, KeystrokeType.Incorrect, _currentIndex);
 
         if (delayMs > 0)
+        {
             _time.Advance(TimeSpan.FromMilliseconds(delayMs));
+        }
 
         return this;
     }
@@ -55,7 +62,9 @@ public class TelemetryBuilder
         }
 
         if (delayMs > 0)
+        {
             _time.Advance(TimeSpan.FromMilliseconds(delayMs));
+        }
 
         return this;
     }

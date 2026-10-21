@@ -1,12 +1,13 @@
 using System.IO;
+
 using DbUp;
+
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Typical.DataAccess.Sqlite;
 
-public class DatabaseMigrator(IOptions<TypicalDbOptions> options, ILogger<DatabaseMigrator> logger)
-    : IDatabaseMigrator
+public class DatabaseMigrator(IOptions<TypicalDbOptions> options, ILogger<DatabaseMigrator> logger) : IDatabaseMigrator
 {
     public Task EnsureDatabaseUpdated()
     {

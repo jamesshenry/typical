@@ -2,7 +2,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+
 using Microsoft.Extensions.Logging;
+
 using Typical.Core.Events;
 using Typical.Core.Logging;
 using Typical.Core.Statistics;
@@ -34,18 +36,16 @@ public class TypingTest
     internal TestSession Stats { get; private set; }
     public TextSample TargetSample { get; private set; } = TextSample.Empty;
     public string TargetText { get; private set; } = string.Empty;
-
     public string UserInput => _userInput.ToString();
-    public bool IsOver { get; private set; }
     public bool IsRunning => !IsOver && Stats.IsRunning;
 
     public TextSample SampleNormalized { get; private set; } = TextSample.Empty;
 
     public TestSnapshot GetCurrentSnapshot() => Stats.GetCurrentSnapshot();
-
+    public enum TestState { NotStarted, Running, Finished }
     public bool ProcessKeyPress(string input, bool isBackspace)
     {
-        if (!IsRunning && !IsOver && !isBackspace)
+        if (!IsRunning && !isBackspace)
         {
             Stats.Start();
             CoreLogs.TestStarting(_logger);
@@ -64,7 +64,9 @@ public class TypingTest
 
         int currentPos = _userInput.GraphemeCount;
         if (currentPos >= _targetGraphemes.Length)
+        {
             return false;
+        }
 
         string normalizedInput = input.Normalize(NormalizationForm.FormC);
         bool isCorrect = normalizedInput == _targetGraphemes[currentPos];
@@ -75,29 +77,37 @@ public class TypingTest
         if (!_testOptions.ForbidIncorrectEntries || isCorrect)
         {
             _userInput.Push(normalizedInput);
-            CheckEndCondition();
         }
-
-        return true;
-    }
-
-    private void CheckEndCondition()
-    {
-        if (_userInput.GraphemeCount == _targetGraphemes.Length)
+        if (IsOver)
         {
-            if (_testOptions.Require100Accuracy && _userInput.ToString() != TargetText)
-            {
-                return;
-            }
-
-            Stats.Stop();
-            IsOver = true;
             var result = Stats.GetFinalResult(TargetSample);
 
             OnTestFinished?.Invoke(this, result);
         }
+
+        return true;
+    }
+    public bool IsOver
+    {
+        get
+        {
+            if (_userInput.GraphemeCount == _targetGraphemes.Length)
+            {
+                if (_testOptions.Require100Accuracy && _userInput.ToString() != TargetText)
+                {
+                    return false;
+                }
+                return true;
+
+            }
+            return false;
+        }
     }
 
+    public void LoadText(string internationalText, string? locale = null)
+    {
+        LoadText(new TextSample() { Text = internationalText, Source = locale ?? "none" });
+    }
     public void LoadText(TextSample sample)
     {
         TargetSample = sample;
@@ -115,17 +125,16 @@ public class TypingTest
         _targetGraphemes = list.ToArray();
         _userInput.Clear();
 
-        IsOver = false;
         Stats = new TestSession(_timeProvider);
     }
 
     internal KeystrokeType GetStatus(int index)
     {
         if (index >= _userInput.GraphemeCount)
+        {
             return KeystrokeType.Untyped;
+        }
 
-        return _userInput.GetGraphemeAt(index) == _targetGraphemes[index]
-            ? KeystrokeType.Correct
-            : KeystrokeType.Incorrect;
+        return _userInput.GetGraphemeAt(index) == _targetGraphemes[index] ? KeystrokeType.Correct : KeystrokeType.Incorrect;
     }
 }

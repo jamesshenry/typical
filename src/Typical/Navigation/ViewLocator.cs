@@ -1,6 +1,9 @@
 using System.Reflection.Emit;
+
 using Microsoft.Extensions.DependencyInjection;
+
 using Terminal.Gui.ViewBase;
+
 using Typical.Core.ViewModels;
 using Typical.UI.Views;
 
@@ -8,12 +11,11 @@ namespace Typical.Navigation;
 
 public static class ViewLocator
 {
-    public static View GetView(IServiceProvider sp, object viewModel) =>
-        viewModel switch
-        {
-            SettingsViewModel => sp.GetRequiredService<SettingsView>(),
-            TypingViewModel => sp.GetRequiredService<TypingView>(),
-            ResultsViewModel => sp.GetRequiredService<ResultsDialog>(),
-            _ => throw new ArgumentException($"No view registered for {viewModel.GetType()}"),
-        };
+    public static View GetView(IServiceProvider sp, object viewModel) => viewModel switch
+    {
+        SettingsViewModel => sp.GetRequiredService<SettingsView>(),
+        TypingViewModel => sp.GetRequiredService<TypingView>(),
+        ResultsViewModel => sp.GetRequiredService<ResultsDialog>(),
+        _ => throw new ArgumentException($"No view registered for {viewModel.GetType()}"),
+    };
 }

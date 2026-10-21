@@ -1,4 +1,5 @@
 using System.ComponentModel;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Typical.Core.Interfaces;
@@ -6,10 +7,7 @@ namespace Typical.Core.Interfaces;
 public interface INavigationService : INotifyPropertyChanged
 {
     ObservableObject CurrentViewModel { get; }
-    void NavigateTo<TViewModel>()
-        where TViewModel : ObservableObject;
-    void NavigateTo<TViewModel>(Action<TViewModel> configure)
-        where TViewModel : ObservableObject;
-    TResult? ShowModal<TViewModel, TResult>(Action<TViewModel>? configure = null)
-        where TViewModel : class, IModalViewModel<TResult>;
+    void NavigateTo<TViewModel>() where TViewModel : ObservableObject;
+    void NavigateTo<TViewModel>(Action<TViewModel> configure) where TViewModel : ObservableObject;
+    TResult? ShowModal<TViewModel, TResult>(Action<TViewModel>? configure = null) where TViewModel : class, IModalViewModel<TResult>;
 }

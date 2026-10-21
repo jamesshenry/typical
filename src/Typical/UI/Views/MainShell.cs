@@ -1,10 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+
 using Microsoft.Extensions.DependencyInjection;
+
 using Stanza.TerminalGui;
+
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
+
 using Typical.Core.ViewModels;
 using Typical.Navigation;
 
@@ -99,14 +103,18 @@ public partial class MainShell : Window
     partial void OnApplyBindings(BindingContext context)
     {
         if (ViewModel is not null)
+        {
             this.Bind(ViewModel, vm => vm.CurrentPage, _ => UpdateContent(ViewModel.CurrentPage))
                 .AddTo(_bindingContext);
+        }
     }
 
     private void UpdateContent(ObservableObject? viewModel)
     {
         if (viewModel == null)
+        {
             return;
+        }
 
         foreach (var child in _contentFrame.SubViews)
         {

@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Messaging;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Typical.Core.Services;

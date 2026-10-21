@@ -1,7 +1,9 @@
 using Stanza.TerminalGui;
+
 using Terminal.Gui.Drawing;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
+
 using Typical.Core.ViewModels;
 
 namespace Typical.UI.Views;

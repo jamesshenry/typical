@@ -103,12 +103,10 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             TestResult result = await _statsRepository.GetTestResultAsync();
-            _navigationService.ShowModal<ResultsViewModel, bool>(
-                (vm) =>
-                {
-                    vm.Initialize(result);
-                }
-            );
+            _navigationService.ShowModal<ResultsViewModel, bool>((vm) =>
+            {
+                vm.Initialize(result);
+            });
         }
         catch (TypicalException tex)
         {

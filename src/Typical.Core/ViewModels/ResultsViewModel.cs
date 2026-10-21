@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Drawing;
+
 using CommunityToolkit.Mvvm.ComponentModel;
+
 using Typical.Core.Interfaces;
 using Typical.Core.Statistics;
 
@@ -41,8 +43,8 @@ public class GraphData
 
     public List<PointF> Points =>
         _snapshots
-            .Select(s => new PointF((float)s.ElapsedTime.TotalSeconds, (float)s.WPM))
-            .ToList();
+            .ConvertAll(s => new PointF((float)s.ElapsedTime.TotalSeconds, (float)s.WPM))
+;
 
     // ANALYZE: Provides the bounds for scaling
     public float MinWpm => _snapshots.Any() ? _snapshots.Min(s => (float)s.WPM) : 0;

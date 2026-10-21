@@ -1,10 +1,13 @@
 using System.Globalization;
 using System.Text;
+
 using Terminal.Gui.Configuration;
 using Terminal.Gui.Text;
 using Terminal.Gui.ViewBase;
+
 using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
+
 using Attribute = Terminal.Gui.Drawing.Attribute;
 
 namespace Typical.UI.Views;
@@ -32,7 +35,9 @@ public class TypingArea : View
     public void Refresh()
     {
         if (Viewport.Width <= 0)
+        {
             return;
+        }
 
         _formatter.Text = _viewModel.Target.Text;
         _formatter.ConstrainToWidth = Viewport.Width;
@@ -50,7 +55,9 @@ public class TypingArea : View
     protected override bool OnDrawingContent(DrawContext? context)
     {
         if (_cachedLines.Count == 0 || Viewport.Width == 0)
+        {
             return true;
+        }
 
         int globalIdx = 0;
         int yPos = Math.Max(0, (Viewport.Height - _cachedLines.Count) / 2);
@@ -90,11 +97,10 @@ public class TypingArea : View
         return Math.Max(0, (Viewport.Width - visualWidth) / 2);
     }
 
-    private Attribute GetAttributeForState(KeystrokeType state) =>
-        state switch
-        {
-            KeystrokeType.Correct => _correctAttr,
-            KeystrokeType.Incorrect => _incorrectAttr,
-            _ => _untypedAttr,
-        };
+    private Attribute GetAttributeForState(KeystrokeType state) => state switch
+    {
+        KeystrokeType.Correct => _correctAttr,
+        KeystrokeType.Incorrect => _incorrectAttr,
+        _ => _untypedAttr,
+    };
 }

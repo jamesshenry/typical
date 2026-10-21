@@ -54,8 +54,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
         }
         var testIdParam = new { testId = id };
 
-        const string testSql =
-            @"
+        const string testSql = @"
         SELECT
             t.Wpm,
             t.CreatedAt,
@@ -76,8 +75,7 @@ public class StatsRepository(IOptions<TypicalDbOptions> options) : IStatsReposit
             testIdParam
         );
 
-        const string snapshotsSql =
-            @"
+        const string snapshotsSql = @"
         SELECT * FROM TestSnapshots WHERE TestId = @testId ORDER BY OffsetMs ASC;
         ";
 
@@ -130,9 +128,12 @@ WHERE kt.TestId = @testId;
         var args = new
         {
             CreatedAt = new DateTimeOffset(result.PlayedAt).ToUnixTimeMilliseconds(),
-            Wpm = result.FinalWpm.Value,         // Unwrap Vogen
-            RawWpm = result.RawWpm.Value,        // Unwrap Vogen
+            Wpm = result.FinalWpm.Value, // Unwrap Vogen
+
+            RawWpm = result.RawWpm.Value, // Unwrap Vogen
+
             Accuracy = result.FinalAccuracy.Value, // Unwrap Vogen
+
             DurationMs = (long)result.Duration.TotalMilliseconds,
             QuoteId = result.Target.SourceId,
             CustomText = result.Target.SourceId.HasValue ? null : result.Target.Text
@@ -154,14 +155,15 @@ WHERE kt.TestId = @testId;
             VALUES (@TestId, @OffsetMs, @Index, @Actual, @Type);
             """;
 
-        var args = result.Telemetry.Select(log => new TelemetryInsertArgs
-        {
-            TestId = testId,
-            OffsetMs = log.OffsetMs,
-            GraphemeIndex = log.Index,
-            ActualText = log.Value,
-            KeystrokeType = (int)log.Type // Cast enum to int
-        });
+        var args = result.Telemetry.Select(log =>
+                new TelemetryInsertArgs
+                {
+                    TestId = testId,
+                    OffsetMs = log.OffsetMs,
+                    GraphemeIndex = log.Index,
+                    ActualText = log.Value,
+                    KeystrokeType = (int)log.Type // Cast enum to int
+                });
 
         await conn.ExecuteAsync(sql, args, trans);
     }
@@ -174,7 +176,9 @@ WHERE kt.TestId = @testId;
     )
     {
         if (snapshots.Count() == 0)
+        {
             return;
+        }
 
         const string sql = """
             INSERT INTO TestSnapshots (TestId, OffsetMs, Wpm, Accuracy)
@@ -182,13 +186,15 @@ WHERE kt.TestId = @testId;
             """;
 
         // Project your domain models to the flattened primitive args
-        var args = snapshots.Select(snap => new SnapshotInsertArgs
-        {
-            TestId = testId,
-            OffsetMs = (long)snap.ElapsedTime.TotalMilliseconds,
-            Wpm = snap.WPM.Value,           // Unwrap
-            Accuracy = snap.Accuracy.Value  // Unwrap
-        });
+        var args = snapshots.Select(snap =>
+                new SnapshotInsertArgs
+                {
+                    TestId = testId,
+                    OffsetMs = (long)snap.ElapsedTime.TotalMilliseconds,
+                    Wpm = snap.WPM.Value, // Unwrap
+
+                    Accuracy = snap.Accuracy.Value // Unwrap
+                });
 
         // Pass the IEnumerable directly! Dapper.AOT handles the iteration internally.
         await conn.ExecuteAsync(sql, args, trans);
@@ -201,7 +207,6 @@ WHERE kt.TestId = @testId;
         return connection;
     }
 }
-
 
 [Serializable]
 public class NoTestsExistException : TypicalException
@@ -247,6 +252,7 @@ internal class TestSnapshotDto
             Core.Statistics.Wpm.From(Wpm),
             Core.Statistics.Accuracy.From(Accuracy),
             new TestMetrics(0, 0, 0), // Metrics aren't stored in the snapshot table
+
             TimeSpan.FromMilliseconds(OffsetMs)
         );
     }
@@ -271,11 +277,11 @@ internal class KeystrokeTelemetryDto
             // We map it back to both here so the domain model stays fully populated.
             Timestamp: OffsetMs,
             OffsetMs: OffsetMs,
-
             Index: GraphemeIndex
         );
     }
 }
+
 [DapperAot]
 internal struct SnapshotInsertArgs
 {
@@ -284,8 +290,10 @@ internal struct SnapshotInsertArgs
     public double Wpm { get; set; }
 
     [DbValue(Name = "Acc")] // Maps to the @Acc parameter in your SQL
+
     public double Accuracy { get; set; }
 }
+
 [DapperAot]
 internal struct TelemetryInsertArgs
 {

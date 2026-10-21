@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Time.Testing;
+
 using Typical.Core.Statistics;
 
 namespace Typical.Tests.Core.Statistics;
@@ -29,6 +30,7 @@ public class TestStatsTests
         // Use the builder to simulate a 90% accuracy run
         new TelemetryBuilder(stats, fakeTime)
             .Type("123456789") // 9 Correct
+
             .Error("x"); // 1 Incorrect
 
         fakeTime.Advance(TimeSpan.FromSeconds(10));

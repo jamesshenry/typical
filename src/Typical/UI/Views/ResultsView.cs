@@ -1,9 +1,12 @@
 using System.Drawing;
+
 using Stanza.TerminalGui;
+
 using Terminal.Gui.Drawing;
 using Terminal.Gui.Input;
 using Terminal.Gui.ViewBase;
 using Terminal.Gui.Views;
+
 using Typical.Core.Statistics;
 using Typical.Core.ViewModels;
 
@@ -32,7 +35,9 @@ public partial class ResultsDialog : Dialog
         {
             Width = Dim.Fill(),
             Height = Dim.Fill(), // leave room for buttons
+
             MarginLeft = 3, // Space for Y-axis labels (e.g. "120.00")
+
             MarginBottom = 2, // Space for X-axis labels
         };
 
@@ -64,14 +69,18 @@ public partial class ResultsDialog : Dialog
     partial void OnApplyBindings(BindingContext context)
     {
         if (ViewModel is null)
+        {
             return;
+        }
 
         var ctx = ViewModel.GraphContext;
 
         var data = ctx.Points;
 
         if (!data.Any())
+        {
             return;
+        }
 
         // 1. Get the "Perfect Scale" from our data object
         var (cellSize, scrollOffset, yIncrement) = ctx.GetScale(

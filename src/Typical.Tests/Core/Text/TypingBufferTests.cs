@@ -1,5 +1,7 @@
 using System.Threading.Tasks;
+
 using TUnit;
+
 using Typical.Core.Text;
 
 namespace Typical.Tests.Core.Text;

@@ -32,5 +32,5 @@ public class TypingBuffer
 
     public override string ToString() => _buffer.ToString();
 
-    internal string GetGraphemeAt(int index) => _graphemes[index];
+    public string GetGraphemeAt(int index) => _graphemes[index];
 }

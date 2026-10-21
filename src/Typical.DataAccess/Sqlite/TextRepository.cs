@@ -1,12 +1,16 @@
 using System.Data;
 using System.Data.Common;
 using System.Text.Json;
+
 using Dapper;
+
 using DbUp;
+
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
 using Typical.Core.Data;
 using Typical.DataAccess.Sqlite;
 
@@ -28,8 +32,7 @@ public class TextRepository(IOptions<TypicalDbOptions> options) : ITextRepositor
     {
         await using var connection = await GetOpenConnectionAsync();
 
-        string sql =
-            @"
+        string sql = @"
         SELECT Id, Text, Author, Tags, WordCount, CharCount 
         FROM Quotes 
         ORDER BY Id ASC LIMIT 1;";
@@ -44,8 +47,7 @@ public class TextRepository(IOptions<TypicalDbOptions> options) : ITextRepositor
         await using var connection = await GetOpenConnectionAsync();
         await connection.OpenAsync();
 
-        string sql =
-            "SELECT Id, Text, Author, Tags, WordCount, CharCount FROM Quotes ORDER BY RANDOM() LIMIT 1";
+        string sql = "SELECT Id, Text, Author, Tags, WordCount, CharCount FROM Quotes ORDER BY RANDOM() LIMIT 1";
 
         var quote1 = await connection.QueryFirstAsync<QuoteDto>(sql);
 

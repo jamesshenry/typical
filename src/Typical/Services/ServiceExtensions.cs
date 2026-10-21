@@ -1,11 +1,14 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting.Display;
+
 using Terminal.Gui.App;
+
 using Typical.Configuration;
 using Typical.Core.Interfaces;
 using Typical.Logging;
@@ -15,8 +18,7 @@ namespace Typical.Services;
 
 public static class ServiceExtensions
 {
-    private const string OutputTemplate =
-        "[{Timestamp:HH:mm:ss} {Level:u3}] ({SourceClass}) {Message:lj}{NewLine}{Exception}";
+    private const string OutputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] ({SourceClass}) {Message:lj}{NewLine}{Exception}";
 
     /// <summary>
     /// Creates the application logger. Call this early in Program.cs to set Log.Logger.

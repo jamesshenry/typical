@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging.Abstractions;
+
 using Typical.DataAccess;
 using Typical.DataAccess.Sqlite;
 

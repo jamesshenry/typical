@@ -38,7 +38,7 @@ try
 
     builder.Services.AddTypicalDb(builder.Configuration);
     builder.Services.PostConfigure<TypicalDbOptions>(opts =>
-        opts.DataDirectory = AppPaths.DataHome
+            opts.DataDirectory = AppPaths.DataHome
     );
 
     using IHost host = builder.Build();

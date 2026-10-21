@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+
 using Typical.Core.Text;
 using Typical.Core.ViewModels;
 
