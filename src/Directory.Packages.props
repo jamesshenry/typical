@@ -20,14 +20,8 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
-    <PackageVersion
-      Include="Microsoft.Extensions.DependencyInjection.Abstractions"
-      Version="10.0.9"
-    />
-    <PackageVersion
-      Include="Microsoft.Extensions.Options.ConfigurationExtensions"
-      Version="10.0.9"
-    />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
@@ -55,5 +49,6 @@
     <PackageVersion Include="Xdg.Directories" Version="0.1.2" />
     <PackageVersion Include="Imposter" Version="0.1.9" />
     <PackageVersion Include="TUnit" Version="1.56.35" />
+    <PackageVersion Include="XenoAtom.Terminal.UI" Version="3.10.0" />
   </ItemGroup>
 </Project>

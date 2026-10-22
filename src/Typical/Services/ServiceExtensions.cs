@@ -55,6 +55,8 @@ public static class ServiceExtensions
         builder.Services.AddSingleton<IAppLifetime, AppLifetime>();
 
         builder.Services.AddSingleton<MainShell>();
+        builder.Services.AddSingleton<MainShellXenoTerminal>();
+
         //builder.Services.AddTransient<HomeView>();
         builder.Services.AddTransient<SettingsView>();
         builder.Services.AddTransient<TypingView>();

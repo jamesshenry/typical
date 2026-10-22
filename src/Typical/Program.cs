@@ -67,10 +67,13 @@ static async Task Run(IHost host)
 
     try
     {
-        app.Init();
+        // app.Init();
+        // var mainShell = host.Services.GetRequiredService<MainShell>();
+        // app.Run(mainShell);
 
-        var mainShell = host.Services.GetRequiredService<MainShell>();
-        app.Run(mainShell);
+        var mainShellXeno = host.Services.GetRequiredService<MainShellXenoTerminal>();
+
+        mainShellXeno.Run();
     }
     finally
     {
