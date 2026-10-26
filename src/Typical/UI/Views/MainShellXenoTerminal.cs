@@ -1,12 +1,12 @@
+using System.Text;
+
 using Microsoft.Extensions.Logging;
 
+using XenoAtom.Terminal;
 using XenoAtom.Terminal.UI;
 using XenoAtom.Terminal.UI.Controls;
-using XenoAtom.Terminal.UI.Styling;
-using XenoAtom.Terminal.UI.Templating;
 
 using XTerm = XenoAtom.Terminal.Terminal;
-
 
 namespace Typical.UI.Views;
 
@@ -18,36 +18,79 @@ public class MainShellXenoTerminal
     {
         _logger = logger;
     }
+
     public void Run()
     {
-        _logger.LogInformation("Starting");
+        _logger.LogInformation("Starting typing test");
 
+        const string target = "the quick brown fox jumps over the lazy dog";
+        var typedText = new State<string?>("");
+        var exit = new State<bool>(false);
 
-        State<string?> text = new("Type here");
-        State<bool> exit = new(false);
-        var brush = Brush.LinearGradient(
-            new GradientPoint(0f, 0f),
-            new GradientPoint(1f, 0f),
-            [new GradientStop(0f, Colors.DeepSkyBlue), new GradientStop(1f, Colors.White)]);
+        // 1. The visible typing test display
+        var display = new Markup(() =>
+        {
+            var typed = typedText.Value ?? "";
+            var sb = new StringBuilder();
 
-        var templates = DataTemplates.Default.Derive(builder => builder
-            .Register<string>(
-                DataTemplateRole.Display,
-                new DataTemplate<string>(
-                    Display: static (DataTemplateValue<string> value, in DataTemplateContext _) => new TextBlock(() => $"> {value.GetValue()}"),
-                    Editor: null)));
+            for (var i = 0; i < target.Length; i++)
+            {
+                var ch = target[i];
 
-        var ui = new VStack(
-                new ListBox<string>().Items(["One", "Two", "Three"]),
-                new Select<string>().Items(["Alpha", "Beta"]))
-            .Spacing(1)
-            .Style(templates);
+                if (i < typed.Length)
+                {
+                    // Correct (green) or typo (white text on red)
+                    if (typed[i] == ch)
+                        sb.Append($"[green]{ch}[/]");
+                    else
+                        sb.Append($"[white on red]{ch}[/]");
+                }
+                else if (i == typed.Length)
+                {
+                    // Caret highlight on active character
+                    sb.Append($"[black on white]{ch}[/]");
+                }
+                else
+                {
+                    // Untyped future letters
+                    sb.Append($"[grey]{ch}[/]");
+                }
+            }
+
+            return sb.ToString();
+        });
+
+        // 2. Hidden TextBox acting as the invisible keyboard driver
+        var hiddenInput = new TextBox(typedText)
+            .KeyDown((_, e) =>
+            {
+                if (e.Key == TerminalKey.Escape)
+                {
+                    exit.Value = true;
+                    e.Handled = true;
+                }
+            })
+            .MaxHeight(0)
+            .TextInput((_, e) =>
+            {
+                // Prevent typing past the target sentence length
+                if ((typedText.Value ?? "").Length >= target.Length)
+                {
+                    e.Handled = true;
+                }
+            });
+
+        // 3. Stack them (hiddenInput takes 0 space)
+        var root = new VStack(
+            display,
+            hiddenInput
+        );
+
         XTerm.Run(
-                   ui,
-                   onUpdate: () => exit.Value
-                       ? TerminalLoopResult.StopAndKeepVisual
-                       : TerminalLoopResult.Continue
-                   );
-
+            root,
+            onUpdate: () => exit.Value
+                ? TerminalLoopResult.StopAndKeepVisual
+                : TerminalLoopResult.Continue
+        );
     }
 }
